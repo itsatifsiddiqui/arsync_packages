@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import '../arsync_exception_toolkit.dart';
 
 /// Utility functions for working with exceptions.
@@ -8,8 +6,6 @@ class ExceptionUtils {
   ///
   /// Returns true if the exception appears to be a network connectivity issue.
   static bool isNetworkConnectivityIssue(Object exception) {
-    if (exception is SocketException) return true;
-
     final conditions = [
       'socketexception',
       'network',

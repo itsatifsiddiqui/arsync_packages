@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Fix Web compatibility
+
 ## 0.0.4
 
 * Converted to monorepo structure
