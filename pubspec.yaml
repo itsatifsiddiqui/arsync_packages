@@ -1,6 +1,6 @@
 name: arsync_exception_toolkit
 description: A flexible exception handling system for Flutter applications by Arsync
-version: 0.0.1
+version: 0.0.2
 homepage: https://arsyncsolutions.com/
 
 environment:

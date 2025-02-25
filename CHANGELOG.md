@@ -1,3 +1,7 @@
+## 0.0.2
+
+* Added web compatibility
+
 ## 0.0.1
 
 * Initial release of Arsync Exception Toolkit

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -19,8 +18,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
   @override
   ArsyncException handle(Object exception) {
     // Handle specific common exception types
-    if (exception is SocketException ||
-        exception.toString().contains('SocketException')) {
+    if (ExceptionUtils.isNetworkConnectivityIssue(exception)) {
       return ArsyncException.network(
         originalException: exception,
       );
