@@ -1,0 +1,30 @@
+name: arsync_packages
+repository: https://github.com/itsatifsiddiqui/arsync_packages
+
+packages:
+  - packages/**
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+
+scripts:
+  analyze:
+    run: melos exec -- "dart analyze ."
+    description: Run analyzer in all packages
+
+  format:
+    run: melos exec -- "dart format ."
+    description: Run formatter in all packages
+
+  build:
+    run: melos exec -- "flutter build"
+    description: Build all packages
+    packageFilters:
+      flutter: true
+
+  clean:
+    run: melos exec -- "flutter clean"
+    description: Clean all packages
+    packageFilters:
+      flutter: true
