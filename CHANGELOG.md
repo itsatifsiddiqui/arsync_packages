@@ -1,3 +1,7 @@
+## 0.0.3
+
+* Added github repository link
+
 ## 0.0.2
 
 * Added web compatibility
