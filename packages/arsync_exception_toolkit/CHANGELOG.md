@@ -1,3 +1,7 @@
+## 0.0.6
+
+* Added example project
+
 ## 0.0.5
 
 * Fix Web compatibility
