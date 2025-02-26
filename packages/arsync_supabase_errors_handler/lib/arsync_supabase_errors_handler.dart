@@ -1,5 +1,5 @@
 /// Supabase error handlers for the Arsync Exception Toolkit
-/// 
+///
 /// This package provides specialized error handlers for various Supabase services
 /// that integrate with the Arsync Exception Toolkit.
 library arsync_supabase_errors_handler;

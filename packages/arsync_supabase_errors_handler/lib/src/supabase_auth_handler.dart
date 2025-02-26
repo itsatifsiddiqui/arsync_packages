@@ -34,7 +34,6 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message.contains('login'),
       message.contains('sign'),
       message.contains('password'),
-      message.contains('user'),
       message.contains('token'),
       message.contains('session'),
       message.contains('jwt'),

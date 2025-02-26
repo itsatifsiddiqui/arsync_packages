@@ -1,6 +1,7 @@
 name: arsync_supabase_errors_handler
-description: Supabase error handlers for the Arsync Exception Toolkit
-version: 0.0.1
+
+description: An error handling solution for Supabase services. Provides user-friendly error messages, standardized error handling, and integration with the Arsync Exception Toolkit.
+version: 0.0.2
 homepage: https://arsyncsolutions.com/
 repository: https://github.com/itsatifsiddiqui/arsync_exception_toolkit
 
@@ -12,7 +13,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  arsync_exception_toolkit: ^0.0.4
+  arsync_exception_toolkit: ^0.0.8
   supabase_flutter: ^2.8.4
   supabase: ^2.6.3
 

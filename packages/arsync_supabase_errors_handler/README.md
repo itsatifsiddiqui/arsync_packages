@@ -28,13 +28,19 @@ dependencies:
 
 ```dart
 // Create a toolkit with all Supabase handlers
-final toolkit = ArsyncExceptionToolkit()
-  .withAllSupabaseHandlers();
+final toolkit = ArsyncExceptionToolkit(
+  handlers: [SupabaseErrorsHandler()],
+);
 
 // Or add specific handlers
-final toolkit = ArsyncExceptionToolkit()
-  .withSupabaseAuthHandler()
-  .withSupabaseDatabaseHandler();
+final toolkit = ArsyncExceptionToolkit(
+  handlers: [
+    SupabaseErrorsHandler(
+      authHandler: SupabaseAuthHandler(),
+      databaseHandler: SupabaseDatabaseHandler(),
+    ),
+  ],
+);
 ```
 
 ### 2. Use in try-catch blocks
@@ -69,30 +75,25 @@ You can customize the error messages for specific error codes using `ArsyncExcep
 
 ```dart
 // Create a toolkit with custom Supabase Auth error messages
-final toolkit = ArsyncExceptionToolkit()
-  .withSupabaseAuthHandler(
-    customExceptions: {
-      SupabaseErrorCodes.invalidCredentials: ArsyncException(
-        icon: Icons.lock_outline,
-        title: 'Wrong Password',
-        message: 'The password you entered doesn\'t match our records. Please try again or reset your password.',
-        briefTitle: 'Login Failed',
-        briefMessage: 'Incorrect password',
-        exceptionCode: 'supabase_auth_invalid_credentials',
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [
+      SupabaseErrorsHandler(
+        authHandler: SupabaseAuthHandler(
+          customExceptions: {
+            SupabaseErrorCodes.invalidCredentials: ArsyncException(
+              icon: Icons.lock_outline,
+              title: 'Wrong Password',
+              message:
+                  'The password you entered doesn\'t match our records. Please try again or reset your password.',
+              briefTitle: 'Login Failed',
+              briefMessage: 'Incorrect password',
+              exceptionCode: 'supabase_auth_invalid_credentials',
+            ),
+          },
+        ),
       ),
-    },
+    ],
   );
-```
-
-### Using Specific Service Handlers
-
-You can choose which Supabase service handlers to include:
-
-```dart
-// Only include handlers for the services you use
-final toolkit = ArsyncExceptionToolkit()
-  .withSupabaseAuthHandler()
-  .withSupabaseDatabaseHandler();
 ```
 
 ### Accessing Technical Details

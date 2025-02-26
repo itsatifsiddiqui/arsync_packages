@@ -17,7 +17,7 @@ class SupabaseErrorsHandler implements ArsyncExceptionHandler {
   final SupabaseStorageHandler _storageHandler;
   final SupabaseFunctionsHandler _functionsHandler;
   final SupabaseRealtimeHandler _realtimeHandler;
-  
+
   /// Priority level for this handler (higher means it's tried earlier)
   final int _priority;
 
@@ -36,20 +36,20 @@ class SupabaseErrorsHandler implements ArsyncExceptionHandler {
     SupabaseFunctionsHandler? functionsHandler,
     SupabaseRealtimeHandler? realtimeHandler,
     int priority = 25,
-  }) : _authHandler = authHandler ?? SupabaseAuthHandler(),
-       _databaseHandler = databaseHandler ?? SupabaseDatabaseHandler(),
-       _storageHandler = storageHandler ?? SupabaseStorageHandler(),
-       _functionsHandler = functionsHandler ?? SupabaseFunctionsHandler(),
-       _realtimeHandler = realtimeHandler ?? SupabaseRealtimeHandler(),
-       _priority = priority;
+  })  : _authHandler = authHandler ?? SupabaseAuthHandler(),
+        _databaseHandler = databaseHandler ?? SupabaseDatabaseHandler(),
+        _storageHandler = storageHandler ?? SupabaseStorageHandler(),
+        _functionsHandler = functionsHandler ?? SupabaseFunctionsHandler(),
+        _realtimeHandler = realtimeHandler ?? SupabaseRealtimeHandler(),
+        _priority = priority;
 
   @override
   bool canHandle(Object exception) {
     return _authHandler.canHandle(exception) ||
-           _databaseHandler.canHandle(exception) ||
-           _storageHandler.canHandle(exception) ||
-           _functionsHandler.canHandle(exception) ||
-           _realtimeHandler.canHandle(exception);
+        _databaseHandler.canHandle(exception) ||
+        _storageHandler.canHandle(exception) ||
+        _functionsHandler.canHandle(exception) ||
+        _realtimeHandler.canHandle(exception);
   }
 
   @override
@@ -57,23 +57,23 @@ class SupabaseErrorsHandler implements ArsyncExceptionHandler {
     if (_authHandler.canHandle(exception)) {
       return _authHandler.handle(exception);
     }
-    
+
     if (_databaseHandler.canHandle(exception)) {
       return _databaseHandler.handle(exception);
     }
-    
+
     if (_storageHandler.canHandle(exception)) {
       return _storageHandler.handle(exception);
     }
-    
+
     if (_functionsHandler.canHandle(exception)) {
       return _functionsHandler.handle(exception);
     }
-    
+
     if (_realtimeHandler.canHandle(exception)) {
       return _realtimeHandler.handle(exception);
     }
-    
+
     // This shouldn't happen if canHandle was checked first
     return ArsyncException.generic(
       title: 'Supabase Error',
@@ -87,16 +87,16 @@ class SupabaseErrorsHandler implements ArsyncExceptionHandler {
 
   /// Get the Supabase Auth handler
   SupabaseAuthHandler get authHandler => _authHandler;
-  
+
   /// Get the Database handler
   SupabaseDatabaseHandler get databaseHandler => _databaseHandler;
-  
+
   /// Get the Supabase Storage handler
   SupabaseStorageHandler get storageHandler => _storageHandler;
-  
+
   /// Get the Supabase Functions handler
   SupabaseFunctionsHandler get functionsHandler => _functionsHandler;
-  
+
   /// Get the Supabase Realtime handler
   SupabaseRealtimeHandler get realtimeHandler => _realtimeHandler;
 

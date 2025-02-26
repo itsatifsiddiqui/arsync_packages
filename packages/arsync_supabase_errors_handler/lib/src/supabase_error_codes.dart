@@ -21,7 +21,8 @@ class SupabaseErrorCodes {
   static const String uniqueViolation = '23505'; // Unique constraint violation
   static const String foreignKeyViolation = '23503'; // Foreign key violation
   static const String checkViolation = '23514'; // Check constraint violation
-  static const String notNullViolation = '23502'; // Not null constraint violation
+  static const String notNullViolation =
+      '23502'; // Not null constraint violation
   static const String tableNotFound = '42P01'; // Relation does not exist
   static const String columnNotFound = '42703'; // Column does not exist
   static const String insufficientPrivilege = '42501'; // Insufficient privilege
@@ -69,9 +70,10 @@ class SupabaseErrorCodes {
     'invalid token': invalidToken,
     'user not found': userNotFound,
     'already registered': userAlreadyExists,
-    'duplicate key value violates unique constraint "users_email_key"': emailTaken,
+    'duplicate key value violates unique constraint "users_email_key"':
+        emailTaken,
     'password should be at least': weakPassword,
-    
+
     // Database patterns
     'violates unique constraint': uniqueViolation,
     'violates foreign key constraint': foreignKeyViolation,
@@ -82,7 +84,7 @@ class SupabaseErrorCodes {
     'permission denied': insufficientPrivilege,
     'syntax error': syntaxError,
     'invalid input syntax': invalidParameter,
-    
+
     // Storage patterns
     'no such object': objectNotFound,
     'not found in bucket': objectNotFound,
@@ -93,19 +95,19 @@ class SupabaseErrorCodes {
     'file too large': fileTooBig,
     'content type not allowed': invalidContentType,
     'invalid file name': invalidFilename,
-    
+
     // Functions patterns
     'function not found': functionNotFound,
     'execution failed': functionExecutionFailed,
     'function timed out': functionTimeout,
     'invalid payload': invalidFunctionPayload,
-    
+
     // Realtime patterns
     'connection error': connectionError,
     'subscription error': subscriptionError,
     'channel error': channelError,
     'too many connections': tooManyConnections,
-    
+
     // Network patterns
     'network error': networkError,
     'timeout': timeoutError,
@@ -124,19 +126,19 @@ class SupabaseErrorCodes {
   ];
 
   /// Extract a normalized error code from an error message or code
-  /// 
+  ///
   /// This attempts to identify known error patterns in the message
   /// and return the corresponding error code
   static String extractErrorCode(String errorMessage) {
     final lowerMessage = errorMessage.toLowerCase();
-    
+
     // Check for PostgreSQL error codes (format XX000)
     final pgCodeRegex = RegExp(r'[0-9]{2}[0-9A-Z]{3}');
     final pgMatch = pgCodeRegex.firstMatch(errorMessage);
     if (pgMatch != null) {
       return pgMatch.group(0) ?? unknownError;
     }
-    
+
     // Look for known error patterns
     for (final entry in errorPatterns.entries) {
       final pattern = entry.key.toLowerCase();
@@ -144,16 +146,15 @@ class SupabaseErrorCodes {
         return entry.value;
       }
     }
-    
+
     // Default to unknown
     return unknownError;
   }
-  
+
   /// Check if an error should be ignored based on its message
   static bool isIgnorable(String errorMessage) {
     final lowerMessage = errorMessage.toLowerCase();
-    return ignorableErrorPatterns.any((pattern) => 
-      lowerMessage.contains(pattern.toLowerCase())
-    );
+    return ignorableErrorPatterns
+        .any((pattern) => lowerMessage.contains(pattern.toLowerCase()));
   }
 }
