@@ -1,8 +1,8 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 
 import 'dio_error_handler.dart';
-import 'response_error_handler.dart';
 import 'error_extractor.dart';
+import 'response_error_handler.dart';
 
 /// A combined handler for all Dio-related exceptions
 ///
@@ -12,7 +12,7 @@ import 'error_extractor.dart';
 class DioErrorsHandler implements ArsyncExceptionHandler {
   final ResponseErrorHandler _responseErrorHandler;
   final DioErrorHandler _dioErrorHandler;
-  
+
   /// Priority level for this handler (higher means it's tried earlier)
   final int _priority;
 
@@ -25,15 +25,15 @@ class DioErrorsHandler implements ArsyncExceptionHandler {
     ResponseErrorHandler? responseErrorHandler,
     DioErrorHandler? dioErrorHandler,
     int priority = 25,
-  }) : _responseErrorHandler = responseErrorHandler ?? 
-             ResponseErrorHandler(errorExtractor: DefaultErrorExtractor()),
-       _dioErrorHandler = dioErrorHandler ?? DioErrorHandler(),
-       _priority = priority;
+  })  : _responseErrorHandler = responseErrorHandler ??
+            ResponseErrorHandler(errorExtractor: DefaultErrorExtractor()),
+        _dioErrorHandler = dioErrorHandler ?? DioErrorHandler(),
+        _priority = priority;
 
   @override
   bool canHandle(Object exception) {
     return _responseErrorHandler.canHandle(exception) ||
-           _dioErrorHandler.canHandle(exception);
+        _dioErrorHandler.canHandle(exception);
   }
 
   @override
@@ -42,16 +42,17 @@ class DioErrorsHandler implements ArsyncExceptionHandler {
     if (_responseErrorHandler.canHandle(exception)) {
       return _responseErrorHandler.handle(exception);
     }
-    
+
     // Fall back to the general Dio error handler
     if (_dioErrorHandler.canHandle(exception)) {
       return _dioErrorHandler.handle(exception);
     }
-    
+
     // This shouldn't happen if canHandle was checked first
     return ArsyncException.generic(
-      title: 'Network Error',
-      message: 'An unexpected network error occurred',
+      title: 'Connection Issue',
+      message:
+          'Something unexpected happened with the connection. Please try again.',
       originalException: exception,
     );
   }
@@ -61,7 +62,7 @@ class DioErrorsHandler implements ArsyncExceptionHandler {
 
   /// Get the response error handler
   ResponseErrorHandler get responseErrorHandler => _responseErrorHandler;
-  
+
   /// Get the Dio error handler
   DioErrorHandler get dioErrorHandler => _dioErrorHandler;
 
@@ -75,13 +76,6 @@ class DioErrorsHandler implements ArsyncExceptionHandler {
       responseErrorHandler: responseErrorHandler ?? _responseErrorHandler,
       dioErrorHandler: dioErrorHandler ?? _dioErrorHandler,
       priority: priority ?? _priority,
-    );
-  }
-  
-  /// Create a new instance with a custom error extractor
-  DioErrorsHandler withErrorExtractor(ErrorExtractor errorExtractor) {
-    return copyWith(
-      responseErrorHandler: _responseErrorHandler.withErrorExtractor(errorExtractor),
     );
   }
 }

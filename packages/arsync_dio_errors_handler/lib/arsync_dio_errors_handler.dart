@@ -12,4 +12,3 @@ export 'src/dio_error_handler.dart';
 export 'src/dio_errors_handler.dart';
 export 'src/error_extractor.dart';
 export 'src/response_error_handler.dart';
-export 'src/toolkit_extensions.dart';

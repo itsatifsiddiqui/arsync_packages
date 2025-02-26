@@ -28,15 +28,9 @@ dependencies:
 
 ```dart
 // Create a toolkit with all Dio handlers
-final toolkit = ArsyncExceptionToolkit()
-  .withAllDioHandlers();
-
-// Or add specific handlers
-final toolkit = ArsyncExceptionToolkit()
-  .withDioErrorHandler()
-  .withResponseErrorHandler(
-    errorExtractor: DefaultErrorExtractor(),
-  );
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [DioErrorsHandler()],
+);
 ```
 
 ### 2. Use in try-catch blocks
@@ -68,8 +62,8 @@ You can customize the error messages for specific error codes:
 
 ```dart
 // Create a toolkit with custom Dio error messages
-final toolkit = ArsyncExceptionToolkit()
-  .withDioErrorHandler(
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [DioErrorsHandler(
     customExceptions: {
       DioErrorCodes.connectionError: ArsyncException(
         icon: Icons.wifi_off,
@@ -79,8 +73,10 @@ final toolkit = ArsyncExceptionToolkit()
         briefMessage: 'Network unavailable',
         exceptionCode: 'dio_connection_error',
       ),
-    },
-  );
+      },
+    ),
+  ],
+);
 ```
 
 ### Using Custom API Error Formats
@@ -104,11 +100,6 @@ class MyApiErrorExtractor implements ErrorExtractor {
   }
 }
 
-// Use the custom extractor with the toolkit
-final toolkit = ArsyncExceptionToolkit()
-  .withAllDioHandlers(
-    errorExtractor: MyApiErrorExtractor(),
-  );
 ```
 
 ### Using Built-in Extractors for Common Frameworks
@@ -117,16 +108,18 @@ The package includes pre-configured extractors for common frameworks:
 
 ```dart
 // For Laravel APIs
-final toolkit = ArsyncExceptionToolkit()
-  .withResponseErrorHandler(
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [ResponseErrorHandler(
     errorExtractor: LaravelErrorExtractor(),
-  );
+  )],
+);
 
 // For Django Rest Framework APIs
-final toolkit = ArsyncExceptionToolkit()
-  .withResponseErrorHandler(
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [ResponseErrorHandler(
     errorExtractor: DjangoErrorExtractor(),
-  );
+  )],
+);
 ```
 
 ### Using a Completely Custom Extractor Function
@@ -134,8 +127,8 @@ final toolkit = ArsyncExceptionToolkit()
 For more complex scenarios, you can use a function-based extractor:
 
 ```dart
-final toolkit = ArsyncExceptionToolkit()
-  .withResponseErrorHandler(
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [ResponseErrorHandler(
     errorExtractor: CustomErrorExtractor(
       extractorFunction: (response) {
         // Custom logic to extract error information
@@ -147,7 +140,8 @@ final toolkit = ArsyncExceptionToolkit()
         );
       },
     ),
-  );
+  ],
+);
 ```
 
 ## Handler Classes

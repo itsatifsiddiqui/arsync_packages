@@ -111,70 +111,70 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
         case 400:
           return ArsyncException(
             icon: Icons.error_outline,
-            title: 'Bad Request',
+            title: 'Something\'s Not Right',
             message: errorMessage ??
-                'The request was invalid. Please check your input and try again.',
-            briefTitle: 'Bad Request',
-            briefMessage: 'Invalid request',
+                'There seems to be an issue with this request. Let\'s try again.',
+            briefTitle: 'Try Again',
+            briefMessage: 'Something\'s not right',
             exceptionCode: 'dio_bad_request',
           );
         case 401:
           return ArsyncException(
             icon: Icons.lock_outline,
-            title: 'Authentication Required',
+            title: 'Sign In Needed',
             message: errorMessage ??
-                'You need to be signed in to access this resource. Please sign in and try again.',
-            briefTitle: 'Sign In Required',
-            briefMessage: 'Authentication required',
+                'A sign in is needed to continue. The session may have expired.',
+            briefTitle: 'Sign In',
+            briefMessage: 'Sign in needed',
             exceptionCode: 'dio_unauthorized',
           );
         case 403:
           return ArsyncException(
             icon: Icons.no_accounts,
-            title: 'Access Denied',
+            title: 'Access Needed',
             message: errorMessage ??
-                'You don\'t have permission to access this resource.',
-            briefTitle: 'Access Denied',
-            briefMessage: 'Permission denied',
+                'Access to this feature isn\'t currently available.',
+            briefTitle: 'No Access',
+            briefMessage: 'Access needed',
             exceptionCode: 'dio_forbidden',
           );
         case 404:
           return ArsyncException(
             icon: Icons.find_replace,
-            title: 'Not Found',
+            title: 'Not Available',
             message: errorMessage ??
-                'The requested resource could not be found. It may have been deleted or moved.',
+                'The requested item isn\'t available right now. It may have been moved or removed.',
             briefTitle: 'Not Found',
-            briefMessage: 'Resource not found',
+            briefMessage: 'Item not available',
             exceptionCode: 'dio_not_found',
           );
         case 422:
           return ArsyncException(
             icon: Icons.input,
-            title: 'Validation Error',
+            title: 'Information Issue',
             message: errorMessage ??
-                'The request could not be processed due to validation errors. Please check your input and try again.',
-            briefTitle: 'Validation Error',
-            briefMessage: 'Invalid data',
+                'There seems to be an issue with the information provided. A review might help.',
+            briefTitle: 'Review Info',
+            briefMessage: 'Information issue',
             exceptionCode: 'dio_unprocessable_entity',
           );
         case 429:
           return ArsyncException(
             icon: Icons.speed,
-            title: 'Too Many Requests',
+            title: 'Slow Down',
             message: errorMessage ??
-                'You\'ve made too many requests in a short period. Please wait a moment and try again.',
-            briefTitle: 'Rate Limited',
-            briefMessage: 'Too many requests',
+                'Too many requests in a short time. Please wait a moment before trying again.',
+            briefTitle: 'Too Fast',
+            briefMessage: 'Please wait a moment',
             exceptionCode: 'dio_too_many_requests',
           );
         default:
           return ArsyncException(
             icon: Icons.error_outline,
-            title: 'Request Error',
+            title: 'Request Issue',
             message: errorMessage ??
-                'An error occurred with your request. Please try again or contact support.',
-            briefTitle: 'Request Error',
+                'An issue occurred with this request. Please try again or contact support.',
+            briefTitle: 'Request Issue',
             briefMessage: 'Request failed',
             exceptionCode: 'dio_client_error',
           );
@@ -184,11 +184,11 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     else if (statusCode >= 500 && statusCode < 600) {
       return ArsyncException(
         icon: Icons.cloud_off,
-        title: 'Server Error',
+        title: 'Temporary Issue',
         message: errorMessage ??
-            'The server encountered an error processing your request. Please try again later.',
-        briefTitle: 'Server Error',
-        briefMessage: 'Server error',
+            'We\'re experiencing a temporary issue. We\'re working on it and should be resolved soon.',
+        briefTitle: 'Temporary Issue',
+        briefMessage: 'We\'re on it',
         exceptionCode: 'dio_server_error',
       );
     }
@@ -196,11 +196,11 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     // Fallback for unknown status codes
     return ArsyncException(
       icon: Icons.help_outline,
-      title: 'Unexpected Error',
+      title: 'Unexpected Issue',
       message: errorMessage ??
-          'An unexpected error occurred. Please try again or contact support.',
-      briefTitle: 'Error',
-      briefMessage: 'Unexpected error',
+          'An unexpected issue occurred. Please try again or contact support.',
+      briefTitle: 'Issue',
+      briefMessage: 'Unexpected issue',
       exceptionCode: 'dio_unknown_status',
     );
   }

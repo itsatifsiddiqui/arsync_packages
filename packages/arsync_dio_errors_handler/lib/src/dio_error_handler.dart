@@ -157,168 +157,166 @@ class DioErrorHandler implements ArsyncExceptionHandler {
     // Connection-related errors
     DioErrorCodes.connectionTimeout: ArsyncException(
       icon: Icons.timer_off,
-      title: 'Connection Timeout',
+      title: 'Connection Issue',
       message:
-          'The connection to the server timed out. Please check your internet connection and try again.',
-      briefTitle: 'Timeout',
-      briefMessage: 'Connection timed out',
+          'We\'re having trouble connecting right now. A network check might help.',
+      briefTitle: 'Connection Issue',
+      briefMessage: 'Network connection needed',
       exceptionCode: 'dio_connection_timeout',
     ),
 
     DioErrorCodes.sendTimeout: ArsyncException(
       icon: Icons.timer_off,
-      title: 'Send Timeout',
+      title: 'Connection Slow',
       message:
-          'The request took too long to send. Please check your internet connection and try again.',
-      briefTitle: 'Timeout',
-      briefMessage: 'Request timed out',
+          'The connection seems a bit slow right now. A stronger signal might help.',
+      briefTitle: 'Slow Connection',
+      briefMessage: 'Connection is slow',
       exceptionCode: 'dio_send_timeout',
     ),
 
     DioErrorCodes.receiveTimeout: ArsyncException(
       icon: Icons.timer_off,
-      title: 'Receive Timeout',
-      message: 'The server took too long to respond. Please try again later.',
-      briefTitle: 'Timeout',
-      briefMessage: 'Response timed out',
+      title: 'Taking Too Long',
+      message:
+          'We\'re having trouble getting a response. Please try again in a moment.',
+      briefTitle: 'No Response',
+      briefMessage: 'Taking too long',
       exceptionCode: 'dio_receive_timeout',
     ),
 
     DioErrorCodes.connectionError: ArsyncException(
       icon: Icons.wifi_off,
-      title: 'Connection Error',
+      title: 'Connection Lost',
       message:
-          'Unable to connect to the server. Please check your internet connection and try again.',
-      briefTitle: 'No Connection',
-      briefMessage: 'Connection failed',
+          'It looks like the network is offline. A connection check might help.',
+      briefTitle: 'Offline',
+      briefMessage: 'Connection needed',
       exceptionCode: 'dio_connection_error',
     ),
 
     DioErrorCodes.badCertificate: ArsyncException(
       icon: Icons.security,
-      title: 'Security Error',
+      title: 'Security Check',
       message:
-          'There was a problem with the server\'s security certificate. Please contact support.',
-      briefTitle: 'Security Error',
-      briefMessage: 'Certificate error',
+          'We\'ve detected a security issue with the connection. Please contact support.',
+      briefTitle: 'Security Issue',
+      briefMessage: 'Security check failed',
       exceptionCode: 'dio_bad_certificate',
     ),
 
     DioErrorCodes.cancel: ArsyncException(
       icon: Icons.cancel_outlined,
-      title: 'Request Cancelled',
-      message: 'The request was cancelled.',
-      briefTitle: 'Cancelled',
-      briefMessage: 'Request cancelled',
+      title: 'Request Stopped',
+      message: 'This request was stopped.',
+      briefTitle: 'Stopped',
+      briefMessage: 'Request stopped',
       exceptionCode: 'dio_cancel',
     ),
 
     // HTTP status code errors
     DioErrorCodes.badRequest: ArsyncException(
       icon: Icons.error_outline,
-      title: 'Bad Request',
+      title: 'Something\'s Not Right',
       message:
-          'The request was invalid. Please check your input and try again.',
-      briefTitle: 'Bad Request',
-      briefMessage: 'Invalid request',
+          'There seems to be an issue with this request. Let\'s try again.',
+      briefTitle: 'Try Again',
+      briefMessage: 'Something\'s not right',
       exceptionCode: 'dio_bad_request',
     ),
 
     DioErrorCodes.unauthorized: ArsyncException(
       icon: Icons.lock_outline,
-      title: 'Authentication Required',
-      message:
-          'You need to be signed in to access this resource. Please sign in and try again.',
-      briefTitle: 'Sign In Required',
-      briefMessage: 'Authentication required',
+      title: 'Sign In Needed',
+      message: 'A sign in is needed to continue. The session may have expired.',
+      briefTitle: 'Sign In',
+      briefMessage: 'Sign in needed',
       exceptionCode: 'dio_unauthorized',
     ),
 
     DioErrorCodes.forbidden: ArsyncException(
       icon: Icons.no_accounts,
-      title: 'Access Denied',
-      message: 'You don\'t have permission to access this resource.',
-      briefTitle: 'Access Denied',
-      briefMessage: 'Permission denied',
+      title: 'Access Needed',
+      message: 'Access to this feature isn\'t currently available.',
+      briefTitle: 'No Access',
+      briefMessage: 'Access needed',
       exceptionCode: 'dio_forbidden',
     ),
 
     DioErrorCodes.notFound: ArsyncException(
       icon: Icons.find_replace,
-      title: 'Not Found',
+      title: 'Not Available',
       message:
-          'The requested resource could not be found. It may have been deleted or moved.',
+          'The requested item isn\'t available right now. It may have been moved or removed.',
       briefTitle: 'Not Found',
-      briefMessage: 'Resource not found',
+      briefMessage: 'Item not available',
       exceptionCode: 'dio_not_found',
     ),
 
     DioErrorCodes.methodNotAllowed: ArsyncException(
       icon: Icons.block,
-      title: 'Method Not Allowed',
-      message: 'The request method is not supported for this resource.',
-      briefTitle: 'Method Not Allowed',
-      briefMessage: 'Method not allowed',
+      title: 'Action Unavailable',
+      message: 'This action isn\'t available right now.',
+      briefTitle: 'Unavailable',
+      briefMessage: 'Action unavailable',
       exceptionCode: 'dio_method_not_allowed',
     ),
 
     DioErrorCodes.requestTimeout: ArsyncException(
       icon: Icons.timer_off,
-      title: 'Request Timeout',
-      message:
-          'The server timed out waiting for the request. Please try again later.',
-      briefTitle: 'Timeout',
-      briefMessage: 'Request timed out',
+      title: 'Request Timed Out',
+      message: 'The request is taking longer than expected. Please try again.',
+      briefTitle: 'Timed Out',
+      briefMessage: 'Please try again',
       exceptionCode: 'dio_request_timeout',
     ),
 
     DioErrorCodes.conflict: ArsyncException(
       icon: Icons.sync_problem,
-      title: 'Resource Conflict',
-      message:
-          'The request could not be completed due to a conflict with the current state of the resource.',
+      title: 'Update Conflict',
+      message: 'This information may have been updated. A refresh might help.',
       briefTitle: 'Conflict',
-      briefMessage: 'Resource conflict',
+      briefMessage: 'Update conflict',
       exceptionCode: 'dio_conflict',
     ),
 
     DioErrorCodes.unprocessableEntity: ArsyncException(
       icon: Icons.input,
-      title: 'Validation Error',
+      title: 'Information Issue',
       message:
-          'The request could not be processed due to validation errors. Please check your input and try again.',
-      briefTitle: 'Validation Error',
-      briefMessage: 'Invalid data',
+          'There seems to be an issue with the information provided. A review might help.',
+      briefTitle: 'Review Info',
+      briefMessage: 'Information issue',
       exceptionCode: 'dio_unprocessable_entity',
     ),
 
     DioErrorCodes.tooManyRequests: ArsyncException(
       icon: Icons.speed,
-      title: 'Too Many Requests',
+      title: 'Slow Down',
       message:
-          'You\'ve made too many requests in a short period. Please wait a moment and try again.',
-      briefTitle: 'Rate Limited',
-      briefMessage: 'Too many requests',
+          'Too many requests in a short time. Please wait a moment before trying again.',
+      briefTitle: 'Too Fast',
+      briefMessage: 'Please wait a moment',
       exceptionCode: 'dio_too_many_requests',
     ),
 
     DioErrorCodes.internalServerError: ArsyncException(
       icon: Icons.cloud_off,
-      title: 'Server Error',
+      title: 'Temporary Issue',
       message:
-          'The server encountered an internal error. Please try again later or contact support if the problem persists.',
-      briefTitle: 'Server Error',
-      briefMessage: 'Internal server error',
+          'We\'re experiencing a temporary issue. We\'re working on it and should be resolved soon.',
+      briefTitle: 'Temporary Issue',
+      briefMessage: 'We\'re on it',
       exceptionCode: 'dio_internal_server_error',
     ),
 
     DioErrorCodes.badGateway: ArsyncException(
       icon: Icons.cloud_off,
-      title: 'Bad Gateway',
+      title: 'Service Issue',
       message:
-          'The server received an invalid response from an upstream server. Please try again later.',
-      briefTitle: 'Server Error',
-      briefMessage: 'Bad gateway',
+          'We\'re having some trouble with our service. Please try again in a moment.',
+      briefTitle: 'Service Issue',
+      briefMessage: 'Please try again soon',
       exceptionCode: 'dio_bad_gateway',
     ),
 
@@ -326,29 +324,29 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       icon: Icons.cloud_off,
       title: 'Service Unavailable',
       message:
-          'The service is temporarily unavailable. Please try again later.',
-      briefTitle: 'Service Down',
+          'This service is temporarily unavailable. We\'ll be back up shortly.',
+      briefTitle: 'Unavailable',
       briefMessage: 'Service unavailable',
       exceptionCode: 'dio_service_unavailable',
     ),
 
     DioErrorCodes.gatewayTimeout: ArsyncException(
       icon: Icons.timer_off,
-      title: 'Gateway Timeout',
+      title: 'Service Timeout',
       message:
-          'The server did not receive a timely response from an upstream server. Please try again later.',
+          'Our service is taking longer than expected to respond. Please try again in a moment.',
       briefTitle: 'Timeout',
-      briefMessage: 'Gateway timeout',
+      briefMessage: 'Service timeout',
       exceptionCode: 'dio_gateway_timeout',
     ),
 
     DioErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
-      title: 'Network Error',
+      title: 'Connection Issue',
       message:
-          'An unexpected network error occurred. Please try again or contact support if the problem persists.',
-      briefTitle: 'Network Error',
-      briefMessage: 'Unknown error',
+          'Something unexpected happened with the connection. Please try again.',
+      briefTitle: 'Connection Issue',
+      briefMessage: 'Please try again',
       exceptionCode: 'dio_unknown',
     ),
   };

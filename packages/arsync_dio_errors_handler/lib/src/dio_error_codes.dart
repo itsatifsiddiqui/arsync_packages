@@ -3,18 +3,25 @@ class DioErrorCodes {
   // Dio error types
   /// Connection timeout error
   static const String connectionTimeout = 'connection_timeout';
+
   /// Send timeout error
   static const String sendTimeout = 'send_timeout';
+
   /// Receive timeout error
   static const String receiveTimeout = 'receive_timeout';
+
   /// Bad certificate error
   static const String badCertificate = 'bad_certificate';
+
   /// Connection error
   static const String connectionError = 'connection_error';
+
   /// Bad response error
   static const String badResponse = 'bad_response';
+
   /// Cancel error
   static const String cancel = 'cancel';
+
   /// Unknown error
   static const String unknown = 'unknown';
 
@@ -34,7 +41,8 @@ class DioErrorCodes {
   /// Not acceptable error
   static const String notAcceptable = 'not_acceptable'; // 406
   /// Proxy authentication required error
-  static const String proxyAuthenticationRequired = 'proxy_authentication_required'; // 407
+  static const String proxyAuthenticationRequired =
+      'proxy_authentication_required'; // 407
   /// Request timeout error
   static const String requestTimeout = 'request_timeout'; // 408
   /// Conflict error
@@ -52,7 +60,8 @@ class DioErrorCodes {
   /// Unsupported media type error
   static const String unsupportedMediaType = 'unsupported_media_type'; // 415
   /// Requested range not satisfiable error
-  static const String requestedRangeNotSatisfiable = 'requested_range_not_satisfiable'; // 416
+  static const String requestedRangeNotSatisfiable =
+      'requested_range_not_satisfiable'; // 416
   /// Expectation failed error
   static const String expectationFailed = 'expectation_failed'; // 417
   /// Im a teapot error
@@ -74,9 +83,11 @@ class DioErrorCodes {
   /// Too many requests error
   static const String tooManyRequests = 'too_many_requests'; // 429
   /// Request header fields too large error
-  static const String requestHeaderFieldsTooLarge = 'request_header_fields_too_large'; // 431
+  static const String requestHeaderFieldsTooLarge =
+      'request_header_fields_too_large'; // 431
   /// Unavailable for legal reasons error
-  static const String unavailableForLegalReasons = 'unavailable_for_legal_reasons'; // 451
+  static const String unavailableForLegalReasons =
+      'unavailable_for_legal_reasons'; // 451
 
   /// 5xx Server Error
   /// Internal server error
@@ -90,7 +101,8 @@ class DioErrorCodes {
   /// Gateway timeout error
   static const String gatewayTimeout = 'gateway_timeout'; // 504
   /// HTTP version not supported error
-  static const String httpVersionNotSupported = 'http_version_not_supported'; // 505
+  static const String httpVersionNotSupported =
+      'http_version_not_supported'; // 505
   /// Variant also negotiates error
   static const String variantAlsoNegotiates = 'variant_also_negotiates'; // 506
   /// Insufficient storage error
@@ -100,7 +112,8 @@ class DioErrorCodes {
   /// Not extended error
   static const String notExtended = 'not_extended'; // 510
   /// Network authentication required error
-  static const String networkAuthenticationRequired = 'network_authentication_required'; // 511
+  static const String networkAuthenticationRequired =
+      'network_authentication_required'; // 511
 
   /// Ignorable Exceptions
   static const List<String> ignorableErrorCodes = [

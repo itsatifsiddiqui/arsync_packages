@@ -6,10 +6,10 @@ import 'package:dio/dio.dart';
 class ExtractedError {
   /// Error code from the response
   final String? code;
-  
+
   /// Error message from the response
   final String? message;
-  
+
   /// Optional additional error details
   final Map<String, dynamic>? details;
 
@@ -35,8 +35,8 @@ abstract class ErrorExtractor {
 /// Default JSON error extractor that follows common REST API patterns
 ///
 /// This extractor supports the following common JSON error response formats:
-/// 
-/// Format 1: 
+///
+/// Format 1:
 /// ```json
 /// {
 ///   "error": {
@@ -45,8 +45,8 @@ abstract class ErrorExtractor {
 ///   }
 /// }
 /// ```
-/// 
-/// Format 2: 
+///
+/// Format 2:
 /// ```json
 /// {
 ///   "code": "SOME_ERROR_CODE",
@@ -54,15 +54,15 @@ abstract class ErrorExtractor {
 ///   "details": { ... }
 /// }
 /// ```
-/// 
-/// Format 3: 
+///
+/// Format 3:
 /// ```json
 /// {
 ///   "error": "Error message"
 /// }
 /// ```
-/// 
-/// Format 4: 
+///
+/// Format 4:
 /// ```json
 /// {
 ///   "message": "Error message"
@@ -71,16 +71,16 @@ abstract class ErrorExtractor {
 class DefaultErrorExtractor implements ErrorExtractor {
   /// Key for the error object in the response
   final String errorKey;
-  
+
   /// Key for the error code in the response
   final String codeKey;
-  
+
   /// Key for the error message in the response
   final String messageKey;
-  
+
   /// Key for the error details in the response
   final String detailsKey;
-  
+
   /// Boolean indicating whether to also check at the root level
   final bool checkRootLevel;
 
@@ -134,22 +134,25 @@ class DefaultErrorExtractor implements ErrorExtractor {
     // Check for error format inside an error object
     if (errorData.containsKey(errorKey)) {
       final dynamic errorValue = errorData[errorKey];
-      
+
       // Handle case where error is a string
       if (errorValue is String) {
         return ExtractedError(
           message: errorValue,
         );
       }
-      
+
       // Handle case where error is an object
       if (errorValue is Map) {
-        final Map<String, dynamic> errorObj = Map<String, dynamic>.from(errorValue);
-        
+        final Map<String, dynamic> errorObj =
+            Map<String, dynamic>.from(errorValue);
+
         return ExtractedError(
           code: errorObj[codeKey]?.toString(),
           message: errorObj[messageKey]?.toString(),
-          details: errorObj[detailsKey] is Map ? Map<String, dynamic>.from(errorObj[detailsKey]) : null,
+          details: errorObj[detailsKey] is Map
+              ? Map<String, dynamic>.from(errorObj[detailsKey])
+              : null,
         );
       }
     }
@@ -158,19 +161,19 @@ class DefaultErrorExtractor implements ErrorExtractor {
     if (checkRootLevel) {
       String? code, message;
       Map<String, dynamic>? details;
-      
+
       if (errorData.containsKey(codeKey)) {
         code = errorData[codeKey]?.toString();
       }
-      
+
       if (errorData.containsKey(messageKey)) {
         message = errorData[messageKey]?.toString();
       }
-      
+
       if (errorData.containsKey(detailsKey) && errorData[detailsKey] is Map) {
         details = Map<String, dynamic>.from(errorData[detailsKey]);
       }
-      
+
       if (code != null || message != null || details != null) {
         return ExtractedError(
           code: code,
@@ -246,19 +249,20 @@ class LaravelErrorExtractor implements ErrorExtractor {
     }
 
     final Map<String, dynamic> errorData = Map<String, dynamic>.from(data);
-    
+
     // Get the message
     final String? message = errorData['message']?.toString();
-    
+
     // Handle Laravel validation errors
     if (errorData.containsKey('errors') && errorData['errors'] is Map) {
-      final Map<String, dynamic> errors = Map<String, dynamic>.from(errorData['errors']);
-      
+      final Map<String, dynamic> errors =
+          Map<String, dynamic>.from(errorData['errors']);
+
       // Compose a message from the validation errors
       if (errors.isNotEmpty) {
         // Get the first error message from each field
         final List<String> errorMessages = [];
-        
+
         errors.forEach((field, fieldErrors) {
           if (fieldErrors is List && fieldErrors.isNotEmpty) {
             errorMessages.add('${field.toUpperCase()}: ${fieldErrors.first}');
@@ -266,7 +270,7 @@ class LaravelErrorExtractor implements ErrorExtractor {
             errorMessages.add('${field.toUpperCase()}: $fieldErrors');
           }
         });
-        
+
         // If we have validation error messages, use them
         if (errorMessages.isNotEmpty) {
           return ExtractedError(
@@ -277,7 +281,7 @@ class LaravelErrorExtractor implements ErrorExtractor {
         }
       }
     }
-    
+
     // Fallback to the general message
     return ExtractedError(
       message: message ?? response.statusMessage,
@@ -333,16 +337,17 @@ class DjangoErrorExtractor implements ErrorExtractor {
     }
 
     final Map<String, dynamic> errorData = Map<String, dynamic>.from(data);
-    
+
     // Check for DRF's 'detail' field
     if (errorData.containsKey('detail')) {
       return ExtractedError(
         message: errorData['detail']?.toString(),
       );
     }
-    
+
     // Check for 'non_field_errors'
-    if (errorData.containsKey('non_field_errors') && errorData['non_field_errors'] is List) {
+    if (errorData.containsKey('non_field_errors') &&
+        errorData['non_field_errors'] is List) {
       final List errors = errorData['non_field_errors'];
       if (errors.isNotEmpty) {
         return ExtractedError(
@@ -351,10 +356,10 @@ class DjangoErrorExtractor implements ErrorExtractor {
         );
       }
     }
-    
+
     // Check if the response is a validation error with field-specific errors
     final List<String> errorMessages = [];
-    
+
     // Try to parse field errors
     errorData.forEach((field, fieldErrors) {
       if (fieldErrors is List && fieldErrors.isNotEmpty) {
@@ -363,7 +368,7 @@ class DjangoErrorExtractor implements ErrorExtractor {
         errorMessages.add('${field.toUpperCase()}: $fieldErrors');
       }
     });
-    
+
     if (errorMessages.isNotEmpty) {
       return ExtractedError(
         code: 'validation_error',
@@ -371,7 +376,7 @@ class DjangoErrorExtractor implements ErrorExtractor {
         details: errorData,
       );
     }
-    
+
     // Fallback to status message
     return ExtractedError(
       message: response.statusMessage,
