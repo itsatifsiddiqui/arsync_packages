@@ -14,4 +14,3 @@ export 'src/firebase_errors_handler.dart';
 export 'src/firestore_handler.dart';
 export 'src/functions_handler.dart';
 export 'src/storage_handler.dart';
-export 'src/toolkit_extensions.dart';

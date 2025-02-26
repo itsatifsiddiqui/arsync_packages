@@ -17,8 +17,8 @@ A specialized package for handling Firebase-specific errors with the [Arsync Exc
 
 ```yaml
 dependencies:
-  arsync_exception_toolkit: ^0.1.0
-  arsync_firebase_errors_handler: ^0.1.0
+  arsync_exception_toolkit: latest_version
+  arsync_firebase_errors_handler: latest_version
   # Other Firebase packages as needed
 ```
 
@@ -28,13 +28,14 @@ dependencies:
 
 ```dart
 // Create a toolkit with all Firebase handlers
-final toolkit = ArsyncExceptionToolkit()
-  .withAllFirebaseHandlers();
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [FirebaseErrorsHandler()],
+  );
 
 // Or add specific handlers
-final toolkit = ArsyncExceptionToolkit()
-  .withFirebaseAuthHandler()
-  .withFirestoreHandler();
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [FirebaseAuthHandler(), FirebaseStorageHandler()],
+  );
 ```
 
 ### 2. Use in try-catch blocks
@@ -69,30 +70,24 @@ You can customize the error messages for specific error codes using `ArsyncExcep
 
 ```dart
 // Create a toolkit with custom Firebase Auth error messages
-final toolkit = ArsyncExceptionToolkit()
-  .withFirebaseAuthHandler(
-    customExceptions: {
-      FirebaseErrorCodes.wrongPassword: ArsyncException(
-        icon: Icons.lock_outline,
-        title: 'Wrong Password',
-        message: 'The password you entered doesn\'t match our records. Please try again or use the "Forgot Password" option.',
-        briefTitle: 'Login Failed',
-        briefMessage: 'Incorrect password',
-        exceptionCode: 'firebase_auth_wrong_password',
+final toolkit = ArsyncExceptionToolkit(
+    handlers: [
+      FirebaseErrorsHandler(
+        authHandler: FirebaseAuthHandler(
+          customExceptions: {
+            FirebaseErrorCodes.wrongPassword: ArsyncException(
+              icon: Icons.lock_outline,
+              title: 'Wrong Password',
+              message: 'The Custom Exception',
+              briefTitle: 'Login Failed',
+              briefMessage: 'Incorrect password',
+              exceptionCode: 'firebase_auth_wrong_password',
+            ),
+          },
+        ),
       ),
-    },
+    ],
   );
-```
-
-### Using Specific Service Handlers
-
-You can choose which Firebase service handlers to include:
-
-```dart
-// Only include handlers for the services you use
-final toolkit = ArsyncExceptionToolkit()
-  .withFirebaseAuthHandler()
-  .withFirestoreHandler();
 ```
 
 ### Accessing Technical Details

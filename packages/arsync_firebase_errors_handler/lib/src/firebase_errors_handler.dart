@@ -17,7 +17,7 @@ class FirebaseErrorsHandler implements ArsyncExceptionHandler {
   final FirebaseFunctionsHandler _functionsHandler;
   final FirebaseStorageHandler _storageHandler;
   final FirebaseCoreHandler _coreHandler;
-  
+
   /// Priority level for this handler (higher means it's tried earlier)
   final int _priority;
 
@@ -36,20 +36,20 @@ class FirebaseErrorsHandler implements ArsyncExceptionHandler {
     FirebaseStorageHandler? storageHandler,
     FirebaseCoreHandler? coreHandler,
     int priority = 25,
-  }) : _authHandler = authHandler ?? FirebaseAuthHandler(),
-       _firestoreHandler = firestoreHandler ?? FirestoreHandler(),
-       _functionsHandler = functionsHandler ?? FirebaseFunctionsHandler(),
-       _storageHandler = storageHandler ?? FirebaseStorageHandler(),
-       _coreHandler = coreHandler ?? FirebaseCoreHandler(),
-       _priority = priority;
+  })  : _authHandler = authHandler ?? FirebaseAuthHandler(),
+        _firestoreHandler = firestoreHandler ?? FirestoreHandler(),
+        _functionsHandler = functionsHandler ?? FirebaseFunctionsHandler(),
+        _storageHandler = storageHandler ?? FirebaseStorageHandler(),
+        _coreHandler = coreHandler ?? FirebaseCoreHandler(),
+        _priority = priority;
 
   @override
   bool canHandle(Object exception) {
     return _authHandler.canHandle(exception) ||
-           _firestoreHandler.canHandle(exception) ||
-           _functionsHandler.canHandle(exception) ||
-           _storageHandler.canHandle(exception) ||
-           _coreHandler.canHandle(exception);
+        _firestoreHandler.canHandle(exception) ||
+        _functionsHandler.canHandle(exception) ||
+        _storageHandler.canHandle(exception) ||
+        _coreHandler.canHandle(exception);
   }
 
   @override
@@ -57,23 +57,23 @@ class FirebaseErrorsHandler implements ArsyncExceptionHandler {
     if (_authHandler.canHandle(exception)) {
       return _authHandler.handle(exception);
     }
-    
+
     if (_firestoreHandler.canHandle(exception)) {
       return _firestoreHandler.handle(exception);
     }
-    
+
     if (_functionsHandler.canHandle(exception)) {
       return _functionsHandler.handle(exception);
     }
-    
+
     if (_storageHandler.canHandle(exception)) {
       return _storageHandler.handle(exception);
     }
-    
+
     if (_coreHandler.canHandle(exception)) {
       return _coreHandler.handle(exception);
     }
-    
+
     // This shouldn't happen if canHandle was checked first
     return ArsyncException.generic(
       title: 'Firebase Error',
@@ -87,16 +87,16 @@ class FirebaseErrorsHandler implements ArsyncExceptionHandler {
 
   /// Get the Firebase Auth handler
   FirebaseAuthHandler get authHandler => _authHandler;
-  
+
   /// Get the Firestore handler
   FirestoreHandler get firestoreHandler => _firestoreHandler;
-  
+
   /// Get the Firebase Functions handler
   FirebaseFunctionsHandler get functionsHandler => _functionsHandler;
-  
+
   /// Get the Firebase Storage handler
   FirebaseStorageHandler get storageHandler => _storageHandler;
-  
+
   /// Get the Firebase Core handler
   FirebaseCoreHandler get coreHandler => _coreHandler;
 

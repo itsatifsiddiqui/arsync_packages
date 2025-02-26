@@ -1,3 +1,11 @@
+## 0.0.8
+
+* Fixed an issue with handler 
+
+## 0.0.7
+
+* Fixed an issue with handler 
+
 ## 0.0.6
 
 * Added example project
