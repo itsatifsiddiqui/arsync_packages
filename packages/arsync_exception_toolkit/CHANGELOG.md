@@ -1,3 +1,7 @@
+## 0.0.9
+
+* Added support for String Exception
+
 ## 0.0.8
 
 * Fixed an issue with handler 

@@ -176,6 +176,14 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
       );
     }
 
+    if (exception is String || exception is Exception) {
+      return ArsyncException.generic(
+        title: exception.toString(),
+        briefTitle: exception.toString(),
+        message: exception.toString(),
+        originalException: exception,
+      );
+    }
     // Default unknown exception
     return ArsyncException.generic(
       originalException: exception,

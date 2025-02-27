@@ -99,6 +99,10 @@ class _BasicExampleScreenState extends State<BasicExampleScreen> {
           onPressed: _simulateServerException,
           child: const Text('Server Exception'),
         ),
+        ElevatedButton(
+          onPressed: _simulateCustomException,
+          child: const Text('Custom Exception'),
+        ),
       ],
     );
   }
@@ -302,6 +306,14 @@ class _BasicExampleScreenState extends State<BasicExampleScreen> {
   void _simulateServerException() {
     try {
       throw Exception('Server error: Internal server error (500)');
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+  void _simulateCustomException() {
+    try {
+      throw 'Custom error: Something went wrong';
     } catch (e) {
       _handleException(e);
     }
