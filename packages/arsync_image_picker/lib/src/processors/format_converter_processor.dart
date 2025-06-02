@@ -17,7 +17,7 @@ class FormatConverterProcessor implements ImageProcessor {
   Future<bool> shouldProcess(XFile image, _, _) async {
     if (targetFormat == ImageFormatType.original) return false;
 
-    final extension = ArsyncImagePickerService.getFileExtension(image.path);
+    final extension = ArsyncImagePicker.getFileExtension(image.path);
 
     // Check if already in target format
     if (targetFormat == ImageFormatType.png && extension == '.png') {

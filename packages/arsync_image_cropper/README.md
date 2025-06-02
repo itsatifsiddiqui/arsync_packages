@@ -27,7 +27,7 @@ dependencies:
 import 'package:arsync_image_picker/arsync_image_picker.dart';
 import 'package:arsync_image_cropper/arsync_image_cropper.dart';
 
-final picker = ArsyncImagePickerService();
+final picker = ArsyncImagePicker();
 
 // Add cropping processor
 picker.addProcessor(ImageCroppingProcessor());

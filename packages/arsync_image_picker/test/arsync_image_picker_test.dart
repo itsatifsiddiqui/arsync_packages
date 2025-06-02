@@ -4,14 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('SuperImagePickerService', () {
     test('should initialize with default config', () {
-      final service = ArsyncImagePickerService();
+      final service = ArsyncImagePicker();
       expect(service.validators, isEmpty);
       expect(service.processors, isEmpty);
       expect(service.appname, 'This app');
     });
 
     test('should add validators and processors', () {
-      final service = ArsyncImagePickerService();
+      final service = ArsyncImagePicker();
       final validator = FileSizeValidator(maxSizeMB: 5.0);
       final processor = FileNameProcessor(newFileName: 'test');
 

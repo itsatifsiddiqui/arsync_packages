@@ -1,6 +1,6 @@
 name: arsync_image_cropper
 description: Image cropping addon for arsync_image_picker
-version: 0.0.2
+version: 0.0.3
 homepage: https://arsyncsolutions.com/
 repository: https://github.com/itsatifsiddiqui/arsync_packages
 
@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  arsync_image_picker: ^0.0.2
+  arsync_image_picker: ^0.0.3
   image_cropper: ^9.1.0
   cross_file: ^0.3.4+2
 

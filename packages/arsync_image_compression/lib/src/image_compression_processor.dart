@@ -23,13 +23,13 @@ class ImageCompressionProcessor implements ImageProcessor {
   @override
   FutureOr<bool> shouldProcess(XFile image, _, _) async {
     // Only compress if the file is larger than the target size
-    final currentSize = await ArsyncImagePickerService.getFileSizeMB(image);
+    final currentSize = await ArsyncImagePicker.getFileSizeMB(image);
     return currentSize > targetMaxSizeMB;
   }
 
   @override
   Future<XFile> process(XFile image, _, _) async {
-    final extension = ArsyncImagePickerService.getFileExtension(image.path);
+    final extension = ArsyncImagePicker.getFileExtension(image.path);
     CompressFormat format;
 
     if (extension == '.png') {
@@ -44,7 +44,7 @@ class ImageCompressionProcessor implements ImageProcessor {
 
     while (attempts < maxAttempts) {
       // Check if the image is already small enough
-      final currentSize = await ArsyncImagePickerService.getFileSizeMB(
+      final currentSize = await ArsyncImagePicker.getFileSizeMB(
         currentImage,
       );
       if (currentSize <= targetMaxSizeMB) {

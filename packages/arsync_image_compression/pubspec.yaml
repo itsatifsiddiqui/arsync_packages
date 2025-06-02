@@ -1,6 +1,6 @@
 name: arsync_image_compression
 description: Image compression addon for arsync_image_picker
-version: 0.0.2
+version: 0.0.3
 homepage: https://arsyncsolutions.com/
 repository: https://github.com/itsatifsiddiqui/arsync_packages
 
@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  arsync_image_picker: ^0.0.2
+  arsync_image_picker: ^0.0.3
   flutter_image_compress: ^2.4.0
   path: ^1.9.1
 

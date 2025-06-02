@@ -28,7 +28,7 @@ dependencies:
 import 'package:arsync_image_picker/arsync_image_picker.dart';
 
 // Create a picker instance
-final picker = ArsyncImagePickerService();
+final picker = ArsyncImagePicker();
 
 // Add optional validators
 picker.addValidator(FileSizeValidator(maxSizeMB: 5.0));
@@ -45,7 +45,7 @@ final images = await picker.pickImages(context: context);
 ### Single Image
 
 ```dart
-final picker = ArsyncImagePickerService();
+final picker = ArsyncImagePicker();
 
 final image = await picker.pickImage(
   context: context,
@@ -113,7 +113,7 @@ picker.addProcessor(FormatConverterProcessor(
 ### Material Design (Default)
 
 ```dart
-final picker = ArsyncImagePickerService(
+final picker = ArsyncImagePicker(
   uiProvider: DefaultImagePickerUI(),
 );
 ```
@@ -121,7 +121,7 @@ final picker = ArsyncImagePickerService(
 ### Cupertino Style
 
 ```dart
-final picker = ArsyncImagePickerService(
+final picker = ArsyncImagePicker(
   uiProvider: CupertinoImagePickerUI(),
 );
 ```
@@ -129,7 +129,7 @@ final picker = ArsyncImagePickerService(
 ### Custom UI Config
 
 ```dart
-final picker = ArsyncImagePickerService(
+final picker = ArsyncImagePicker(
   uiConfig: ImagePickerUIConfig(
     title: 'Select Photo',
     galleryButtonText: 'Choose from Library',

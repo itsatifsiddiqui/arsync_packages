@@ -14,7 +14,7 @@ class FileSizeValidator implements ImageValidator {
 
   @override
   Future<bool> validate(XFile image) async {
-    final sizeMB = await ArsyncImagePickerService.getFileSizeMB(image);
+    final sizeMB = await ArsyncImagePicker.getFileSizeMB(image);
     return sizeMB <= maxSizeMB;
   }
 

@@ -55,8 +55,8 @@ class ImagePickerDemo extends StatefulWidget {
 }
 
 class _ImagePickerDemoState extends State<ImagePickerDemo> {
-  late ArsyncImagePickerService _standardPicker;
-  late ArsyncImagePickerService _advancedPicker;
+  late ArsyncImagePicker _standardPicker;
+  late ArsyncImagePicker _advancedPicker;
   final List<ImageItem> _images = [];
   bool _isLoading = false;
   bool _useAdvancedNaming = false;
@@ -69,7 +69,7 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
 
   void _setupPickers() {
     // Standard picker with basic naming
-    _standardPicker = ArsyncImagePickerService(appname: 'Image Picker Demo');
+    _standardPicker = ArsyncImagePicker(appname: 'Image Picker Demo');
     _standardPicker.addValidator(FileSizeValidator(maxSizeMB: 10.0));
     _standardPicker.addProcessor(FileNameProcessor(newFileName: 'demo_image'));
     _standardPicker.addProcessor(
@@ -78,7 +78,7 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
     _standardPicker.addProcessor(ImageCroppingProcessor());
 
     // Advanced picker with index-based naming and custom generator
-    _advancedPicker = ArsyncImagePickerService(appname: 'Advanced Demo');
+    _advancedPicker = ArsyncImagePicker(appname: 'Advanced Demo');
     _advancedPicker.addValidator(FileSizeValidator(maxSizeMB: 10.0));
     _advancedPicker.addProcessor(
       FileNameProcessor(
@@ -97,7 +97,7 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
     _advancedPicker.addProcessor(ImageCroppingProcessor());
   }
 
-  ArsyncImagePickerService get _currentPicker =>
+  ArsyncImagePicker get _currentPicker =>
       _useAdvancedNaming ? _advancedPicker : _standardPicker;
 
   Future<void> _pickSingleImage() async {
@@ -213,7 +213,7 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
 
     try {
       // Create a temporary service just for cropping this individual image
-      final croppingService = ArsyncImagePickerService(
+      final croppingService = ArsyncImagePicker(
         appname: 'Individual Crop',
       );
 

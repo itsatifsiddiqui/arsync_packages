@@ -9,7 +9,7 @@ import 'config.dart';
 import 'interfaces.dart';
 
 /// Core image picker service without external dependencies
-class ArsyncImagePickerService {
+class ArsyncImagePicker {
   XFile? imageFile;
 
   /// UI configuration
@@ -27,7 +27,7 @@ class ArsyncImagePickerService {
   /// UI provider
   final ImagePickerUIProvider uiProvider;
 
-  ArsyncImagePickerService({
+  ArsyncImagePicker({
     ImagePickerUIConfig? uiConfig,
     List<ImageValidator>? validators,
     List<ImageProcessor>? processors,

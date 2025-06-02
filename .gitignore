@@ -31,3 +31,6 @@ migrate_working_dir/
 build/
 .vscode/settings.json
 packages/arsync_firebase_errors_handler/.idea
+
+# FVM Version Cache
+.fvm/
