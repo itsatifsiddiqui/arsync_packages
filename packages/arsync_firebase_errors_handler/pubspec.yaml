@@ -2,7 +2,7 @@ name: arsync_firebase_errors_handler
 description: An error handling solution for Firebase services. Provides user-friendly error messages, standardized error handling, and integration with the Arsync Exception Toolkit.
 version: 0.0.3
 homepage: https://arsyncsolutions.com/
-repository: https://github.com/itsatifsiddiqui/arsync_exception_toolkit
+repository: https://github.com/itsatifsiddiqui/arsync_packages
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

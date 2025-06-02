@@ -2,7 +2,7 @@ name: arsync_dio_errors_handler
 description: A Dio error handling package that integrates with Arsync Exception Toolkit to provide standardized error handling.
 version: 0.0.3
 homepage: https://arsyncsolutions.com/
-repository: https://github.com/itsatifsiddiqui/arsync_exception_toolkit
+repository: https://github.com/itsatifsiddiqui/arsync_packages
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

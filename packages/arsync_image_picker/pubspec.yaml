@@ -1,0 +1,32 @@
+name: arsync_image_picker
+description: A flexible, extensible image picker for Flutter with plug-and-play addons
+version: 0.0.2
+homepage: https://arsyncsolutions.com/
+repository: https://github.com/itsatifsiddiqui/arsync_packages
+
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image: ^4.5.4
+  image_picker: ^1.1.2
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+
+flutter:
+
+
+topics:
+  - image-picker
+  - camera
+  - gallery
+  - image-processing
