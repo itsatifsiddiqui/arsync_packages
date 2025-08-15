@@ -1,3 +1,7 @@
+## 0.0.4
+
+* Updated dependencies to latest major versions
+
 ## 0.0.3
 
 * Made the error messages more user friendly

@@ -1,6 +1,6 @@
 name: arsync_exception_toolkit
 description: A flexible exception handling system for Flutter applications by Arsync
-version: 0.0.9
+version: 0.0.10
 homepage: https://arsyncsolutions.com/
 repository: https://github.com/itsatifsiddiqui/arsync_packages
 
@@ -16,4 +16,4 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0

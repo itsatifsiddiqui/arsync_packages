@@ -1,3 +1,7 @@
+## 0.0.3
+
+* Updated dependencies to latest major versions
+
 ## 0.0.2
 
 * Added Example

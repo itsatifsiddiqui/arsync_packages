@@ -1,3 +1,7 @@
+## 0.0.10
+
+* Updated dependencies to latest major versions
+
 ## 0.0.9
 
 * Added support for String Exception
