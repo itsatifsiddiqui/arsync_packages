@@ -37,17 +37,17 @@ packages:
     dependency: transitive
     description:
       name: arsync_exception_toolkit
-      sha256: "9750105340f9fabed5dde5b13ce7c7c9ca6d056ecdfceb1629988154c8371cd0"
+      sha256: c653841aa524750243ceef0a268dc75e1cef53accff01e78dd3b4234b474c53c
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.9"
+    version: "0.0.10"
   arsync_supabase_errors_handler:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
-    version: "0.0.2"
+    version: "0.0.3"
   async:
     dependency: transitive
     description:
