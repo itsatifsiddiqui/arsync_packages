@@ -1,8 +1,4 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule: provider_declaration_syntax
 ///
@@ -12,13 +8,17 @@ import '../utils.dart';
 ///
 /// Good: `final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);`
 /// Bad:  `final authProvider = NotifierProvider.autoDispose<AuthNotifier, AuthState>(() => AuthNotifier());`
-class ProviderDeclarationSyntax extends DartLintRule {
-  const ProviderDeclarationSyntax() : super(code: _code);
+class ProviderDeclarationSyntax extends AnalysisRule {
+  ProviderDeclarationSyntax()
+      : super(
+          name: 'provider_declaration_syntax',
+          description:
+              'NotifierProvider should use .new constructor syntax without explicit generic parameters.',
+        );
 
-  static const _code = LintCode(
-    name: 'provider_declaration_syntax',
-    problemMessage:
-        'NotifierProvider should use .new constructor syntax without explicit generic parameters.',
+  static const LintCode code = LintCode(
+    'provider_declaration_syntax',
+    'NotifierProvider should use .new constructor syntax without explicit generic parameters.',
     correctionMessage:
         'Use NotifierProvider.autoDispose(MyNotifier.new) instead of '
         'NotifierProvider.autoDispose<MyNotifier, State>(() => MyNotifier()).',
@@ -32,41 +32,53 @@ class ProviderDeclarationSyntax extends DartLintRule {
   };
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to files in providers directory
-    if (!PathUtils.isInProviders(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInProviders(path)) {
       return;
     }
 
-    // Listen to top-level variable declarations (provider declarations)
-    context.registry.addTopLevelVariableDeclaration((node) {
-      for (final variable in node.variables.variables) {
-        final initializer = variable.initializer;
-        if (initializer == null) continue;
+    final visitor = _Visitor(this);
+    registry.addTopLevelVariableDeclaration(this, visitor);
+    registry.addFieldDeclaration(this, visitor);
+  }
+}
 
-        _checkProviderSyntax(initializer, reporter);
-      }
-    });
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
 
-    // Also listen for FieldDeclarations (class-level providers)
-    context.registry.addFieldDeclaration((node) {
-      for (final variable in node.fields.variables) {
-        final initializer = variable.initializer;
-        if (initializer == null) continue;
+  _Visitor(this.rule);
 
-        _checkProviderSyntax(initializer, reporter);
-      }
-    });
+  @override
+  void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    for (final variable in node.variables.variables) {
+      final initializer = variable.initializer;
+      if (initializer == null) continue;
+
+      _checkProviderSyntax(initializer);
+    }
   }
 
-  void _checkProviderSyntax(Expression initializer, ErrorReporter reporter) {
+  @override
+  void visitFieldDeclaration(FieldDeclaration node) {
+    for (final variable in node.fields.variables) {
+      final initializer = variable.initializer;
+      if (initializer == null) continue;
+
+      _checkProviderSyntax(initializer);
+    }
+  }
+
+  void _checkProviderSyntax(Expression initializer) {
     // Check if this is a NotifierProvider/AsyncNotifierProvider call with bad syntax
     final source = initializer.toSource();
-    final isTargetedProvider = _notifierProviderTypes.any(
+    final isTargetedProvider = ProviderDeclarationSyntax._notifierProviderTypes.any(
       (type) => source.startsWith(type),
     );
 
@@ -80,7 +92,7 @@ class ProviderDeclarationSyntax extends DartLintRule {
         (source.contains('() {') || source.contains('() =>'));
 
     if (hasTypeArgs || usesClosureInsteadOfNew) {
-      reporter.atNode(initializer, _code);
+      rule.reportAtNode(initializer);
     }
   }
 }

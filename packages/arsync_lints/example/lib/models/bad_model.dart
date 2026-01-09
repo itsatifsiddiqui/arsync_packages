@@ -3,6 +3,7 @@
 // VIOLATION: model_purity - Importing providers in a model
 // ignore: unused_import
 import 'package:riverpod/riverpod.dart';
+
 // ignore: unused_import
 import '../providers/auth_provider.dart';
 

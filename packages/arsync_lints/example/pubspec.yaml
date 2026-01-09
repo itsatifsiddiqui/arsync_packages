@@ -4,7 +4,7 @@ version: 1.0.0
 publish_to: none
 
 environment:
-  sdk: ^3.8.1
+  sdk: ">=3.10.0 <4.0.0"
 
 # NOTE: This is a simplified example for testing without Flutter SDK.
 # In a real Flutter project, you would uncomment the flutter dependencies below.
@@ -20,13 +20,14 @@ dependencies:
   # Networking
   dio: ^5.9.0
   http: ^1.6.0
-  
 
 dev_dependencies:
   arsync_lints:
     path: ../
-  custom_lint: ^0.8.1
-  riverpod_lint: ^3.1.0
+  # NOTE: riverpod_lint is temporarily removed due to analyzer version conflict.
+  # riverpod_lint requires analyzer <9.0.0, but arsync_lints requires analyzer ^9.0.0
+  # Uncomment when riverpod_lint updates to support analyzer 9.x:
+  # riverpod_lint: ^3.1.0
 
   # Code generation
   build_runner: ^2.10.4

@@ -1,20 +1,24 @@
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule A4: repository_isolation
 ///
 /// Repositories handle data fetching only. They cannot manage state or UI.
-class RepositoryIsolation extends DartLintRule {
-  const RepositoryIsolation() : super(code: _code);
+class RepositoryIsolation extends AnalysisRule {
+  RepositoryIsolation()
+      : super(
+          name: 'repository_isolation',
+          description: 'Repositories cannot depend on UI or ViewModels.',
+        );
 
-  static const _code = LintCode(
-    name: 'repository_isolation',
-    problemMessage: 'Repositories cannot depend on UI or ViewModels.',
+  static const LintCode code = LintCode(
+    'repository_isolation',
+    'Repositories cannot depend on UI or ViewModels.',
     correctionMessage:
         'Remove the import. Repositories should only handle data fetching.',
   );
+
+  @override
+  DiagnosticCode get diagnosticCode => code;
 
   /// Banned import patterns for repositories.
   /// Note: riverpod is allowed because repositories must define a Provider.
@@ -26,32 +30,42 @@ class RepositoryIsolation extends DartLintRule {
   ];
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
     // Only apply to files in lib/repositories/
-    if (!PathUtils.isInRepositories(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInRepositories(path)) {
       return;
     }
 
-    context.registry.addImportDirective((node) {
-      final importUri = node.uri.stringValue;
-      if (importUri == null) return;
-
-      if (_isBannedImport(importUri)) {
-        reporter.atNode(node, _code);
-      }
-    });
+    var visitor = _Visitor(this);
+    registry.addImportDirective(this, visitor);
   }
 
-  bool _isBannedImport(String importUri) {
+  static bool isBannedImport(String importUri) {
     for (final pattern in _bannedPatterns) {
       if (importUri.contains(pattern)) {
         return true;
       }
     }
     return false;
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
+
+  _Visitor(this.rule);
+
+  @override
+  void visitImportDirective(ImportDirective node) {
+    final importUri = node.uri.stringValue;
+    if (importUri == null) return;
+
+    if (RepositoryIsolation.isBannedImport(importUri)) {
+      rule.reportAtNode(node);
+    }
   }
 }

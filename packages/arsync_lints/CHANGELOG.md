@@ -1,3 +1,7 @@
+## 0.0.4
+
+- migrate from custom lint to analyzer plugin.
+
 ## 0.0.3
 
 - Fix IDE integration (VS Code/Cursor) by constraining analyzer to `<9.0.0`

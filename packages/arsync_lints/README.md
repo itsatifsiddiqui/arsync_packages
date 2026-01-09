@@ -1,72 +1,55 @@
 # arsync_lints
 
-A powerful custom lint package for Flutter/Dart that enforces the **Arsync 4-Layer Architecture** with strict separation of concerns, Riverpod best practices, and clean code standards.
+A powerful lint package for Flutter/Dart that enforces the **Arsync 4-Layer Architecture** with strict separation of concerns, Riverpod best practices, and clean code standards.
 
-[![Dart](https://img.shields.io/badge/Dart-3.8+-blue.svg)](https://dart.dev)
-[![Flutter](https://img.shields.io/badge/Flutter-Compatible-02569B.svg)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.10+-blue.svg)](https://dart.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.38+-02569B.svg)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+## Requirements
+
+- **Dart SDK**: 3.10.0 or higher
+- **Flutter SDK**: 3.38.0 or higher
+
+This package uses the native `analysis_server_plugin` system introduced in Dart 3.10, which provides better IDE integration and faster analysis compared to the legacy custom_lint approach.
 
 ## Overview
 
 `arsync_lints` treats architectural violations as **build errors**, not warnings. This ensures your codebase maintains clean architecture from day one and prevents "spaghetti code" from creeping into your project.
 
-### The 4-Layer Architecture
-
-```mermaid
-flowchart TB
-    subgraph PRESENTATION["PRESENTATION"]
-        direction TB
-        P1["screens/, widgets/"]
-        P2["UI components, no business logic"]
-    end
-
-    subgraph VIEWMODEL["VIEWMODEL"]
-        direction TB
-        V1["providers/"]
-        V2["State management, business logic orchestration"]
-    end
-
-    subgraph MODEL["MODEL"]
-        direction TB
-        M1["models/"]
-        M2["Pure data structures - Freezed/JSON"]
-    end
-
-    subgraph REPOSITORY["REPOSITORY"]
-        direction TB
-        R1["repositories/"]
-        R2["Data fetching, API calls, DB access"]
-    end
-
-    PRESENTATION -->|watches| VIEWMODEL
-    VIEWMODEL -->|uses| MODEL
-    MODEL -->|returned by| REPOSITORY
-```
-
 ## Installation
 
-### 1. Add dependencies to your `pubspec.yaml`
+### 1. Add to your `pubspec.yaml`
 
 ```yaml
 dev_dependencies:
   arsync_lints: ^1.0.0
-  custom_lint: ^0.7.3
 ```
 
 ### 2. Enable the plugin in `analysis_options.yaml`
 
 ```yaml
+# Dart 3.10+ native plugin system
+plugins:
+  arsync_lints:
+
 analyzer:
-  plugins:
-    - custom_lint
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
 ```
 
-### 3. Run the analyzer
+**Note:** The `plugins:` section is a top-level key, not nested under `analyzer:`.
+
+### 3. Restart your IDE
+
+After adding the plugin, restart your IDE (VS Code, Android Studio, IntelliJ) to activate the lints. The diagnostics will appear automatically in your editor.
+
+### 4. Run analysis
 
 ```bash
-# In your IDE, the lints will appear automatically
-# Or run manually:
-dart run custom_lint
+# Analyze your project
+dart analyze
 ```
 
 ## Rules Reference
@@ -523,45 +506,6 @@ class UserProfileScreen {} // Matches file name
 
 ---
 
-## Configuration
-
-All rules are enabled by default with ERROR severity. To customize, add to your `analysis_options.yaml`:
-
-```yaml
-custom_lint:
-  rules:
-    # Disable a specific rule
-    - presentation_layer_isolation: false
-
-    # All rules are enabled by default
-    - shared_widget_purity
-    - model_purity
-    - repository_isolation
-    - provider_autodispose_enforcement
-    - provider_file_naming
-    - provider_state_class
-    - provider_declaration_syntax
-    - provider_class_restriction
-    - provider_single_per_file
-    - viewmodel_naming_convention
-    - no_context_in_providers
-    - async_viewmodel_safety
-    - repository_provider_declaration
-    - repository_dependency_injection
-    - repository_class_restriction
-    - repository_no_try_catch
-    - repository_async_return
-    - complexity_limits
-    - global_variable_restriction
-    - print_ban
-    - barrel_file_restriction
-    - ignore_file_ban
-    - hook_safety_enforcement
-    - scaffold_location
-    - asset_safety
-    - file_class_match
-```
-
 ## Project Structure
 
 For `arsync_lints` to work correctly, organize your project like this:
@@ -610,8 +554,8 @@ Add to your CI pipeline to enforce architecture:
 
 ```yaml
 # GitHub Actions example
-- name: Run Lints
-  run: dart run custom_lint --fatal-infos --fatal-warnings
+- name: Run Analysis
+  run: dart analyze --fatal-infos --fatal-warnings
 ```
 
 ## Philosophy

@@ -29,11 +29,7 @@ class BadAuthViewModel extends Notifier<AuthState> {
     // This await is not wrapped in try/catch
     final user = await _mockLogin(email, password);
 
-    state = state.copyWith(
-      isLoading: false,
-      isAuthenticated: true,
-      user: user,
-    );
+    state = state.copyWith(isLoading: false, isAuthenticated: true, user: user);
   }
 
   // VIOLATION: async_viewmodel_safety - Multiple awaits without try/catch
@@ -77,11 +73,7 @@ class AuthState {
     this.user,
   });
 
-  AuthState copyWith({
-    bool? isLoading,
-    bool? isAuthenticated,
-    User? user,
-  }) {
+  AuthState copyWith({bool? isLoading, bool? isAuthenticated, User? user}) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,

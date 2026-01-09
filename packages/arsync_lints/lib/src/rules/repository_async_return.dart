@@ -1,45 +1,56 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule C2: repository_async_return
 ///
 /// Repositories must not block the main thread.
 /// Public methods must return `Future<T>` or `Stream<T>`.
-class RepositoryAsyncReturn extends DartLintRule {
-  const RepositoryAsyncReturn() : super(code: _code);
+class RepositoryAsyncReturn extends AnalysisRule {
+  RepositoryAsyncReturn()
+      : super(
+          name: 'repository_async_return',
+          description:
+              'Repository public methods must return Future<T> or Stream<T>.',
+        );
 
-  static const _code = LintCode(
-    name: 'repository_async_return',
-    problemMessage:
-        'Repository public methods must return Future<T> or Stream<T>.',
-    correctionMessage:
-        'Change the return type to Future<T> or Stream<T>.',
+  static const LintCode code = LintCode(
+    'repository_async_return',
+    'Repository public methods must return Future<T> or Stream<T>.',
+    correctionMessage: 'Change the return type to Future<T> or Stream<T>.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to files in lib/repositories/
-    if (!PathUtils.isInRepositories(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInRepositories(path)) {
       return;
     }
 
-    context.registry.addClassDeclaration((node) {
-      for (final member in node.members) {
-        if (member is MethodDeclaration) {
-          _checkMethod(member, reporter);
-        }
+    final visitor = _Visitor(this);
+    registry.addClassDeclaration(this, visitor);
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
+
+  _Visitor(this.rule);
+
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    for (final member in node.members) {
+      if (member is MethodDeclaration) {
+        _checkMethod(member);
       }
-    });
+    }
   }
 
-  void _checkMethod(MethodDeclaration method, ErrorReporter reporter) {
+  void _checkMethod(MethodDeclaration method) {
     final methodName = method.name.lexeme;
 
     // Skip private methods (starting with _)
@@ -61,7 +72,7 @@ class RepositoryAsyncReturn extends DartLintRule {
         returnTypeName == 'Stream';
 
     if (!isValidReturn) {
-      reporter.atNode(returnType, _code);
+      rule.reportAtNode(returnType);
     }
   }
 }

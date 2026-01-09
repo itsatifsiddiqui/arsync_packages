@@ -1,31 +1,33 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule A2: shared_widget_purity
 ///
 /// Shared Widgets must be dumb and pure. They cannot know about business logic.
 /// Each widget file should contain only ONE public widget.
-class SharedWidgetPurity extends DartLintRule {
-  const SharedWidgetPurity() : super(code: _importCode);
+class SharedWidgetPurity extends MultiAnalysisRule {
+  SharedWidgetPurity()
+      : super(
+          name: 'shared_widget_purity',
+          description:
+              'Shared widgets must be pure and not depend on business logic.',
+        );
 
-  static const _importCode = LintCode(
-    name: 'shared_widget_purity',
-    problemMessage:
-        'Shared Widgets must be pure. Pass data as parameters, do not read providers.',
+  static const importCode = LintCode(
+    'shared_widget_purity',
+    'Shared Widgets must be pure. Pass data as parameters, do not read providers.',
     correctionMessage:
         'Pass data as Constructor Arguments instead of reading providers.',
   );
 
-  static const _singleWidgetCode = LintCode(
-    name: 'shared_widget_purity',
-    problemMessage:
-        'Widget file should only contain ONE public widget. Other widgets must be private (_).',
+  static const singleWidgetCode = LintCode(
+    'shared_widget_purity',
+    'Widget file should only contain ONE public widget. Other widgets must be private (_).',
     correctionMessage:
         'Make this widget private by prefixing with _ or move to a separate file.',
   );
+
+  @override
+  List<DiagnosticCode> get diagnosticCodes => [importCode, singleWidgetCode];
 
   /// Banned import patterns for shared widgets.
   static const _bannedPatterns = [
@@ -35,7 +37,7 @@ class SharedWidgetPurity extends DartLintRule {
     'package:hooks_riverpod',
   ];
 
-  /// Widget base classes (excluding Widget itself to avoid mock class issues)
+  /// Widget base classes
   static const _widgetBaseClasses = {
     'StatelessWidget',
     'StatefulWidget',
@@ -46,53 +48,21 @@ class SharedWidgetPurity extends DartLintRule {
   };
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to files in lib/widgets/
-    if (!PathUtils.isInWidgets(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInWidgets(path)) {
       return;
     }
 
-    // Check imports
-    context.registry.addImportDirective((node) {
-      final importUri = node.uri.stringValue;
-      if (importUri == null) return;
-
-      if (_isBannedImport(importUri)) {
-        reporter.atNode(node, _importCode);
-      }
-    });
-
-    // Collect public widget classes
-    final publicWidgets = <ClassDeclaration>[];
-
-    context.registry.addClassDeclaration((node) {
-      final className = node.name.lexeme;
-
-      // Skip private classes
-      if (className.startsWith('_')) return;
-
-      // Check if it's a widget class
-      if (_isWidgetClass(node)) {
-        publicWidgets.add(node);
-      }
-    });
-
-    // After collecting, check for multiple public widgets
-    context.addPostRunCallback(() {
-      if (publicWidgets.length > 1) {
-        // Report on all widgets after the first one
-        for (var i = 1; i < publicWidgets.length; i++) {
-          reporter.atToken(publicWidgets[i].name, _singleWidgetCode);
-        }
-      }
-    });
+    var visitor = _Visitor(this);
+    registry.addImportDirective(this, visitor);
+    registry.addCompilationUnit(this, visitor);
   }
 
-  bool _isBannedImport(String importUri) {
+  static bool isBannedImport(String importUri) {
     for (final pattern in _bannedPatterns) {
       if (importUri.contains(pattern)) {
         return true;
@@ -101,12 +71,53 @@ class SharedWidgetPurity extends DartLintRule {
     return false;
   }
 
-  /// Check if class extends a Widget base class
-  bool _isWidgetClass(ClassDeclaration node) {
+  static bool isWidgetClass(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return false;
 
-    final superclassName = extendsClause.superclass.name2.lexeme;
+    final superclassName = extendsClause.superclass.name.lexeme;
     return _widgetBaseClasses.contains(superclassName);
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
+
+  _Visitor(this.rule);
+
+  @override
+  void visitImportDirective(ImportDirective node) {
+    final importUri = node.uri.stringValue;
+    if (importUri == null) return;
+
+    if (SharedWidgetPurity.isBannedImport(importUri)) {
+      rule.reportAtNode(node, diagnosticCode: SharedWidgetPurity.importCode);
+    }
+  }
+
+  @override
+  void visitCompilationUnit(CompilationUnit node) {
+    final publicWidgets = <ClassDeclaration>[];
+
+    for (final declaration in node.declarations) {
+      if (declaration is ClassDeclaration) {
+        final className = declaration.name.lexeme;
+        if (className.startsWith('_')) continue;
+
+        if (SharedWidgetPurity.isWidgetClass(declaration)) {
+          publicWidgets.add(declaration);
+        }
+      }
+    }
+
+    if (publicWidgets.length > 1) {
+      for (var i = 1; i < publicWidgets.length; i++) {
+        rule.reportAtOffset(
+          publicWidgets[i].name.offset,
+          publicWidgets[i].name.length,
+          diagnosticCode: SharedWidgetPurity.singleWidgetCode,
+        );
+      }
+    }
   }
 }

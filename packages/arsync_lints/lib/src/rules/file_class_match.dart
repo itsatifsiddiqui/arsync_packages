@@ -1,8 +1,4 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule E4: file_class_match
 ///
@@ -10,62 +6,81 @@ import '../utils.dart';
 /// If file is login_screen.dart, at least one Class MUST be LoginScreen.
 /// If file is auth_repository.dart, at least one Class MUST be AuthRepository.
 /// Files can contain multiple classes, but at least one must match the file name.
-class FileClassMatch extends DartLintRule {
-  const FileClassMatch() : super(code: _code);
+class FileClassMatch extends AnalysisRule {
+  FileClassMatch()
+      : super(
+          name: 'file_class_match',
+          description:
+              'No class in this file matches the file name. Expected a class named like the file (snake_case to PascalCase).',
+        );
 
-  static const _code = LintCode(
-    name: 'file_class_match',
-    problemMessage:
-        'No class in this file matches the file name. Expected a class named like the file (snake_case to PascalCase).',
+  static const LintCode code = LintCode(
+    'file_class_match',
+    'No class in this file matches the file name. Expected a class named like the file (snake_case to PascalCase).',
     correctionMessage:
         'Add or rename a class to match the file name (e.g., login_screen.dart should have LoginScreen class).',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to lib/ files
-    if (!PathUtils.isInLib(resolver.path)) {
+    if (!context.isInLibDir) {
       return;
     }
+
+    final path = context.definingUnit.file.path;
 
     // Skip providers directory - it has special naming rules
     // (files end with _provider.dart but classes end with Notifier)
-    if (PathUtils.isInProviders(resolver.path)) {
+    if (PathUtils.isInProviders(path)) {
       return;
     }
 
-    final fileName = PathUtils.getFileName(resolver.path);
+    final fileName = PathUtils.getFileName(path);
     final expectedClassName = PathUtils.snakeToPascal(fileName);
 
-    // Collect all class declarations in the file
+    final visitor = _Visitor(this, expectedClassName);
+    registry.addCompilationUnit(this, visitor);
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
+  final String expectedClassName;
+
+  _Visitor(this.rule, this.expectedClassName);
+
+  @override
+  void visitCompilationUnit(CompilationUnit node) {
+    // Collect all public class names
     final classNames = <String>[];
     ClassDeclaration? firstClass;
 
-    context.registry.addClassDeclaration((node) {
-      final className = node.name.lexeme;
+    for (final declaration in node.declarations) {
+      if (declaration is ClassDeclaration) {
+        final className = declaration.name.lexeme;
 
-      // Skip private classes
-      if (className.startsWith('_')) return;
+        // Skip private classes
+        if (className.startsWith('_')) continue;
 
-      classNames.add(className);
-      firstClass ??= node;
-    });
-
-    // After all classes are collected, check if any matches
-    context.addPostRunCallback(() {
-      if (classNames.isEmpty) return;
-
-      // Check if any public class matches the expected name
-      final hasMatchingClass = classNames.any((name) => name == expectedClassName);
-
-      if (!hasMatchingClass && firstClass != null) {
-        // Report on the first class as a representative location
-        reporter.atToken(firstClass!.name, _code);
+        classNames.add(className);
+        firstClass ??= declaration;
       }
-    });
+    }
+
+    if (classNames.isEmpty) return;
+
+    // Check if any public class matches the expected name
+    final hasMatchingClass = classNames.any((name) => name == expectedClassName);
+
+    if (!hasMatchingClass && firstClass != null) {
+      // Report on the first class as a representative location
+      rule.reportAtOffset(firstClass.name.offset, firstClass.name.length);
+    }
   }
 }

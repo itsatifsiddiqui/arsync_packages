@@ -1,52 +1,61 @@
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule D5: ignore_file_ban
 ///
 /// Developers cannot lazily disable rules for an entire file.
 /// Search for string: // ignore_for_file:
-class IgnoreFileBan extends DartLintRule {
-  const IgnoreFileBan() : super(code: _code);
+class IgnoreFileBan extends AnalysisRule {
+  IgnoreFileBan()
+      : super(
+          name: 'ignore_file_ban',
+          description:
+              '// ignore_for_file: is banned. Fix the issue or use line-specific ignores.',
+        );
 
-  static const _code = LintCode(
-    name: 'ignore_file_ban',
-    problemMessage:
-        '// ignore_for_file: is banned. Fix the issue or use line-specific ignores.',
+  static const LintCode code = LintCode(
+    'ignore_file_ban',
+    '// ignore_for_file: is banned. Fix the issue or use line-specific ignores.',
     correctionMessage:
         'Remove the ignore_for_file comment and fix the underlying issue.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to lib/ files
-    if (!PathUtils.isInLib(resolver.path)) {
+    if (!context.isInLibDir) {
       return;
     }
 
-    context.registry.addCompilationUnit((node) {
-      // Check all comments in the file
-      final sourceContent = resolver.source.contents.data;
+    final visitor = _Visitor(this, context);
+    registry.addCompilationUnit(this, visitor);
+  }
+}
 
-      // Find all occurrences of // ignore_for_file:
-      final pattern = RegExp(r'//\s*ignore_for_file:');
-      final matches = pattern.allMatches(sourceContent);
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
+  final RuleContext context;
 
-      for (final match in matches) {
-        final offset = match.start;
-        final length = match.end - match.start;
+  _Visitor(this.rule, this.context);
 
-        reporter.atOffset(
-          offset: offset,
-          length: length,
-          errorCode: _code,
-        );
-      }
-    });
+  @override
+  void visitCompilationUnit(CompilationUnit node) {
+    // Check all comments in the file
+    final sourceContent = context.definingUnit.content;
+
+    // Find all occurrences of // ignore_for_file:
+    final pattern = RegExp(r'//\s*ignore_for_file:');
+    final matches = pattern.allMatches(sourceContent);
+
+    for (final match in matches) {
+      final offset = match.start;
+      final length = match.end - match.start;
+
+      rule.reportAtOffset(offset, length);
+    }
   }
 }

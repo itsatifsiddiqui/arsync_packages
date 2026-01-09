@@ -1,75 +1,73 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule B1: provider_autodispose_enforcement
 ///
 /// To prevent memory leaks, all providers must use .autoDispose by default.
 /// Exception: providers/core/ contains infrastructure providers (Dio, etc.)
 /// that should persist throughout the app lifecycle.
-class ProviderAutodisposeEnforcement extends DartLintRule {
-  const ProviderAutodisposeEnforcement() : super(code: _code);
+class ProviderAutodisposeEnforcement extends AnalysisRule {
+  ProviderAutodisposeEnforcement()
+      : super(
+          name: 'provider_autodispose_enforcement',
+          description: 'Providers must use .autoDispose to prevent memory leaks.',
+        );
 
-  static const _code = LintCode(
-    name: 'provider_autodispose_enforcement',
-    problemMessage:
-        'Providers must use .autoDispose to prevent memory leaks.',
+  static const LintCode code = LintCode(
+    'provider_autodispose_enforcement',
+    'Providers must use .autoDispose to prevent memory leaks.',
     correctionMessage:
         'Add .autoDispose to the provider or call ref.keepAlive() inside it.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to files in lib/providers/
-    if (!PathUtils.isInProviders(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInProviders(path)) {
       return;
     }
 
     // Skip providers/core/ - infrastructure providers that should persist
-    if (resolver.path.contains('providers/core/')) {
+    if (path.contains('providers/core/')) {
       return;
     }
 
-    context.registry.addTopLevelVariableDeclaration((node) {
-      for (final variable in node.variables.variables) {
-        final name = variable.name.lexeme;
-
-        // Check if variable name ends with 'Provider'
-        if (!name.endsWith('Provider')) continue;
-
-        final initializer = variable.initializer;
-        if (initializer == null) continue;
-
-        // Get the source code of the initializer
-        final initializerSource = initializer.toSource();
-
-        // Check if it uses autoDispose
-        final hasAutoDispose = initializerSource.contains('autoDispose') ||
-            initializerSource.contains('.autoDispose');
-
-        // Check if ref.keepAlive() is called inside the provider
-        final hasKeepAlive = _containsKeepAlive(initializer);
-
-        if (!hasAutoDispose && !hasKeepAlive) {
-          reporter.atToken(variable.name, _code);
-        }
-      }
-    });
+    var visitor = _Visitor(this);
+    registry.addTopLevelVariableDeclaration(this, visitor);
   }
+}
 
-  /// Recursively checks if the expression contains ref.keepAlive() call.
-  bool _containsKeepAlive(Expression? expression) {
-    if (expression == null) return false;
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
 
-    // Check the source for keepAlive
-    final source = expression.toSource();
-    return source.contains('ref.keepAlive()') ||
-        source.contains('ref.keepAlive(');
+  _Visitor(this.rule);
+
+  @override
+  void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    for (final variable in node.variables.variables) {
+      final name = variable.name.lexeme;
+
+      if (!name.endsWith('Provider')) continue;
+
+      final initializer = variable.initializer;
+      if (initializer == null) continue;
+
+      final initializerSource = initializer.toSource();
+
+      final hasAutoDispose = initializerSource.contains('autoDispose') ||
+          initializerSource.contains('.autoDispose');
+
+      final hasKeepAlive = initializerSource.contains('ref.keepAlive()') ||
+          initializerSource.contains('ref.keepAlive(');
+
+      if (!hasAutoDispose && !hasKeepAlive) {
+        rule.reportAtOffset(variable.name.offset, variable.name.length);
+      }
+    }
   }
 }

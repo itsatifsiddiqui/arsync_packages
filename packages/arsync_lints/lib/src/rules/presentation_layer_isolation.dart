@@ -1,33 +1,35 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule A1: presentation_layer_isolation
 ///
 /// Files in lib/screens/ and lib/widgets/ cannot import Infrastructure,
 /// Repositories, or Data Sources.
 /// Also enforces: use Dart records instead of plain parameter classes.
-class PresentationLayerIsolation extends DartLintRule {
-  const PresentationLayerIsolation() : super(code: _importCode);
+class PresentationLayerIsolation extends MultiAnalysisRule {
+  PresentationLayerIsolation()
+      : super(
+          name: 'presentation_layer_isolation',
+          description:
+              'Presentation layer cannot import repositories or data sources.',
+        );
 
-  static const _importCode = LintCode(
-    name: 'presentation_layer_isolation',
-    problemMessage:
-        'Presentation Layer cannot touch Repositories or Data Sources directly. '
+  static const importCode = LintCode(
+    'presentation_layer_isolation',
+    'Presentation Layer cannot touch Repositories or Data Sources directly. '
         'Use a ViewModel.',
     correctionMessage:
         'Move logic to a ViewModel (Provider) and watch the provider instead.',
   );
 
-  static const _useRecordCode = LintCode(
-    name: 'presentation_layer_isolation',
-    problemMessage:
-        'Use Dart records instead of plain parameter classes in presentation layer.',
+  static const useRecordCode = LintCode(
+    'presentation_layer_isolation',
+    'Use Dart records instead of plain parameter classes in presentation layer.',
     correctionMessage:
         'Replace with a record type: typedef ParamsName = ({Type field1, Type field2});',
   );
+
+  @override
+  List<DiagnosticCode> get diagnosticCodes => [importCode, useRecordCode];
 
   /// Banned import patterns for presentation layer.
   static const _bannedPatterns = [
@@ -51,45 +53,22 @@ class PresentationLayerIsolation extends DartLintRule {
   };
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
+    final path = context.definingUnit.file.path;
     // Only apply to files in lib/screens/ or lib/widgets/
-    if (!PathUtils.isInScreens(resolver.path) &&
-        !PathUtils.isInWidgets(resolver.path)) {
+    if (!PathUtils.isInScreens(path) && !PathUtils.isInWidgets(path)) {
       return;
     }
 
-    // Check imports
-    context.registry.addImportDirective((node) {
-      final importUri = node.uri.stringValue;
-      if (importUri == null) return;
-
-      if (_isBannedImport(importUri)) {
-        reporter.atNode(node, _importCode);
-      }
-    });
-
-    // Check for plain parameter classes (should use records)
-    context.registry.addClassDeclaration((node) {
-      final className = node.name.lexeme;
-
-      // Skip private classes
-      if (className.startsWith('_')) return;
-
-      // Skip widget classes
-      if (_isWidgetClass(node)) return;
-
-      // Check if it looks like a parameter/data class
-      if (_isParameterClass(node)) {
-        reporter.atToken(node.name, _useRecordCode);
-      }
-    });
+    var visitor = _Visitor(this);
+    registry.addImportDirective(this, visitor);
+    registry.addClassDeclaration(this, visitor);
   }
 
-  bool _isBannedImport(String importUri) {
+  static bool isBannedImport(String importUri) {
     for (final pattern in _bannedPatterns) {
       if (importUri.contains(pattern)) {
         return true;
@@ -99,17 +78,16 @@ class PresentationLayerIsolation extends DartLintRule {
   }
 
   /// Check if class extends a Widget
-  bool _isWidgetClass(ClassDeclaration node) {
+  static bool isWidgetClass(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return false;
 
-    final superclassName = extendsClause.superclass.name2.lexeme;
+    final superclassName = extendsClause.superclass.name.lexeme;
     return _allowedBaseClasses.contains(superclassName);
   }
 
   /// Check if class is a simple parameter/data class
-  /// (only has final fields and constructor, no methods)
-  bool _isParameterClass(ClassDeclaration node) {
+  static bool isParameterClass(ClassDeclaration node) {
     final members = node.members;
 
     bool hasOnlyFinalFields = true;
@@ -118,22 +96,52 @@ class PresentationLayerIsolation extends DartLintRule {
 
     for (final member in members) {
       if (member is FieldDeclaration) {
-        // Check if all fields are final
         if (!member.fields.isFinal) {
           hasOnlyFinalFields = false;
         }
       } else if (member is ConstructorDeclaration) {
         hasConstructor = true;
       } else if (member is MethodDeclaration) {
-        // Has methods - not a simple parameter class
         hasMethods = true;
       }
     }
 
-    // It's a parameter class if:
-    // - Has a constructor
-    // - Has only final fields
-    // - Has no methods (except maybe getters from fields)
     return hasConstructor && hasOnlyFinalFields && !hasMethods;
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
+
+  _Visitor(this.rule);
+
+  @override
+  void visitImportDirective(ImportDirective node) {
+    final importUri = node.uri.stringValue;
+    if (importUri == null) return;
+
+    if (PresentationLayerIsolation.isBannedImport(importUri)) {
+      rule.reportAtNode(node, diagnosticCode: PresentationLayerIsolation.importCode);
+    }
+  }
+
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    final className = node.name.lexeme;
+
+    // Skip private classes
+    if (className.startsWith('_')) return;
+
+    // Skip widget classes
+    if (PresentationLayerIsolation.isWidgetClass(node)) return;
+
+    // Check if it looks like a parameter/data class
+    if (PresentationLayerIsolation.isParameterClass(node)) {
+      rule.reportAtOffset(
+        node.name.offset,
+        node.name.length,
+        diagnosticCode: PresentationLayerIsolation.useRecordCode,
+      );
+    }
   }
 }

@@ -1,8 +1,4 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule D1: complexity_limits
 ///
@@ -12,131 +8,165 @@ import '../utils.dart';
 /// - Max Method Lines: 60
 /// - Max Build Method Lines: 120
 /// - Nested Ternary: Banned
-class ComplexityLimits extends DartLintRule {
-  const ComplexityLimits() : super(code: _paramCode);
+class ComplexityLimits extends MultiAnalysisRule {
+  ComplexityLimits()
+      : super(
+          name: 'complexity_limits',
+          description: 'Enforce code complexity limits.',
+        );
 
-  static const _paramCode = LintCode(
-    name: 'complexity_limits',
-    problemMessage: 'Methods cannot have more than 4 parameters.',
+  static const paramCode = LintCode(
+    'complexity_limits',
+    'Methods cannot have more than 4 parameters.',
     correctionMessage:
         'Reduce parameters by using a parameter object or refactoring.',
   );
 
-  static const _nestingCode = LintCode(
-    name: 'complexity_limits',
-    problemMessage: 'Nesting depth cannot exceed 3 levels.',
+  static const nestingCode = LintCode(
+    'complexity_limits',
+    'Nesting depth cannot exceed 3 levels.',
     correctionMessage:
         'Refactor to reduce nesting (extract methods, early returns).',
   );
 
-  static const _methodLinesCode = LintCode(
-    name: 'complexity_limits',
-    problemMessage: 'Methods cannot exceed 60 lines.',
+  static const methodLinesCode = LintCode(
+    'complexity_limits',
+    'Methods cannot exceed 60 lines.',
     correctionMessage: 'Extract logic into smaller methods or helper functions.',
   );
 
-  static const _buildLinesCode = LintCode(
-    name: 'complexity_limits',
-    problemMessage: 'build() method cannot exceed 120 lines.',
+  static const buildLinesCode = LintCode(
+    'complexity_limits',
+    'build() method cannot exceed 120 lines.',
     correctionMessage: 'Extract widgets into separate methods or widgets.',
   );
 
-  static const _nestedTernaryCode = LintCode(
-    name: 'complexity_limits',
-    problemMessage: 'Nested ternary operators are banned.',
+  static const nestedTernaryCode = LintCode(
+    'complexity_limits',
+    'Nested ternary operators are banned.',
     correctionMessage: 'Use if-else statements or switch expressions instead.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  List<DiagnosticCode> get diagnosticCodes => [
+        paramCode,
+        nestingCode,
+        methodLinesCode,
+        buildLinesCode,
+        nestedTernaryCode,
+      ];
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to lib/ files
-    if (!PathUtils.isInLib(resolver.path)) {
+    if (!context.isInLibDir) {
       return;
     }
 
-    // Check method parameters and line count (functions)
-    context.registry.addFunctionDeclaration((node) {
-      _checkParameterCount(node.functionExpression.parameters, reporter);
-      _checkFunctionLines(node, reporter, resolver);
-    });
+    var visitor = _Visitor(this, context);
+    registry.addFunctionDeclaration(this, visitor);
+    registry.addMethodDeclaration(this, visitor);
+    registry.addBlock(this, visitor);
+    registry.addConditionalExpression(this, visitor);
+  }
+}
 
-    // Check method parameters and line count (methods)
-    context.registry.addMethodDeclaration((node) {
-      _checkParameterCount(node.parameters, reporter);
-      _checkMethodLines(node, reporter, resolver);
-    });
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
+  final RuleContext context;
 
-    // Check nesting depth
-    context.registry.addBlock((node) {
-      _checkNestingDepth(node, reporter);
-    });
+  _Visitor(this.rule, this.context);
 
-    // Check for nested ternaries
-    context.registry.addConditionalExpression((node) {
-      _checkNestedTernary(node, reporter);
-    });
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    _checkParameterCount(node.functionExpression.parameters);
+    _checkFunctionLines(node);
   }
 
-  void _checkParameterCount(
-      FormalParameterList? parameters, ErrorReporter reporter) {
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    _checkParameterCount(node.parameters);
+    _checkMethodLines(node);
+  }
+
+  @override
+  void visitBlock(Block node) {
+    _checkNestingDepth(node);
+  }
+
+  @override
+  void visitConditionalExpression(ConditionalExpression node) {
+    _checkNestedTernary(node);
+  }
+
+  void _checkParameterCount(FormalParameterList? parameters) {
     if (parameters == null) return;
 
     final paramCount = parameters.parameters.length;
     if (paramCount > 4) {
-      reporter.atNode(parameters, _paramCode);
+      rule.reportAtNode(parameters, diagnosticCode: ComplexityLimits.paramCode);
     }
   }
 
-  void _checkMethodLines(
-    MethodDeclaration node,
-    ErrorReporter reporter,
-    CustomLintResolver resolver,
-  ) {
+  void _checkMethodLines(MethodDeclaration node) {
     final body = node.body;
     if (body is! BlockFunctionBody) return;
 
-    final startLine = resolver.lineInfo.getLocation(body.offset).lineNumber;
-    final endLine = resolver.lineInfo.getLocation(body.end).lineNumber;
+    final content = context.definingUnit.content;
+    final startLine = _countLines(content, 0, body.offset);
+    final endLine = _countLines(content, 0, body.end);
     final lineCount = endLine - startLine + 1;
 
     final isBuildMethod = node.name.lexeme == 'build';
 
-    // build() has a higher limit (120 lines)
     if (isBuildMethod) {
       if (lineCount > 120) {
-        reporter.atToken(node.name, _buildLinesCode);
+        rule.reportAtOffset(
+          node.name.offset,
+          node.name.length,
+          diagnosticCode: ComplexityLimits.buildLinesCode,
+        );
       }
     } else {
-      // All other methods: 60 lines max
       if (lineCount > 60) {
-        reporter.atToken(node.name, _methodLinesCode);
+        rule.reportAtOffset(
+          node.name.offset,
+          node.name.length,
+          diagnosticCode: ComplexityLimits.methodLinesCode,
+        );
       }
     }
   }
 
-  void _checkFunctionLines(
-    FunctionDeclaration node,
-    ErrorReporter reporter,
-    CustomLintResolver resolver,
-  ) {
+  void _checkFunctionLines(FunctionDeclaration node) {
     final body = node.functionExpression.body;
     if (body is! BlockFunctionBody) return;
 
-    final startLine = resolver.lineInfo.getLocation(body.offset).lineNumber;
-    final endLine = resolver.lineInfo.getLocation(body.end).lineNumber;
+    final content = context.definingUnit.content;
+    final startLine = _countLines(content, 0, body.offset);
+    final endLine = _countLines(content, 0, body.end);
     final lineCount = endLine - startLine + 1;
 
-    // Functions: 60 lines max
     if (lineCount > 60) {
-      reporter.atToken(node.name, _methodLinesCode);
+      rule.reportAtOffset(
+        node.name.offset,
+        node.name.length,
+        diagnosticCode: ComplexityLimits.methodLinesCode,
+      );
     }
   }
 
-  void _checkNestingDepth(Block node, ErrorReporter reporter) {
+  int _countLines(String content, int start, int end) {
+    int count = 1;
+    for (int i = start; i < end && i < content.length; i++) {
+      if (content[i] == '\n') count++;
+    }
+    return count;
+  }
+
+  void _checkNestingDepth(Block node) {
     int depth = 0;
     AstNode? current = node;
 
@@ -144,16 +174,14 @@ class ComplexityLimits extends DartLintRule {
       if (_isNestingNode(current)) {
         depth++;
       }
-      // Stop at method/function boundary
       if (current is MethodDeclaration || current is FunctionDeclaration) {
         break;
       }
       current = current.parent;
     }
 
-    // depth > 4 means > 3 nested blocks (method body + 3 levels)
     if (depth > 4) {
-      reporter.atNode(node, _nestingCode);
+      rule.reportAtNode(node, diagnosticCode: ComplexityLimits.nestingCode);
     }
   }
 
@@ -167,11 +195,10 @@ class ComplexityLimits extends DartLintRule {
         node is TryStatement;
   }
 
-  void _checkNestedTernary(ConditionalExpression node, ErrorReporter reporter) {
-    // Check if then or else branches contain another ternary
+  void _checkNestedTernary(ConditionalExpression node) {
     if (node.thenExpression is ConditionalExpression ||
         node.elseExpression is ConditionalExpression) {
-      reporter.atNode(node, _nestedTernaryCode);
+      rule.reportAtNode(node, diagnosticCode: ComplexityLimits.nestedTernaryCode);
     }
   }
 }

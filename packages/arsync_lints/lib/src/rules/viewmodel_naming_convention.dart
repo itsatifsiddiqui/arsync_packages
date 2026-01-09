@@ -1,73 +1,90 @@
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule B2: viewmodel_naming_convention
 ///
 /// Enforce naming consistency for state management.
-class ViewModelNamingConvention extends DartLintRule {
-  const ViewModelNamingConvention() : super(code: _classCode);
+class ViewModelNamingConvention extends MultiAnalysisRule {
+  ViewModelNamingConvention()
+      : super(
+          name: 'viewmodel_naming_convention',
+          description: 'Enforce naming conventions for ViewModels and providers.',
+        );
 
-  static const _classCode = LintCode(
-    name: 'viewmodel_naming_convention',
-    problemMessage:
-        'Classes extending Notifier or AsyncNotifier must end with "Notifier".',
+  static const classCode = LintCode(
+    'viewmodel_naming_convention',
+    'Classes extending Notifier or AsyncNotifier must end with "Notifier".',
     correctionMessage: 'Rename the class to end with "Notifier".',
   );
 
-  static const _providerCode = LintCode(
-    name: 'viewmodel_naming_convention',
-    problemMessage:
-        'Provider variables must end with "Provider".',
+  static const providerCode = LintCode(
+    'viewmodel_naming_convention',
+    'Provider variables must end with "Provider".',
     correctionMessage: 'Rename the variable to end with "Provider".',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  List<DiagnosticCode> get diagnosticCodes => [classCode, providerCode];
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to files in lib/providers/
-    if (!PathUtils.isInProviders(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInProviders(path)) {
       return;
     }
 
-    // Check class names
-    context.registry.addClassDeclaration((node) {
-      final extendsClause = node.extendsClause;
-      if (extendsClause == null) return;
+    var visitor = _Visitor(this);
+    registry.addClassDeclaration(this, visitor);
+    registry.addTopLevelVariableDeclaration(this, visitor);
+  }
+}
 
-      final superclassName = extendsClause.superclass.name2.lexeme;
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
 
-      // Check if extending Notifier or AsyncNotifier
-      if (superclassName.contains('Notifier') ||
-          superclassName.contains('AsyncNotifier')) {
-        final className = node.name.lexeme;
+  _Visitor(this.rule);
 
-        if (!className.endsWith('Notifier')) {
-          reporter.atToken(node.name, _classCode);
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    final extendsClause = node.extendsClause;
+    if (extendsClause == null) return;
+
+    final superclassName = extendsClause.superclass.name.lexeme;
+
+    if (superclassName.contains('Notifier') ||
+        superclassName.contains('AsyncNotifier')) {
+      final className = node.name.lexeme;
+
+      if (!className.endsWith('Notifier')) {
+        rule.reportAtOffset(
+          node.name.offset,
+          node.name.length,
+          diagnosticCode: ViewModelNamingConvention.classCode,
+        );
+      }
+    }
+  }
+
+  @override
+  void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    for (final variable in node.variables.variables) {
+      final initializer = variable.initializer;
+      if (initializer == null) continue;
+
+      final initializerSource = initializer.toSource();
+
+      if (initializerSource.contains('Provider')) {
+        final name = variable.name.lexeme;
+        if (!name.endsWith('Provider')) {
+          rule.reportAtOffset(
+            variable.name.offset,
+            variable.name.length,
+            diagnosticCode: ViewModelNamingConvention.providerCode,
+          );
         }
       }
-    });
-
-    // Check provider variable names
-    context.registry.addTopLevelVariableDeclaration((node) {
-      for (final variable in node.variables.variables) {
-        final initializer = variable.initializer;
-        if (initializer == null) continue;
-
-        final initializerSource = initializer.toSource();
-
-        // Check if it's a provider (contains NotifierProvider, AsyncNotifierProvider, etc.)
-        if (initializerSource.contains('Provider')) {
-          final name = variable.name.lexeme;
-          if (!name.endsWith('Provider')) {
-            reporter.atToken(variable.name, _providerCode);
-          }
-        }
-      }
-    });
+    }
   }
 }

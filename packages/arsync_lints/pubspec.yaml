@@ -1,23 +1,26 @@
 name: arsync_lints
 description: A custom lint package for Flutter/Dart that enforces the Arsync 4-layer architecture with strict separation of concerns, Riverpod best practices, and clean code standards.
-version: 0.0.3
+version: 0.0.4
 homepage: https://arsyncsolutions.com/
 repository: https://github.com/itsatifsiddiqui/arsync_packages
 
 environment:
-  sdk: ^3.8.1
+  sdk: ">=3.10.0 <4.0.0"
 
 dependencies:
-  analyzer: ">=7.0.0 <9.0.0"
-  analyzer_plugin: ^0.13.0
-  custom_lint_builder: ">=0.8.0 <0.9.0"
-  path: ^1.9.1
+  analysis_server_plugin: ^0.3.4
+  analyzer: ^9.0.0
+  analyzer_plugin: ^0.13.11
+  path: ^1.9.0
 
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.29.0
-
+  analyzer_testing: ^0.1.7
+  test_reflective_loader: ^0.2.3
 
 topics:
   - architecture
   - arsync
+  - linter
+  - static-analysis

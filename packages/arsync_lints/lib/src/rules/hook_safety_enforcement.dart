@@ -1,39 +1,39 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule E1: hook_safety_enforcement
 ///
 /// Hooks must be used correctly to prevent runtime crashes.
 /// Ban: Instantiating TextEditingController, AnimationController, or
 /// ScrollController directly in build without using a hook.
-/// Ban: Using GlobalKey<FormState>() in HookWidget build methods (resets on
-/// keyboard open, orientation change). Use GlobalObjectKey<FormState>(context).
-class HookSafetyEnforcement extends DartLintRule {
-  const HookSafetyEnforcement() : super(code: _code);
+/// Ban: Using `GlobalKey<FormState>()` in HookWidget build methods.
+class HookSafetyEnforcement extends MultiAnalysisRule {
+  HookSafetyEnforcement()
+      : super(
+          name: 'hook_safety_enforcement',
+          description:
+              'Controllers must be created using hooks in build() methods.',
+        );
 
-  static const _code = LintCode(
-    name: 'hook_safety_enforcement',
-    problemMessage:
-        'Controllers must be created using hooks in build(). '
+  static const controllerCode = LintCode(
+    'hook_safety_enforcement',
+    'Controllers must be created using hooks in build(). '
         'Use useTextEditingController, useAnimationController, etc.',
     correctionMessage:
         'Replace direct instantiation with the corresponding hook.',
   );
 
-  static const _formKeyCode = LintCode(
-    name: 'hook_safety_enforcement',
-    problemMessage:
-        'GlobalKey<FormState>() resets on keyboard open/orientation change in HookWidgets. '
+  static const formKeyCode = LintCode(
+    'hook_safety_enforcement',
+    'GlobalKey<FormState>() resets on keyboard open/orientation change in HookWidgets. '
         'Use GlobalObjectKey<FormState>(context) instead.',
     correctionMessage:
         'Replace GlobalKey<FormState>() with GlobalObjectKey<FormState>(context).',
   );
 
-  static const _bannedControllers = [
+  @override
+  List<DiagnosticCode> get diagnosticCodes => [controllerCode, formKeyCode];
+
+  static const bannedControllers = [
     'TextEditingController',
     'AnimationController',
     'ScrollController',
@@ -42,94 +42,92 @@ class HookSafetyEnforcement extends DartLintRule {
     'FocusNode',
   ];
 
-  /// HookWidget base classes where GlobalKey<FormState> should be avoided
-  static const _hookWidgetClasses = {
+  static const hookWidgetClasses = {
     'HookWidget',
     'HookConsumerWidget',
   };
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to lib/ files
-    if (!PathUtils.isInLib(resolver.path)) {
+    if (!context.isInLibDir) {
       return;
     }
 
-    context.registry.addClassDeclaration((classNode) {
-      // Check if this class extends a HookWidget
-      final isHookWidget = _isHookWidgetClass(classNode);
+    var visitor = _Visitor(this);
+    registry.addClassDeclaration(this, visitor);
+  }
+}
 
-      // Find the build method in this class
-      for (final member in classNode.members) {
-        if (member is MethodDeclaration && member.name.lexeme == 'build') {
-          final body = member.body;
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
 
-          // Check for banned controllers
-          final controllerVisitor =
-              _ControllerVisitor(reporter, _bannedControllers, _code);
-          body.accept(controllerVisitor);
+  _Visitor(this.rule);
 
-          // Check for GlobalKey<FormState>() in HookWidgets
-          if (isHookWidget) {
-            final formKeyVisitor = _FormKeyVisitor(reporter, _formKeyCode);
-            body.accept(formKeyVisitor);
-          }
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    final isHookWidget = _isHookWidgetClass(node);
+
+    for (final member in node.members) {
+      if (member is MethodDeclaration && member.name.lexeme == 'build') {
+        final body = member.body;
+
+        // Check for banned controllers
+        final controllerVisitor = _ControllerVisitor(rule);
+        body.accept(controllerVisitor);
+
+        // Check for GlobalKey<FormState>() in HookWidgets
+        if (isHookWidget) {
+          final formKeyVisitor = _FormKeyVisitor(rule);
+          body.accept(formKeyVisitor);
         }
       }
-    });
+    }
   }
 
-  /// Check if class extends a HookWidget base class
   bool _isHookWidgetClass(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return false;
 
-    final superclassName = extendsClause.superclass.name2.lexeme;
-    return _hookWidgetClasses.contains(superclassName);
+    final superclassName = extendsClause.superclass.name.lexeme;
+    return HookSafetyEnforcement.hookWidgetClasses.contains(superclassName);
   }
 }
 
 class _ControllerVisitor extends RecursiveAstVisitor<void> {
-  final ErrorReporter reporter;
-  final List<String> bannedControllers;
-  final LintCode code;
+  final MultiAnalysisRule rule;
 
-  _ControllerVisitor(this.reporter, this.bannedControllers, this.code);
+  _ControllerVisitor(this.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final typeName = node.constructorName.type.name2.lexeme;
+    final typeName = node.constructorName.type.name.lexeme;
 
-    if (bannedControllers.contains(typeName)) {
-      reporter.atNode(node, code);
+    if (HookSafetyEnforcement.bannedControllers.contains(typeName)) {
+      rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.controllerCode);
     }
 
     super.visitInstanceCreationExpression(node);
   }
 }
 
-/// Visitor to detect GlobalKey<FormState>() usage in HookWidgets
 class _FormKeyVisitor extends RecursiveAstVisitor<void> {
-  final ErrorReporter reporter;
-  final LintCode code;
+  final MultiAnalysisRule rule;
 
-  _FormKeyVisitor(this.reporter, this.code);
+  _FormKeyVisitor(this.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final typeName = node.constructorName.type.name2.lexeme;
+    final typeName = node.constructorName.type.name.lexeme;
 
-    // Check for GlobalKey<FormState>()
     if (typeName == 'GlobalKey') {
       final typeArgs = node.constructorName.type.typeArguments;
       if (typeArgs != null && typeArgs.arguments.isNotEmpty) {
         final typeArg = typeArgs.arguments.first;
-        if (typeArg is NamedType && typeArg.name2.lexeme == 'FormState') {
-          reporter.atNode(node, code);
+        if (typeArg is NamedType && typeArg.name.lexeme == 'FormState') {
+          rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.formKeyCode);
         }
       }
     }

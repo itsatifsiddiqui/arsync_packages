@@ -1,57 +1,67 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule B4: async_viewmodel_safety
 ///
 /// Async operations in ViewModels must handle errors explicitly.
-class AsyncViewModelSafety extends DartLintRule {
-  const AsyncViewModelSafety() : super(code: _code);
+class AsyncViewModelSafety extends AnalysisRule {
+  AsyncViewModelSafety()
+      : super(
+          name: 'async_viewmodel_safety',
+          description:
+              'Async operations in ViewModels must be wrapped in try/catch.',
+        );
 
-  static const _code = LintCode(
-    name: 'async_viewmodel_safety',
-    problemMessage:
-        'Async operations in ViewModels must be wrapped in try/catch.',
-    correctionMessage:
-        'Add a try/catch block around the await call.',
+  static const LintCode code = LintCode(
+    'async_viewmodel_safety',
+    'Async operations in ViewModels must be wrapped in try/catch.',
+    correctionMessage: 'Add a try/catch block around the await call.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    // Only apply to files in lib/providers/
-    if (!PathUtils.isInProviders(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInProviders(path)) {
       return;
     }
 
-    context.registry.addClassDeclaration((node) {
-      final extendsClause = node.extendsClause;
-      if (extendsClause == null) return;
+    final visitor = _Visitor(this);
+    registry.addClassDeclaration(this, visitor);
+  }
+}
 
-      final superclassName = extendsClause.superclass.name2.lexeme;
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
 
-      // Only check Notifier and AsyncNotifier classes
-      if (!superclassName.contains('Notifier') &&
-          !superclassName.contains('AsyncNotifier')) {
-        return;
+  _Visitor(this.rule);
+
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    final extendsClause = node.extendsClause;
+    if (extendsClause == null) return;
+
+    final superclassName = extendsClause.superclass.name.lexeme;
+
+    // Only check Notifier and AsyncNotifier classes
+    if (!superclassName.contains('Notifier') &&
+        !superclassName.contains('AsyncNotifier')) {
+      return;
+    }
+
+    // Check all methods in the class
+    for (final member in node.members) {
+      if (member is MethodDeclaration) {
+        _checkMethod(member);
       }
-
-      // Check all methods in the class
-      for (final member in node.members) {
-        if (member is MethodDeclaration) {
-          _checkMethod(member, reporter);
-        }
-      }
-    });
+    }
   }
 
-  void _checkMethod(MethodDeclaration method, ErrorReporter reporter) {
+  void _checkMethod(MethodDeclaration method) {
     final body = method.body;
     if (body is! BlockFunctionBody) return;
 
@@ -62,7 +72,7 @@ class AsyncViewModelSafety extends DartLintRule {
     for (final awaitExpr in awaitVisitor.awaitExpressions) {
       // Check if this await is inside a try block
       if (!_isInsideTryBlock(awaitExpr)) {
-        reporter.atNode(awaitExpr, _code);
+        rule.reportAtNode(awaitExpr);
       }
     }
   }

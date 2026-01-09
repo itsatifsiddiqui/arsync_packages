@@ -2,8 +2,6 @@ import 'package:test/test.dart';
 import 'package:arsync_lints/src/utils.dart';
 
 /// Test helper to parse Dart code and verify AST structure.
-/// Note: For full integration testing of custom_lint rules,
-/// you would need to set up a test project with custom_lint enabled.
 /// These tests verify the underlying logic and utilities.
 void main() {
   group('Lint Rule Logic Tests', () {

@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`arsync_lints` is a custom Dart lint package built on `custom_lint_builder` that enforces the Arsync 4-Layer Architecture. It treats architectural violations as **build errors**, not warnings.
+`arsync_lints` is a custom Dart lint package built on the native `analysis_server_plugin` system (Dart 3.10+) that enforces the Arsync 4-Layer Architecture. It treats architectural violations as **build errors**, not warnings.
+
+## Requirements
+
+- **Dart SDK**: 3.10.0 or higher
+- **Flutter SDK**: 3.38.0 or higher
 
 ## Commands
 
@@ -22,25 +27,28 @@ dart test --name "ComplexityLimits"
 dart analyze
 
 # Test lints in the example project
-cd example && dart run custom_lint
+cd example && dart analyze
 ```
 
 ## Architecture
 
-### How custom_lint Works
+### How analysis_server_plugin Works
 
-1. Entry point: `lib/arsync_lints.dart` exports `createPlugin()` which returns the plugin instance
-2. Plugin registers all `LintRule` classes in `getLintRules()`
-3. Each rule extends `DartLintRule` and implements `run()` to analyze AST nodes
-4. Rules use `context.registry.add*()` to listen for specific AST node types
-5. Violations are reported via `reporter.atNode()` or `reporter.atToken()`
+1. Entry point: `lib/main.dart` exports a top-level `plugin` variable
+2. Plugin class `ArsyncPlugin` extends `ServerPlugin` and registers all rules
+3. Each rule extends `AnalysisRule` or `MultiAnalysisRule` and implements `registerNodeProcessors()`
+4. Rules use `registry.add*()` to listen for specific AST node types
+5. Violations are reported via `rule.reportAtNode()` or `rule.reportAtOffset()`
 
 ### Rule Structure
 
 ```
 lib/
-├── arsync_lints.dart          # Plugin entry point, registers all rules
+├── main.dart              # Plugin entry point, exports `plugin` variable
+├── arsync_plugin.dart     # ArsyncPlugin class, registers all rules
+├── arsync_lints.dart      # Library exports for programmatic access
 └── src/
+    ├── arsync_lint_rule.dart  # Base rule classes and helpers
     ├── utils.dart             # PathUtils, ImportUtils helpers
     └── rules/                 # 27 lint rules organized by category
         ├── presentation_layer_isolation.dart   # Category A
@@ -82,19 +90,19 @@ context.addPostRunCallback(() {
 ### Creating a New Rule
 
 1. Create `lib/src/rules/rule_name.dart`
-2. Extend `DartLintRule` with a `const` constructor
+2. Extend `AnalysisRule` (single diagnostic) or `MultiAnalysisRule` (multiple diagnostics)
 3. Define `LintCode` constants for error messages
-4. Implement `run()` using `context.registry.add*()` callbacks
-5. Register in `lib/arsync_lints.dart` `getLintRules()`
-6. Add tests to `test/lint_rules_test.dart`
+4. Implement `registerNodeProcessors()` using `registry.add*()` callbacks
+5. Register in `lib/arsync_plugin.dart` `getLintRules()` method
+6. Add tests to `test/rules/` directory
 7. Add example violations to `example/lib/`
 
 ### LintCode Definition
 
 ```dart
-static const _code = LintCode(
-  name: 'rule_name',  // Must be snake_case
-  problemMessage: 'What is wrong.',
+static const LintCode code = LintCode(
+  'rule_name',  // Must be snake_case
+  'What is wrong.',
   correctionMessage: 'How to fix it.',
 );
 ```
@@ -103,7 +111,7 @@ static const _code = LintCode(
 
 For complex traversal within a node (e.g., finding all method calls in a build method):
 ```dart
-final visitor = _MyVisitor(reporter, code);
+final visitor = _MyVisitor(rule);
 body.accept(visitor);
 
 class _MyVisitor extends RecursiveAstVisitor<void> {
@@ -111,6 +119,58 @@ class _MyVisitor extends RecursiveAstVisitor<void> {
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     // Check node
     super.visitInstanceCreationExpression(node);
+  }
+}
+```
+
+### Quick Fixes
+
+To add a quick fix for a rule:
+1. Create `lib/src/fixes/rule_name_fix.dart`
+2. Extend `ResolvedCorrectionProducer`
+3. Define `FixKind` with priority
+4. Implement `compute()` to build the fix
+5. Register in `ArsyncPlugin.register()` using `registry.registerFixForRule()`
+
+Example:
+```dart
+class MyRuleFix extends ResolvedCorrectionProducer {
+  static const _fixKind = FixKind(
+    'arsync.fix.myRule',
+    100, // Priority
+    'Fix description',
+  );
+
+  @override
+  Future<void> compute(ChangeBuilder builder) async {
+    // Build the fix
+  }
+}
+```
+
+## Testing
+
+Tests use the `analyzer_testing` package with `test_reflective_loader`:
+
+```dart
+@reflectiveTest
+class MyRuleTest extends AnalysisRuleTest {
+  @override
+  void setUp() {
+    rule = MyRule();
+    super.setUp();
+  }
+
+  Future<void> test_good_case() async {
+    await assertNoDiagnostics(r'''
+void main() {}
+''');
+  }
+
+  Future<void> test_bad_case() async {
+    await assertDiagnostics(r'''
+void badCode() {}
+''', [lint(0, 17)]);
   }
 }
 ```

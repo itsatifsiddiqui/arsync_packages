@@ -1,35 +1,49 @@
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule C1: repository_no_try_catch
 ///
 /// Repositories must throw errors to the ViewModel, not swallow them.
-class RepositoryNoTryCatch extends DartLintRule {
-  const RepositoryNoTryCatch() : super(code: _code);
+class RepositoryNoTryCatch extends AnalysisRule {
+  RepositoryNoTryCatch()
+      : super(
+          name: 'repository_no_try_catch',
+          description:
+              'Repositories must throw errors, not swallow them with try/catch.',
+        );
 
-  static const _code = LintCode(
-    name: 'repository_no_try_catch',
-    problemMessage:
-        'Repositories must throw errors, not swallow them with try/catch.',
+  static const LintCode code = LintCode(
+    'repository_no_try_catch',
+    'Repositories must throw errors, not swallow them with try/catch.',
     correctionMessage:
         'Remove the try-catch block. Let the exception bubble up to the ViewModel.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
     // Only apply to files in lib/repositories/
-    if (!PathUtils.isInRepositories(resolver.path)) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInRepositories(path)) {
       return;
     }
 
-    context.registry.addTryStatement((node) {
-      reporter.atNode(node, _code);
-    });
+    var visitor = _Visitor(this);
+    registry.addTryStatement(this, visitor);
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
+
+  _Visitor(this.rule);
+
+  @override
+  void visitTryStatement(TryStatement node) {
+    rule.reportAtNode(node);
   }
 }

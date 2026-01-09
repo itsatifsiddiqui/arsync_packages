@@ -1,55 +1,68 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import '../utils.dart';
+import '../arsync_lint_rule.dart';
 
 /// Rule D3: print_ban
 ///
 /// Production apps should not spam the console.
 /// Banned: print(), debugPrint()
-class PrintBan extends DartLintRule {
-  const PrintBan() : super(code: _code);
+class PrintBan extends AnalysisRule {
+  PrintBan()
+      : super(
+          name: 'print_ban',
+          description:
+              'print() and debugPrint() are banned. Use .log() extension instead.',
+        );
 
-  static const _code = LintCode(
-    name: 'print_ban',
-    problemMessage:
-        'print() and debugPrint() are banned. Use .log() extension instead.',
+  static const LintCode code = LintCode(
+    'print_ban',
+    'print() and debugPrint() are banned. Use .log() extension instead.',
     correctionMessage: 'Replace with your custom logging extension (.log()).',
   );
+
+  @override
+  DiagnosticCode get diagnosticCode => code;
 
   static const _bannedFunctions = ['print', 'debugPrint'];
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
     // Only apply to lib/ files
-    if (!PathUtils.isInLib(resolver.path)) {
+    if (!context.isInLibDir) {
       return;
     }
 
-    context.registry.addMethodInvocation((node) {
-      final methodName = node.methodName.name;
+    var visitor = _Visitor(this);
+    registry.addMethodInvocation(this, visitor);
+    registry.addFunctionExpressionInvocation(this, visitor);
+  }
+}
 
-      if (_bannedFunctions.contains(methodName)) {
-        // Make sure it's a top-level function call, not a method on an object
-        if (node.target == null) {
-          reporter.atNode(node, _code);
-        }
-      }
-    });
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
 
-    // Also check for function expression invocations (standalone function calls)
-    context.registry.addFunctionExpressionInvocation((node) {
-      final function = node.function;
-      if (function is SimpleIdentifier) {
-        if (_bannedFunctions.contains(function.name)) {
-          reporter.atNode(node, _code);
-        }
+  _Visitor(this.rule);
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    final methodName = node.methodName.name;
+
+    if (PrintBan._bannedFunctions.contains(methodName)) {
+      // Make sure it's a top-level function call, not a method on an object
+      if (node.target == null) {
+        rule.reportAtNode(node);
       }
-    });
+    }
+  }
+
+  @override
+  void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    final function = node.function;
+    if (function is SimpleIdentifier) {
+      if (PrintBan._bannedFunctions.contains(function.name)) {
+        rule.reportAtNode(node);
+      }
+    }
   }
 }
