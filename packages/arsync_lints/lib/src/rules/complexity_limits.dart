@@ -5,7 +5,6 @@ import '../arsync_lint_rule.dart';
 /// Rule D1: complexity_limits
 ///
 /// Prevents complex, unreadable code:
-/// - Max Method Parameters: 4
 /// - Max Nesting Depth: 5
 /// - Max Method Lines: 60
 /// - Max Build Method Lines: 120
@@ -16,13 +15,6 @@ class ComplexityLimits extends MultiAnalysisRule {
           name: 'complexity_limits',
           description: 'Enforce code complexity limits.',
         );
-
-  static const paramCode = LintCode(
-    'complexity_limits',
-    'Methods cannot have more than 4 parameters.',
-    correctionMessage:
-        'Reduce parameters by using a parameter object or refactoring.',
-  );
 
   static const nestingCode = LintCode(
     'complexity_limits',
@@ -51,7 +43,6 @@ class ComplexityLimits extends MultiAnalysisRule {
 
   @override
   List<DiagnosticCode> get diagnosticCodes => [
-        paramCode,
         nestingCode,
         methodLinesCode,
         buildLinesCode,
@@ -88,13 +79,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    _checkParameterCount(node.functionExpression.parameters);
     _checkFunctionLines(node);
   }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    _checkParameterCount(node.parameters);
     _checkMethodLines(node);
   }
 
@@ -106,23 +95,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitConditionalExpression(ConditionalExpression node) {
     _checkNestedTernary(node);
-  }
-
-  void _checkParameterCount(FormalParameterList? parameters) {
-    if (parameters == null) return;
-
-    final paramCount = parameters.parameters.length;
-    if (paramCount > 4) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: parameters.offset,
-        lintName: 'complexity_limits',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
-      rule.reportAtNode(parameters, diagnosticCode: ComplexityLimits.paramCode);
-    }
   }
 
   void _checkMethodLines(MethodDeclaration node) {

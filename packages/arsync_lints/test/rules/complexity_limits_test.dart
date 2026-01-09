@@ -16,29 +16,11 @@ class ComplexityLimitsTest extends AnalysisRuleTest {
     super.setUp();
   }
 
-  Future<void> test_good_fourParameters() async {
+  Future<void> test_good_manyParameters() async {
+    // Parameter count is no longer limited
     await assertNoDiagnostics(r'''
-void doSomething(String a, int b, bool c, double d) {}
+void doSomething(String a, int b, bool c, double d, String e, int f) {}
 ''');
-  }
-
-  Future<void> test_bad_fiveParameters() async {
-    await assertDiagnostics(r'''
-void doSomething(String a, int b, bool c, double d, String e) {}
-''', [lint(16, 45)]);
-  }
-
-  Future<void> test_bad_sixParameters() async {
-    await assertDiagnostics(r'''
-void updateProfile(
-  String userId,
-  String name,
-  String email,
-  String phone,
-  String address,
-  String city,
-) {}
-''', [lint(18, 100)]);
   }
 
   Future<void> test_bad_nestedTernary() async {

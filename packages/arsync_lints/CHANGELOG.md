@@ -1,6 +1,10 @@
+## 0.0.6
+
+- Remove `early_return_enforcement` rule (generated false positives in valid code patterns)
+- Remove max 4 method parameters limit from `complexity_limits` rule
+
 ## 0.0.5
 
-- Add `early_return_enforcement` lint rule to encourage early return pattern
 - Add ignore comment support.
 - Increase max nesting depth from 3 to 5 levels in `complexity_limits` rule
 

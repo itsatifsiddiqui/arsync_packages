@@ -33,7 +33,6 @@ import 'src/rules/repository_class_restriction.dart';
 
 // Category D: Code Quality & Complexity
 import 'src/rules/complexity_limits.dart';
-import 'src/rules/early_return_enforcement.dart';
 import 'src/rules/global_variable_restriction.dart';
 import 'src/rules/print_ban.dart';
 import 'src/rules/barrel_file_restriction.dart';
@@ -72,7 +71,6 @@ import 'src/fixes/repository_provider_declaration_fix.dart';
 // Quick Fixes - Category D
 import 'src/fixes/barrel_file_restriction_fix.dart';
 import 'src/fixes/complexity_limits_fix.dart';
-import 'src/fixes/early_return_enforcement_fix.dart';
 import 'src/fixes/global_variable_restriction_fix.dart';
 import 'src/fixes/ignore_file_ban_fix.dart';
 import 'src/fixes/print_ban_fix.dart';
@@ -138,7 +136,6 @@ class ArsyncPlugin extends Plugin {
     // Category D: Code Quality & Complexity
     // These rules enforce clean code standards and complexity limits.
     registry.registerWarningRule(ComplexityLimits());
-    registry.registerWarningRule(EarlyReturnEnforcement());
     registry.registerWarningRule(GlobalVariableRestriction());
     registry.registerWarningRule(PrintBan());
     registry.registerWarningRule(BarrelFileRestriction());
@@ -324,10 +321,6 @@ class ArsyncPlugin extends Plugin {
       ComplexityLimitsAddTodoFix.new,
     );
     registry.registerFixForRule(
-      ComplexityLimits.paramCode,
-      ComplexityLimitsAddTodoFix.new,
-    );
-    registry.registerFixForRule(
       ComplexityLimits.nestingCode,
       ComplexityLimitsAddTodoFix.new,
     );
@@ -342,10 +335,6 @@ class ArsyncPlugin extends Plugin {
     registry.registerFixForRule(
       BarrelFileRestriction.code,
       BarrelFileRestrictionFix.new,
-    );
-    registry.registerFixForRule(
-      EarlyReturnEnforcement.code,
-      EarlyReturnEnforcementFix.new,
     );
 
     // Category E: More UI Safety fixes
