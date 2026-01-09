@@ -1,0 +1,32 @@
+name: arsync_lints_example
+description: Example project demonstrating arsync_lints rules
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.8.1
+
+# NOTE: This is a simplified example for testing without Flutter SDK.
+# In a real Flutter project, you would uncomment the flutter dependencies below.
+
+dependencies:
+  # State Management (pure Dart versions for testing)
+  riverpod: ^2.6.1
+
+  # Data Classes
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Networking
+  dio: ^5.7.0
+  http: ^1.2.2
+
+dev_dependencies:
+  arsync_lints:
+    path: ../
+  custom_lint: ^0.7.0
+
+  # Code generation
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0

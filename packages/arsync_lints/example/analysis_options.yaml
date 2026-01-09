@@ -1,0 +1,46 @@
+analyzer:
+  plugins:
+    - custom_lint
+
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+
+  errors:
+    # Suppress import errors for packages not in pubspec (for demo purposes)
+    uri_does_not_exist: ignore
+    undefined_class: ignore
+    undefined_function: ignore
+    unused_import: ignore
+
+custom_lint:
+  # Enable all arsync_lints rules
+  rules:
+    # Category A: Architectural Layer Isolation
+    - presentation_layer_isolation
+    - shared_widget_purity
+    - model_purity
+    - repository_isolation
+
+    # Category B: Riverpod & State Management
+    - provider_autodispose_enforcement
+    - viewmodel_naming_convention
+    - no_context_in_providers
+    - async_viewmodel_safety
+
+    # Category C: Repository & Data Integrity
+    - repository_no_try_catch
+    - repository_async_return
+
+    # Category D: Code Quality & Complexity
+    - complexity_limits
+    - global_variable_restriction
+    - print_ban
+    - barrel_file_restriction
+    - ignore_file_ban
+
+    # Category E: UI Safety & Consistency
+    - hook_safety_enforcement
+    - scaffold_location
+    - asset_safety
+    - file_class_match
