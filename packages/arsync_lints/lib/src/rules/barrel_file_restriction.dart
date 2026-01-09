@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule D4: barrel_file_restriction
@@ -37,7 +39,10 @@ class BarrelFileRestriction extends AnalysisRule {
 
     if (!isInBannedLocation) return;
 
-    final visitor = _Visitor(this, fileName);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, fileName, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -45,13 +50,23 @@ class BarrelFileRestriction extends AnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
   final String fileName;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.fileName);
+  _Visitor(this.rule, this.fileName, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
     // Check if file is named index.dart
     if (fileName == 'index.dart') {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'barrel_file_restriction',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(node);
       return;
     }
@@ -69,6 +84,14 @@ class _Visitor extends SimpleAstVisitor<void> {
           directives.any((directive) => directive is ExportDirective);
 
       if (hasOnlyExports && hasExports) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: node.offset,
+          lintName: 'barrel_file_restriction',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          return;
+        }
         rule.reportAtNode(node);
       }
     }

@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule A2: shared_widget_purity
@@ -57,7 +59,10 @@ class SharedWidgetPurity extends MultiAnalysisRule {
       return;
     }
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    var visitor = _Visitor(this, content, lineInfo);
     registry.addImportDirective(this, visitor);
     registry.addCompilationUnit(this, visitor);
   }
@@ -82,8 +87,10 @@ class SharedWidgetPurity extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitImportDirective(ImportDirective node) {
@@ -91,6 +98,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (importUri == null) return;
 
     if (SharedWidgetPurity.isBannedImport(importUri)) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'shared_widget_purity',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(node, diagnosticCode: SharedWidgetPurity.importCode);
     }
   }
@@ -112,6 +127,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (publicWidgets.length > 1) {
       for (var i = 1; i < publicWidgets.length; i++) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: publicWidgets[i].name.offset,
+          lintName: 'shared_widget_purity',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtOffset(
           publicWidgets[i].name.offset,
           publicWidgets[i].name.length,

@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule E1: hook_safety_enforcement
@@ -56,15 +58,20 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
       return;
     }
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    var visitor = _Visitor(this, content, lineInfo);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -75,12 +82,12 @@ class _Visitor extends SimpleAstVisitor<void> {
         final body = member.body;
 
         // Check for banned controllers
-        final controllerVisitor = _ControllerVisitor(rule);
+        final controllerVisitor = _ControllerVisitor(rule, content, lineInfo);
         body.accept(controllerVisitor);
 
         // Check for GlobalKey<FormState>() in HookWidgets
         if (isHookWidget) {
-          final formKeyVisitor = _FormKeyVisitor(rule);
+          final formKeyVisitor = _FormKeyVisitor(rule, content, lineInfo);
           body.accept(formKeyVisitor);
         }
       }
@@ -98,15 +105,24 @@ class _Visitor extends SimpleAstVisitor<void> {
 
 class _ControllerVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _ControllerVisitor(this.rule);
+  _ControllerVisitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final typeName = node.constructorName.type.name.lexeme;
 
     if (HookSafetyEnforcement.bannedControllers.contains(typeName)) {
-      rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.controllerCode);
+      if (!IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'hook_safety_enforcement',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.controllerCode);
+      }
     }
 
     super.visitInstanceCreationExpression(node);
@@ -115,8 +131,10 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
 
 class _FormKeyVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _FormKeyVisitor(this.rule);
+  _FormKeyVisitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -127,7 +145,14 @@ class _FormKeyVisitor extends RecursiveAstVisitor<void> {
       if (typeArgs != null && typeArgs.arguments.isNotEmpty) {
         final typeArg = typeArgs.arguments.first;
         if (typeArg is NamedType && typeArg.name.lexeme == 'FormState') {
-          rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.formKeyCode);
+          if (!IgnoreUtils.shouldIgnoreAtOffset(
+            offset: node.offset,
+            lintName: 'hook_safety_enforcement',
+            content: content,
+            lineInfo: lineInfo,
+          )) {
+            rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.formKeyCode);
+          }
         }
       }
     }

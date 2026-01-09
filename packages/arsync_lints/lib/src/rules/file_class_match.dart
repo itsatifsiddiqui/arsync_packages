@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule E4: file_class_match
@@ -44,7 +46,10 @@ class FileClassMatch extends AnalysisRule {
     final fileName = PathUtils.getFileName(path);
     final expectedClassName = PathUtils.snakeToPascal(fileName);
 
-    final visitor = _Visitor(this, expectedClassName);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, expectedClassName, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -52,8 +57,10 @@ class FileClassMatch extends AnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
   final String expectedClassName;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.expectedClassName);
+  _Visitor(this.rule, this.expectedClassName, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -79,6 +86,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final hasMatchingClass = classNames.any((name) => name == expectedClassName);
 
     if (!hasMatchingClass && firstClass != null) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: firstClass.name.offset,
+        lintName: 'file_class_match',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       // Report on the first class as a representative location
       rule.reportAtOffset(firstClass.name.offset, firstClass.name.length);
     }

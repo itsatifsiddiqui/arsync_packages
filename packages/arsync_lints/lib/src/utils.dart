@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
 
 /// Utility class for path checking and common operations.
@@ -129,5 +131,95 @@ class ImportUtils {
 
     // Exact or prefix match
     return importUri.startsWith(pattern) || importUri == pattern;
+  }
+}
+
+/// Utility class for checking ignore comments.
+class IgnoreUtils {
+  /// Checks if a node should be ignored for a specific lint rule.
+  ///
+  /// Checks both:
+  /// - `// ignore: lint_name` on the line before the node
+  /// - `// ignore_for_file: lint_name` anywhere in the file
+  static bool shouldIgnore({
+    required AstNode node,
+    required String lintName,
+    required String content,
+    required LineInfo lineInfo,
+    required CompilationUnit unit,
+  }) {
+    return shouldIgnoreAtOffset(
+      offset: node.offset,
+      lintName: lintName,
+      content: content,
+      lineInfo: lineInfo,
+    );
+  }
+
+  /// Checks if a position (by offset) should be ignored for a specific lint rule.
+  ///
+  /// Checks both:
+  /// - `// ignore: lint_name` on the line before the offset
+  /// - `// ignore_for_file: lint_name` anywhere in the file
+  static bool shouldIgnoreAtOffset({
+    required int offset,
+    required String lintName,
+    required String content,
+    required LineInfo lineInfo,
+  }) {
+    // Check for ignore_for_file
+    if (_hasIgnoreForFile(content, lintName)) {
+      return true;
+    }
+
+    // Check for ignore on the preceding line or same line
+    if (_hasIgnoreAtOffset(offset, lintName, content, lineInfo)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Check if the file has `// ignore_for_file: lint_name`
+  static bool _hasIgnoreForFile(String content, String lintName) {
+    final pattern = RegExp(
+      r'//\s*ignore_for_file\s*:.*\b' + RegExp.escape(lintName) + r'\b',
+      caseSensitive: false,
+    );
+    return pattern.hasMatch(content);
+  }
+
+  /// Check if there's an `// ignore: lint_name` comment at an offset
+  static bool _hasIgnoreAtOffset(
+    int offset,
+    String lintName,
+    String content,
+    LineInfo lineInfo,
+  ) {
+    // Get the line number at the offset
+    final nodeLine = lineInfo.getLocation(offset).lineNumber;
+
+    // Check the line before and the same line
+    for (int line = nodeLine - 1; line <= nodeLine; line++) {
+      if (line < 1) continue;
+
+      final lineStart = lineInfo.getOffsetOfLine(line - 1);
+      final lineEnd = line < lineInfo.lineCount
+          ? lineInfo.getOffsetOfLine(line)
+          : content.length;
+
+      final lineContent = content.substring(lineStart, lineEnd);
+
+      // Check for ignore comment
+      final pattern = RegExp(
+        r'//\s*ignore\s*:.*\b' + RegExp.escape(lintName) + r'\b',
+        caseSensitive: false,
+      );
+      if (pattern.hasMatch(lineContent)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

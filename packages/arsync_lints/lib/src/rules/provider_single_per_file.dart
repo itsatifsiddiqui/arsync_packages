@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: provider_single_per_file
@@ -63,7 +65,10 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
     final prefix = fileName.replaceAll('_provider', '');
     final expectedProviderName = '${_snakeToCamel(prefix)}Provider';
 
-    final visitor = _Visitor(this, expectedProviderName);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, expectedProviderName, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 
@@ -86,8 +91,10 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
   final String expectedProviderName;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.expectedProviderName);
+  _Visitor(this.rule, this.expectedProviderName, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -119,6 +126,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (providerDeclarations.length > 1) {
       // Report on all providers after the first one
       for (var i = 1; i < providerDeclarations.length; i++) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: providerDeclarations[i].name.offset,
+          lintName: 'provider_single_per_file',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtOffset(
           providerDeclarations[i].name.offset,
           providerDeclarations[i].name.length,
@@ -132,6 +147,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     final providerName = mainProvider.name.lexeme;
 
     if (providerName != expectedProviderName) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: mainProvider.name.offset,
+        lintName: 'provider_single_per_file',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtOffset(
         mainProvider.name.offset,
         mainProvider.name.length,

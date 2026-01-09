@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule B1: provider_autodispose_enforcement
@@ -37,15 +39,20 @@ class ProviderAutodisposeEnforcement extends AnalysisRule {
       return;
     }
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    var visitor = _Visitor(this, content, lineInfo);
     registry.addTopLevelVariableDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
@@ -66,6 +73,14 @@ class _Visitor extends SimpleAstVisitor<void> {
           initializerSource.contains('ref.keepAlive(');
 
       if (!hasAutoDispose && !hasKeepAlive) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: variable.name.offset,
+          lintName: 'provider_autodispose_enforcement',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtOffset(variable.name.offset, variable.name.length);
       }
     }

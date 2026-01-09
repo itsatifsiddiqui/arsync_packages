@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule A1: presentation_layer_isolation
@@ -63,7 +65,10 @@ class PresentationLayerIsolation extends MultiAnalysisRule {
       return;
     }
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    var visitor = _Visitor(this, content, lineInfo);
     registry.addImportDirective(this, visitor);
     registry.addClassDeclaration(this, visitor);
   }
@@ -112,8 +117,10 @@ class PresentationLayerIsolation extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitImportDirective(ImportDirective node) {
@@ -121,6 +128,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (importUri == null) return;
 
     if (PresentationLayerIsolation.isBannedImport(importUri)) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'presentation_layer_isolation',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(node, diagnosticCode: PresentationLayerIsolation.importCode);
     }
   }
@@ -137,6 +152,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Check if it looks like a parameter/data class
     if (PresentationLayerIsolation.isParameterClass(node)) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.name.offset,
+        lintName: 'presentation_layer_isolation',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtOffset(
         node.name.offset,
         node.name.length,

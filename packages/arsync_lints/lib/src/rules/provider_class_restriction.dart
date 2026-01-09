@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: provider_class_restriction
@@ -51,7 +53,11 @@ class ProviderClassRestriction extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+    final unit = context.definingUnit.unit;
+
+    final visitor = _Visitor(this, content, lineInfo, unit);
     registry.addClassDeclaration(this, visitor);
   }
 
@@ -77,8 +83,11 @@ class ProviderClassRestriction extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
+  final CompilationUnit unit;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo, this.unit);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -86,6 +95,17 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Skip private classes (they might be implementation details)
     if (className.startsWith('_')) return;
+
+    // Check for ignore comments
+    if (IgnoreUtils.shouldIgnore(
+      node: node,
+      lintName: 'provider_class_restriction',
+      content: content,
+      lineInfo: lineInfo,
+      unit: unit,
+    )) {
+      return;
+    }
 
     // Check if it's a Notifier class
     if (ProviderClassRestriction.isNotifierClass(node)) return;

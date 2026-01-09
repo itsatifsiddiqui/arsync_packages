@@ -1,3 +1,9 @@
+## 0.0.5
+
+- Add `early_return_enforcement` lint rule to encourage early return pattern
+- Add ignore comment support.
+- Increase max nesting depth from 3 to 5 levels in `complexity_limits` rule
+
 ## 0.0.4
 
 - migrate from custom lint to analyzer plugin.

@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule E2: scaffold_location
@@ -32,7 +34,10 @@ class ScaffoldLocation extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -40,14 +45,24 @@ class ScaffoldLocation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final typeName = node.constructorName.type.name.lexeme;
 
     if (typeName == 'Scaffold') {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'scaffold_location',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(node);
     }
   }
@@ -55,6 +70,14 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == 'Scaffold') {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'scaffold_location',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(node);
     }
   }

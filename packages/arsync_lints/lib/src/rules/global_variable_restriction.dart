@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule D2: global_variable_restriction
@@ -50,8 +52,17 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
     final isProvidersFile = PathUtils.isInProviders(path);
     final isRepositoriesFile = PathUtils.isInRepositories(path);
 
-    final visitor =
-        _Visitor(this, isConstantsFile, isProvidersFile, isRepositoriesFile);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(
+      this,
+      isConstantsFile,
+      isProvidersFile,
+      isRepositoriesFile,
+      content,
+      lineInfo,
+    );
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
   }
@@ -62,12 +73,16 @@ class _Visitor extends SimpleAstVisitor<void> {
   final bool isConstantsFile;
   final bool isProvidersFile;
   final bool isRepositoriesFile;
+  final String content;
+  final LineInfo lineInfo;
 
   _Visitor(
     this.rule,
     this.isConstantsFile,
     this.isProvidersFile,
     this.isRepositoriesFile,
+    this.content,
+    this.lineInfo,
   );
 
   @override
@@ -86,6 +101,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // Allow Providers in lib/repositories/ (RepoProvider)
       if (isRepositoriesFile && name.endsWith('Provider')) continue;
+
+      // Check for ignore comment
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: variable.name.offset,
+        lintName: 'global_variable_restriction',
+        content: content,
+        lineInfo: lineInfo,
+      )) continue;
 
       // Everything else is an error
       rule.reportAtOffset(
@@ -108,6 +131,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Allow main function
     if (name == 'main') return;
+
+    // Check for ignore comment
+    if (IgnoreUtils.shouldIgnoreAtOffset(
+      offset: node.name.offset,
+      lintName: 'global_variable_restriction',
+      content: content,
+      lineInfo: lineInfo,
+    )) return;
 
     // Everything else is an error
     rule.reportAtOffset(

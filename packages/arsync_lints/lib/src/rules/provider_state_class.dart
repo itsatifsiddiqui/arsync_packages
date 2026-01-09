@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: provider_state_class
@@ -71,15 +73,20 @@ class ProviderStateClass extends MultiAnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -140,6 +147,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       if (classInfo == null) {
         // State class is not defined in this file (imported)
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: usage.stateTypeNode.offset,
+          lintName: 'provider_state_class',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtNode(
             usage.stateTypeNode, diagnosticCode: ProviderStateClass.importedStateCode);
         continue;
@@ -147,6 +162,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // Check if state class has @freezed annotation
       if (!classInfo.hasFreezed) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: classInfo.node.name.offset,
+          lintName: 'provider_state_class',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtOffset(
           classInfo.node.name.offset,
           classInfo.node.name.length,

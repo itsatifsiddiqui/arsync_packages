@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule D5: ignore_file_ban
@@ -31,29 +33,39 @@ class IgnoreFileBan extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this, context);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final RuleContext context;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.context);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Check all comments in the file
-    final sourceContent = context.definingUnit.content;
-
     // Find all occurrences of // ignore_for_file:
     final pattern = RegExp(r'//\s*ignore_for_file:');
-    final matches = pattern.allMatches(sourceContent);
+    final matches = pattern.allMatches(content);
 
     for (final match in matches) {
       final offset = match.start;
       final length = match.end - match.start;
+
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: offset,
+        lintName: 'ignore_file_ban',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        continue;
+      }
 
       rule.reportAtOffset(offset, length);
     }

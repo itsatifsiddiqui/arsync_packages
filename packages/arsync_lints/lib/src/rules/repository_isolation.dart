@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule A4: repository_isolation
@@ -40,7 +42,10 @@ class RepositoryIsolation extends AnalysisRule {
       return;
     }
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    var visitor = _Visitor(this, content, lineInfo);
     registry.addImportDirective(this, visitor);
   }
 
@@ -56,8 +61,10 @@ class RepositoryIsolation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitImportDirective(ImportDirective node) {
@@ -65,6 +72,14 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (importUri == null) return;
 
     if (RepositoryIsolation.isBannedImport(importUri)) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: node.offset,
+        lintName: 'repository_isolation',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(node);
     }
   }

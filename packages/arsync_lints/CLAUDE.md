@@ -185,7 +185,7 @@ The `example/` directory contains:
 ## Complexity Limits
 
 - Max 4 method parameters
-- Max 3 nesting levels
+- Max 5 nesting levels
 - Max 60 lines per method
 - Max 120 lines for `build()` methods
 - Nested ternary operators banned

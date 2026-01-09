@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule B4: async_viewmodel_safety
@@ -30,15 +32,20 @@ class AsyncViewModelSafety extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -72,6 +79,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final awaitExpr in awaitVisitor.awaitExpressions) {
       // Check if this await is inside a try block
       if (!_isInsideTryBlock(awaitExpr)) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: awaitExpr.offset,
+          lintName: 'async_viewmodel_safety',
+          content: content,
+          lineInfo: lineInfo,
+        )) continue;
         rule.reportAtNode(awaitExpr);
       }
     }

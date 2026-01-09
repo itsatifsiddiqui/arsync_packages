@@ -392,7 +392,7 @@ try {
 
       test('TODO comment generation for complexity', () {
         const todoMessages = [
-          'TODO: Reduce parameters (max 4) - consider using a parameter object',
+          'TODO: Reduce parameters (max 4) - consider using a parameter object using records',
           'TODO: Reduce nesting depth (max 3) - extract methods or use early returns',
           'TODO: Reduce method length (max 60 lines) - extract helper methods',
           'TODO: Reduce build() method length (max 120 lines) - extract widgets',

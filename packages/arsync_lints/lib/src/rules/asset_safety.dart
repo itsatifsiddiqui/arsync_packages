@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule E3: asset_safety
@@ -32,7 +34,10 @@ class AssetSafety extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -40,8 +45,10 @@ class AssetSafety extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -85,11 +92,27 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     // Check if the first argument is a string literal
     if (firstArg is StringLiteral) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: firstArg.offset,
+        lintName: 'asset_safety',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(firstArg);
     }
 
     // Also check if it's a named argument with a string literal
     if (firstArg is NamedExpression && firstArg.expression is StringLiteral) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: firstArg.expression.offset,
+        lintName: 'asset_safety',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(firstArg.expression);
     }
   }

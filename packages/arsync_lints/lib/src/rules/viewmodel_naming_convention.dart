@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule B2: viewmodel_naming_convention
@@ -35,7 +37,10 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
       return;
     }
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    var visitor = _Visitor(this, content, lineInfo);
     registry.addClassDeclaration(this, visitor);
     registry.addTopLevelVariableDeclaration(this, visitor);
   }
@@ -43,8 +48,10 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -58,6 +65,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       final className = node.name.lexeme;
 
       if (!className.endsWith('Notifier')) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: node.name.offset,
+          lintName: 'viewmodel_naming_convention',
+          content: content,
+          lineInfo: lineInfo,
+        )) return;
         rule.reportAtOffset(
           node.name.offset,
           node.name.length,
@@ -78,6 +91,12 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (initializerSource.contains('Provider')) {
         final name = variable.name.lexeme;
         if (!name.endsWith('Provider')) {
+          if (IgnoreUtils.shouldIgnoreAtOffset(
+            offset: variable.name.offset,
+            lintName: 'viewmodel_naming_convention',
+            content: content,
+            lineInfo: lineInfo,
+          )) continue;
           rule.reportAtOffset(
             variable.name.offset,
             variable.name.length,

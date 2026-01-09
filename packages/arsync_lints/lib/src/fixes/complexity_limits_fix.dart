@@ -29,7 +29,7 @@ class ComplexityLimitsAddTodoFix extends ResolvedCorrectionProducer {
     String todoMessage;
 
     if (node is FormalParameterList) {
-      todoMessage = 'TODO: Reduce parameters (max 4) - consider using a parameter object';
+      todoMessage = 'TODO: Reduce parameters (max 4) - consider using a parameter object using records';
     } else if (node is Block) {
       todoMessage = 'TODO: Reduce nesting depth (max 3) - extract methods or use early returns';
     } else if (node is MethodDeclaration || node is FunctionDeclaration) {

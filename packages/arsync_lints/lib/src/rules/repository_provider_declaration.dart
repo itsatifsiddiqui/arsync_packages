@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: repository_provider_declaration
@@ -50,15 +52,20 @@ class RepositoryProviderDeclaration extends MultiAnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -89,12 +96,28 @@ class _Visitor extends SimpleAstVisitor<void> {
       // No provider at all - report on the file (first declaration)
       final firstDecl = node.declarations.firstOrNull;
       if (firstDecl != null) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: firstDecl.offset,
+          lintName: 'repository_provider_declaration',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          return;
+        }
         rule.reportAtNode(
             firstDecl, diagnosticCode: RepositoryProviderDeclaration.missingProviderCode);
       }
     } else if (!hasRepoProvider) {
       // Has providers but none end with RepoProvider
       for (final decl in providerDeclarations) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: decl.name.offset,
+          lintName: 'repository_provider_declaration',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtOffset(
           decl.name.offset,
           decl.name.length,

@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: provider_declaration_syntax
@@ -44,7 +46,10 @@ class ProviderDeclarationSyntax extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFieldDeclaration(this, visitor);
   }
@@ -52,8 +57,10 @@ class ProviderDeclarationSyntax extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
@@ -92,6 +99,14 @@ class _Visitor extends SimpleAstVisitor<void> {
         (source.contains('() {') || source.contains('() =>'));
 
     if (hasTypeArgs || usesClosureInsteadOfNew) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: initializer.offset,
+        lintName: 'provider_declaration_syntax',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(initializer);
     }
   }

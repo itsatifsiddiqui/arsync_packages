@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: repository_dependency_injection
@@ -58,7 +60,10 @@ class RepositoryDependencyInjection extends MultiAnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addFieldDeclaration(this, visitor);
   }
 
@@ -95,8 +100,10 @@ class RepositoryDependencyInjection extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitFieldDeclaration(FieldDeclaration node) {
@@ -115,6 +122,14 @@ class _Visitor extends SimpleAstVisitor<void> {
       final typeName = typeAnnotation.toSource();
       if (typeName == 'Ref' || typeName.startsWith('Ref<')) {
         for (final variable in node.fields.variables) {
+          if (IgnoreUtils.shouldIgnoreAtOffset(
+            offset: variable.name.offset,
+            lintName: 'repository_dependency_injection',
+            content: content,
+            lineInfo: lineInfo,
+          )) {
+            continue;
+          }
           rule.reportAtOffset(
             variable.name.offset,
             variable.name.length,
@@ -132,6 +147,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // Check if it's creating an object instance
       if (RepositoryDependencyInjection.isObjectCreation(initializer)) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: initializer.offset,
+          lintName: 'repository_dependency_injection',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          continue;
+        }
         rule.reportAtNode(
             initializer, diagnosticCode: RepositoryDependencyInjection.directInstantiationCode);
       }

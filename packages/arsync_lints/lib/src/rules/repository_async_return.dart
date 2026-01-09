@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule C2: repository_async_return
@@ -31,15 +33,20 @@ class RepositoryAsyncReturn extends AnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, content, lineInfo);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.content, this.lineInfo);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -72,6 +79,14 @@ class _Visitor extends SimpleAstVisitor<void> {
         returnTypeName == 'Stream';
 
     if (!isValidReturn) {
+      if (IgnoreUtils.shouldIgnoreAtOffset(
+        offset: returnType.offset,
+        lintName: 'repository_async_return',
+        content: content,
+        lineInfo: lineInfo,
+      )) {
+        return;
+      }
       rule.reportAtNode(returnType);
     }
   }

@@ -12,8 +12,8 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 ///   ```
 ///   try {
 ///     await repository.fetch();
-///   } catch (e, s) {
-///     ref.showExceptionDialog(e);
+///   } catch (e) {
+///     ref.showExceptionSheet(e);
 ///   }
 ///   ```
 class AsyncViewModelSafetyFix extends ResolvedCorrectionProducer {
@@ -58,10 +58,11 @@ class AsyncViewModelSafetyFix extends ResolvedCorrectionProducer {
     final statementSource = statement.toSource();
 
     // Build the try-catch block
-    final tryCatch = '''try {
+    final tryCatch =
+        '''try {
 $indent  $statementSource
-$indent} catch (e, s) {
-$indent  ref.showExceptionDialog(e);
+$indent} catch (e) {
+$indent  ref.showExceptionSheet(e);
 $indent}''';
 
     await builder.addDartFileEdit(file, (builder) {

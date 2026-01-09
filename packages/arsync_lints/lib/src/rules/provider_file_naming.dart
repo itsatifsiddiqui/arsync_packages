@@ -1,3 +1,5 @@
+import 'package:analyzer/source/line_info.dart';
+
 import '../arsync_lint_rule.dart';
 
 /// Rule: provider_file_naming
@@ -47,7 +49,10 @@ class ProviderFileNaming extends MultiAnalysisRule {
       return;
     }
 
-    final visitor = _Visitor(this, fileName);
+    final content = context.definingUnit.content;
+    final lineInfo = LineInfo.fromContent(content);
+
+    final visitor = _Visitor(this, fileName, content, lineInfo);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -55,8 +60,10 @@ class ProviderFileNaming extends MultiAnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
   final String fileName;
+  final String content;
+  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.fileName);
+  _Visitor(this.rule, this.fileName, this.content, this.lineInfo);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -66,6 +73,14 @@ class _Visitor extends SimpleAstVisitor<void> {
       for (final declaration in node.declarations) {
         if (declaration is ClassDeclaration &&
             !declaration.name.lexeme.startsWith('_')) {
+          if (IgnoreUtils.shouldIgnoreAtOffset(
+            offset: declaration.name.offset,
+            lintName: 'provider_file_naming',
+            content: content,
+            lineInfo: lineInfo,
+          )) {
+            break;
+          }
           rule.reportAtOffset(
             declaration.name.offset,
             declaration.name.length,
@@ -109,6 +124,14 @@ class _Visitor extends SimpleAstVisitor<void> {
           name.startsWith(expectedNotifierPrefix) && name.endsWith('Notifier'));
 
       if (!hasMatchingNotifier && firstPublicClass != null) {
+        if (IgnoreUtils.shouldIgnoreAtOffset(
+          offset: firstPublicClass.name.offset,
+          lintName: 'provider_file_naming',
+          content: content,
+          lineInfo: lineInfo,
+        )) {
+          return;
+        }
         rule.reportAtOffset(
           firstPublicClass.name.offset,
           firstPublicClass.name.length,
