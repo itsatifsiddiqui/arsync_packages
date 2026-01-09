@@ -19,7 +19,7 @@ sealed class PersistentAuthState with _$PersistentAuthState {
 final persistentAuthProvider =
     NotifierProvider.autoDispose(PersistentAuthNotifier.new);
 
-class PersistentAuthNotifier extends AutoDisposeNotifier<PersistentAuthState> {
+class PersistentAuthNotifier extends Notifier<PersistentAuthState> {
   @override
   PersistentAuthState build() {
     // OK: Using ref.keepAlive() - explicit opt-in to persistence

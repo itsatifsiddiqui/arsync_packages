@@ -19,7 +19,7 @@ sealed class GoodState with _$GoodState {
 final goodProvider = NotifierProvider.autoDispose(GoodNotifier.new);
 
 // OK: Class name ends with "Notifier" and matches provider
-class GoodNotifier extends AutoDisposeNotifier<GoodState> {
+class GoodNotifier extends Notifier<GoodState> {
   @override
   GoodState build() => const GoodState();
 

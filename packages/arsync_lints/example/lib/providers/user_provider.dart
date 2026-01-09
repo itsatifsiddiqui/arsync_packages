@@ -18,17 +18,9 @@ class UserState {
   final bool isLoading;
   final String? error;
 
-  const UserState({
-    this.currentUser,
-    this.isLoading = false,
-    this.error,
-  });
+  const UserState({this.currentUser, this.isLoading = false, this.error});
 
-  UserState copyWith({
-    User? currentUser,
-    bool? isLoading,
-    String? error,
-  }) {
+  UserState copyWith({User? currentUser, bool? isLoading, String? error}) {
     return UserState(
       currentUser: currentUser ?? this.currentUser,
       isLoading: isLoading ?? this.isLoading,
@@ -38,8 +30,7 @@ class UserState {
 }
 
 // OK: Using autoDispose
-final userProvider =
-    NotifierProvider.autoDispose<UserNotifier, UserState>(() {
+final userProvider = NotifierProvider.autoDispose<UserNotifier, UserState>(() {
   return UserNotifier();
 });
 
@@ -49,7 +40,7 @@ class UserProvider {
 }
 
 // OK: Notifier class ends with "Notifier" - satisfies viewmodel_naming_convention
-class UserNotifier extends AutoDisposeNotifier<UserState> {
+class UserNotifier extends Notifier<UserState> {
   @override
   UserState build() {
     return const UserState();

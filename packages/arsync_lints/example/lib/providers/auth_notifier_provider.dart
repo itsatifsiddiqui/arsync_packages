@@ -30,7 +30,7 @@ sealed class User with _$User {
 final authNotifierProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 
 // OK: Provider name ends with "Provider", Class name ends with "Notifier"
-class AuthNotifier extends AutoDisposeNotifier<AuthState> {
+class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     return const AuthState();

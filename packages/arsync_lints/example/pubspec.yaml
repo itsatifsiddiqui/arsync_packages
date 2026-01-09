@@ -11,22 +11,22 @@ environment:
 
 dependencies:
   # State Management (pure Dart versions for testing)
-  riverpod: ^2.6.1
+  riverpod: ^3.1.0
 
   # Data Classes
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
   # Networking
-  dio: ^5.7.0
-  http: ^1.2.2
+  dio: ^5.9.0
+  http: ^1.6.0
 
 dev_dependencies:
   arsync_lints:
     path: ../
-  custom_lint: ^0.7.0
+  custom_lint: ^0.8.1
 
   # Code generation
-  build_runner: ^2.4.13
-  freezed: ^2.5.7
-  json_serializable: ^6.9.0
+  build_runner: ^2.10.4
+  freezed: ^3.2.3
+  json_serializable: ^6.11.2

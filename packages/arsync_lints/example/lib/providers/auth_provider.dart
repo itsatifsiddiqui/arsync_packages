@@ -20,7 +20,7 @@ sealed class AuthState with _$AuthState {
 final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 
 // OK: Notifier class ends with "Notifier" - satisfies viewmodel_naming_convention
-class AuthNotifier extends AutoDisposeNotifier<AuthState> {
+class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     return const AuthState();
