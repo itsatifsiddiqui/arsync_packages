@@ -198,7 +198,7 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
 final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 
 // GOOD - Option 2: Use keepAlive for persistent state
-final authProvider = NotifierProvider(AuthNotifier.new);
+final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 
 class AuthNotifier extends Notifier<AuthState> {
   @override

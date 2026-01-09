@@ -20,11 +20,13 @@ dependencies:
   # Networking
   dio: ^5.9.0
   http: ^1.6.0
+  
 
 dev_dependencies:
   arsync_lints:
     path: ../
   custom_lint: ^0.8.1
+  riverpod_lint: ^3.1.0
 
   # Code generation
   build_runner: ^2.10.4
