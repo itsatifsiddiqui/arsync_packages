@@ -27,8 +27,8 @@ class RepositoryIsolation extends AnalysisRule {
   /// Note: providers/ is allowed for dependency injection (dioProvider, etc.)
   static const _bannedPatterns = [
     'screens/',
-    'package:flutter_riverpod', // UI-specific riverpod
-    'package:hooks_riverpod', // UI-specific hooks riverpod
+    'widgets/',
+    'views/',
   ];
 
   @override

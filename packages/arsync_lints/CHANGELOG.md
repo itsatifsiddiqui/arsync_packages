@@ -1,3 +1,7 @@
+## 0.0.7
+
+- Fixes
+
 ## 0.0.6
 
 - Remove `early_return_enforcement` rule (generated false positives in valid code patterns)

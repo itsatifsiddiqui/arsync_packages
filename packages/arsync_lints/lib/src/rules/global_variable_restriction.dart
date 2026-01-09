@@ -121,6 +121,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
+    // Only check top-level functions (parent is CompilationUnit)
+    // Skip local functions defined inside other functions/methods
+    if (node.parent is! CompilationUnit) return;
+
     final name = node.name.lexeme;
 
     // Skip private functions
