@@ -4,6 +4,7 @@ import 'complexity_limits_test.dart' as complexity_limits;
 import 'presentation_layer_isolation_test.dart' as presentation_layer_isolation;
 import 'print_ban_test.dart' as print_ban;
 import 'provider_declaration_syntax_test.dart' as provider_declaration_syntax;
+import 'provider_state_class_test.dart' as provider_state_class;
 
 void main() {
   defineReflectiveSuite(() {
@@ -12,4 +13,7 @@ void main() {
     print_ban.main();
     provider_declaration_syntax.main();
   });
+
+  // Run non-reflective tests
+  provider_state_class.main();
 }

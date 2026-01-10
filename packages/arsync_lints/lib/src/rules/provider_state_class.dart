@@ -64,8 +64,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
-
     final definedClasses = <String>{};
     final stateClassUsages = <_StateClassUsage>[];
     final classDeclarations = <String, _ClassInfo>{};
@@ -112,18 +110,30 @@ class _Visitor extends SimpleAstVisitor<void> {
       final stateTypeName = usage.stateTypeName;
       final classInfo = classDeclarations[stateTypeName];
 
+      // Only check classes with "State" in the name for being defined in the same file
+      final isStateClass = stateTypeName.contains('State');
+
       if (classInfo == null) {
-        rule.reportAtNode(
-            usage.stateTypeNode, diagnosticCode: ProviderStateClass.importedStateCode);
+        // Only report if it's a State class that should be in the same file
+        if (isStateClass) {
+          if (!ignoreChecker.shouldIgnore(usage.stateTypeNode)) {
+            rule.reportAtNode(
+                usage.stateTypeNode,
+                diagnosticCode: ProviderStateClass.importedStateCode);
+          }
+        }
         continue;
       }
 
-      if (!classInfo.hasFreezed) {
-        rule.reportAtOffset(
-          classInfo.node.name.offset,
-          classInfo.node.name.length,
-          diagnosticCode: ProviderStateClass.freezedCode,
-        );
+      // State classes must have @freezed
+      if (isStateClass && !classInfo.hasFreezed) {
+        if (!ignoreChecker.shouldIgnore(classInfo.node)) {
+          rule.reportAtOffset(
+            classInfo.node.name.offset,
+            classInfo.node.name.length,
+            diagnosticCode: ProviderStateClass.freezedCode,
+          );
+        }
       }
     }
   }

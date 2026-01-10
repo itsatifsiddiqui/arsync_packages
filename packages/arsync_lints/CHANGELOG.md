@@ -1,3 +1,7 @@
+## 0.0.10
+
+- Modifications to `provider_state_class` rule.
+
 ## 0.0.9
 
 - Fix `// ignore:` and `// ignore_for_file:` comments not working
