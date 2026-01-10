@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule E3: asset_safety
@@ -30,14 +28,9 @@ class AssetSafety extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    if (!context.isInLibDir) {
-      return;
-    }
+    if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, content, lineInfo);
+    final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -45,27 +38,20 @@ class AssetSafety extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final typeName = node.constructorName.type.name.lexeme;
     final constructorName = node.constructorName.name?.name;
 
-    // Check for Image.asset
     if (typeName == 'Image' && constructorName == 'asset') {
       _checkFirstArgument(node.argumentList);
     }
-
-    // Check for SvgPicture.asset
     if (typeName == 'SvgPicture' && constructorName == 'asset') {
       _checkFirstArgument(node.argumentList);
     }
-
-    // Check for AssetImage
     if (typeName == 'AssetImage') {
       _checkFirstArgument(node.argumentList);
     }
@@ -76,7 +62,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final target = node.target;
     final methodName = node.methodName.name;
 
-    // Check for Image.asset or SvgPicture.asset method calls
     if (target is SimpleIdentifier) {
       if ((target.name == 'Image' || target.name == 'SvgPicture') &&
           methodName == 'asset') {
@@ -90,29 +75,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final firstArg = argumentList.arguments.first;
 
-    // Check if the first argument is a string literal
     if (firstArg is StringLiteral) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: firstArg.offset,
-        lintName: 'asset_safety',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(firstArg);
     }
 
-    // Also check if it's a named argument with a string literal
     if (firstArg is NamedExpression && firstArg.expression is StringLiteral) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: firstArg.expression.offset,
-        lintName: 'asset_safety',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(firstArg.expression);
     }
   }

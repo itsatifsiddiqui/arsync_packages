@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:arsync_lints/arsync_plugin.dart';
+import 'package:arsync_lints/main.dart';
 
 /// Tests that all fixes are properly configured and registered.
 ///
@@ -10,17 +10,11 @@ import 'package:arsync_lints/arsync_plugin.dart';
 /// 3. Fix logic patterns
 void main() {
   group('Fix Registration Tests', () {
-    late ArsyncPlugin plugin;
-
-    setUp(() {
-      plugin = ArsyncPlugin();
-    });
-
     test('plugin has correct name', () {
       expect(plugin.name, equals('arsync_lints'));
     });
 
-    test('plugin can be instantiated without errors', () {
+    test('plugin is not null', () {
       expect(plugin, isNotNull);
     });
   });

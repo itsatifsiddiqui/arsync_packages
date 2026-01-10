@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule A3: model_purity
@@ -50,23 +48,16 @@ class ModelPurity extends MultiAnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInModels(path)) {
-      return;
-    }
+    if (!PathUtils.isInModels(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addImportDirective(this, visitor);
     registry.addClassDeclaration(this, visitor);
   }
 
   static bool isBannedImport(String importUri) {
     for (final pattern in _bannedPatterns) {
-      if (importUri.contains(pattern)) {
-        return true;
-      }
+      if (importUri.contains(pattern)) return true;
     }
     return false;
   }
@@ -74,10 +65,8 @@ class ModelPurity extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitImportDirective(ImportDirective node) {
@@ -85,14 +74,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (importUri == null) return;
 
     if (ModelPurity.isBannedImport(importUri)) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'model_purity',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node, diagnosticCode: ModelPurity.importCode);
     }
   }
@@ -105,18 +86,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     });
 
     if (!hasFreezed) {
-      if (!IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.name.offset,
-        lintName: 'model_purity',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        rule.reportAtOffset(
-          node.name.offset,
-          node.name.length,
-          diagnosticCode: ModelPurity.freezedCode,
-        );
-      }
+      rule.reportAtOffset(
+        node.name.offset,
+        node.name.length,
+        diagnosticCode: ModelPurity.freezedCode,
+      );
     }
 
     final hasFromJson = node.members.any((member) {
@@ -128,18 +102,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     });
 
     if (!hasFromJson) {
-      if (!IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.name.offset,
-        lintName: 'model_purity',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        rule.reportAtOffset(
-          node.name.offset,
-          node.name.length,
-          diagnosticCode: ModelPurity.fromJsonCode,
-        );
-      }
+      rule.reportAtOffset(
+        node.name.offset,
+        node.name.length,
+        diagnosticCode: ModelPurity.fromJsonCode,
+      );
     }
   }
 }

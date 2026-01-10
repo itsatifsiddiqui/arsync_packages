@@ -1,4 +1,4 @@
-# Dart 3.10+ native plugin system - plugins is a TOP-LEVEL section
+# Dart 3.10+ native plugin system
 plugins:
   arsync_lints:
     path: ../

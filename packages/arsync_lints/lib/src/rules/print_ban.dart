@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule D3: print_ban
@@ -30,15 +28,9 @@ class PrintBan extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // Only apply to lib/ files
-    if (!context.isInLibDir) {
-      return;
-    }
+    if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addMethodInvocation(this, visitor);
     registry.addFunctionExpressionInvocation(this, visitor);
   }
@@ -46,42 +38,23 @@ class PrintBan extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     final methodName = node.methodName.name;
-
-    if (PrintBan._bannedFunctions.contains(methodName)) {
-      // Make sure it's a top-level function call, not a method on an object
-      if (node.target == null) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: node.offset,
-          lintName: 'print_ban',
-          content: content,
-          lineInfo: lineInfo,
-        )) return;
-        rule.reportAtNode(node);
-      }
+    if (PrintBan._bannedFunctions.contains(methodName) && node.target == null) {
+      rule.reportAtNode(node);
     }
   }
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
     final function = node.function;
-    if (function is SimpleIdentifier) {
-      if (PrintBan._bannedFunctions.contains(function.name)) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: node.offset,
-          lintName: 'print_ban',
-          content: content,
-          lineInfo: lineInfo,
-        )) return;
-        rule.reportAtNode(node);
-      }
+    if (function is SimpleIdentifier &&
+        PrintBan._bannedFunctions.contains(function.name)) {
+      rule.reportAtNode(node);
     }
   }
 }

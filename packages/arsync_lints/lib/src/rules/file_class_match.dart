@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule E4: file_class_match
@@ -31,25 +29,15 @@ class FileClassMatch extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    if (!context.isInLibDir) {
-      return;
-    }
+    if (!context.isInLibDir) return;
 
     final path = context.definingUnit.file.path;
-
-    // Skip providers directory - it has special naming rules
-    // (files end with _provider.dart but classes end with Notifier)
-    if (PathUtils.isInProviders(path)) {
-      return;
-    }
+    if (PathUtils.isInProviders(path)) return;
 
     final fileName = PathUtils.getFileName(path);
     final expectedClassName = PathUtils.snakeToPascal(fileName);
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, expectedClassName, content, lineInfo);
+    final visitor = _Visitor(this, expectedClassName);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -57,22 +45,17 @@ class FileClassMatch extends AnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
   final String expectedClassName;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.expectedClassName, this.content, this.lineInfo);
+  _Visitor(this.rule, this.expectedClassName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Collect all public class names
     final classNames = <String>[];
     ClassDeclaration? firstClass;
 
     for (final declaration in node.declarations) {
       if (declaration is ClassDeclaration) {
         final className = declaration.name.lexeme;
-
-        // Skip private classes
         if (className.startsWith('_')) continue;
 
         classNames.add(className);
@@ -82,19 +65,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (classNames.isEmpty) return;
 
-    // Check if any public class matches the expected name
     final hasMatchingClass = classNames.any((name) => name == expectedClassName);
 
     if (!hasMatchingClass && firstClass != null) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: firstClass.name.offset,
-        lintName: 'file_class_match',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
-      // Report on the first class as a representative location
       rule.reportAtOffset(firstClass.name.offset, firstClass.name.length);
     }
   }

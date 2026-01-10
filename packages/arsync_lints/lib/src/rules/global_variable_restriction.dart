@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule D2: global_variable_restriction
@@ -43,26 +41,14 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    if (!context.isInLibDir) {
-      return;
-    }
+    if (!context.isInLibDir) return;
 
     final path = context.definingUnit.file.path;
     final isConstantsFile = PathUtils.isConstantsFile(path);
     final isProvidersFile = PathUtils.isInProviders(path);
     final isRepositoriesFile = PathUtils.isInRepositories(path);
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(
-      this,
-      isConstantsFile,
-      isProvidersFile,
-      isRepositoriesFile,
-      content,
-      lineInfo,
-    );
+    final visitor = _Visitor(this, isConstantsFile, isProvidersFile, isRepositoriesFile);
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
   }
@@ -73,44 +59,19 @@ class _Visitor extends SimpleAstVisitor<void> {
   final bool isConstantsFile;
   final bool isProvidersFile;
   final bool isRepositoriesFile;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(
-    this.rule,
-    this.isConstantsFile,
-    this.isProvidersFile,
-    this.isRepositoriesFile,
-    this.content,
-    this.lineInfo,
-  );
+  _Visitor(this.rule, this.isConstantsFile, this.isProvidersFile, this.isRepositoriesFile);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
     for (final variable in node.variables.variables) {
       final name = variable.name.lexeme;
 
-      // Skip private variables
       if (name.startsWith('_')) continue;
-
-      // Allow k-prefixed variables in constants.dart
       if (isConstantsFile && name.startsWith('k')) continue;
-
-      // Allow Providers in lib/providers/ (includes providers/core/)
       if (isProvidersFile && name.endsWith('Provider')) continue;
-
-      // Allow Providers in lib/repositories/ (RepoProvider)
       if (isRepositoriesFile && name.endsWith('Provider')) continue;
 
-      // Check for ignore comment
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: variable.name.offset,
-        lintName: 'global_variable_restriction',
-        content: content,
-        lineInfo: lineInfo,
-      )) continue;
-
-      // Everything else is an error
       rule.reportAtOffset(
         variable.name.offset,
         variable.name.length,
@@ -121,30 +82,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    // Only check top-level functions (parent is CompilationUnit)
-    // Skip local functions defined inside other functions/methods
     if (node.parent is! CompilationUnit) return;
 
     final name = node.name.lexeme;
 
-    // Skip private functions
     if (name.startsWith('_')) return;
-
-    // Allow k-prefixed functions in constants.dart
     if (isConstantsFile && name.startsWith('k')) return;
-
-    // Allow main function
     if (name == 'main') return;
 
-    // Check for ignore comment
-    if (IgnoreUtils.shouldIgnoreAtOffset(
-      offset: node.name.offset,
-      lintName: 'global_variable_restriction',
-      content: content,
-      lineInfo: lineInfo,
-    )) return;
-
-    // Everything else is an error
     rule.reportAtOffset(
       node.name.offset,
       node.name.length,

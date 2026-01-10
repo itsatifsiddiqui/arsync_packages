@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule C2: repository_async_return
@@ -29,24 +27,17 @@ class RepositoryAsyncReturn extends AnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) {
-      return;
-    }
+    if (!PathUtils.isInRepositories(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, content, lineInfo);
+    final visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -60,33 +51,20 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkMethod(MethodDeclaration method) {
     final methodName = method.name.lexeme;
 
-    // Skip private methods (starting with _)
     if (methodName.startsWith('_')) return;
-
-    // Skip getters and setters
     if (method.isGetter || method.isSetter) return;
 
-    // Skip constructors (they don't have returnType in the same way)
     final returnType = method.returnType;
     if (returnType == null) return;
 
     final returnTypeName = returnType.toSource();
 
-    // Check if return type is Future<T> or Stream<T>
     final isValidReturn = returnTypeName.startsWith('Future<') ||
         returnTypeName.startsWith('Stream<') ||
         returnTypeName == 'Future' ||
         returnTypeName == 'Stream';
 
     if (!isValidReturn) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: returnType.offset,
-        lintName: 'repository_async_return',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(returnType);
     }
   }

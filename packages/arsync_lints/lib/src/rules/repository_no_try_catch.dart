@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule C1: repository_no_try_catch
@@ -28,35 +26,21 @@ class RepositoryNoTryCatch extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // Only apply to files in lib/repositories/
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) {
-      return;
-    }
+    if (!PathUtils.isInRepositories(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addTryStatement(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitTryStatement(TryStatement node) {
-    if (IgnoreUtils.shouldIgnoreAtOffset(
-      offset: node.offset,
-      lintName: 'repository_no_try_catch',
-      content: content,
-      lineInfo: lineInfo,
-    )) return;
     rule.reportAtNode(node);
   }
 }

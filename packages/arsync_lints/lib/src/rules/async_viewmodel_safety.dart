@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule B4: async_viewmodel_safety
@@ -28,24 +26,17 @@ class AsyncViewModelSafety extends AnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) {
-      return;
-    }
+    if (!PathUtils.isInProviders(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, content, lineInfo);
+    final visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -53,14 +44,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (extendsClause == null) return;
 
     final superclassName = extendsClause.superclass.name.lexeme;
-
-    // Only check Notifier and AsyncNotifier classes
     if (!superclassName.contains('Notifier') &&
         !superclassName.contains('AsyncNotifier')) {
       return;
     }
 
-    // Check all methods in the class
     for (final member in node.members) {
       if (member is MethodDeclaration) {
         _checkMethod(member);
@@ -72,19 +60,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     final body = method.body;
     if (body is! BlockFunctionBody) return;
 
-    // Check if method contains await expressions
     final awaitVisitor = _AwaitExpressionVisitor();
     body.accept(awaitVisitor);
 
     for (final awaitExpr in awaitVisitor.awaitExpressions) {
-      // Check if this await is inside a try block
       if (!_isInsideTryBlock(awaitExpr)) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: awaitExpr.offset,
-          lintName: 'async_viewmodel_safety',
-          content: content,
-          lineInfo: lineInfo,
-        )) continue;
         rule.reportAtNode(awaitExpr);
       }
     }
@@ -93,13 +73,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   bool _isInsideTryBlock(AstNode node) {
     AstNode? current = node.parent;
     while (current != null) {
-      if (current is TryStatement) {
-        return true;
-      }
-      // Stop at method boundary
-      if (current is MethodDeclaration || current is FunctionDeclaration) {
-        break;
-      }
+      if (current is TryStatement) return true;
+      if (current is MethodDeclaration || current is FunctionDeclaration) break;
       current = current.parent;
     }
     return false;

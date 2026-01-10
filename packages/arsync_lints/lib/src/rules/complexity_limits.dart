@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule D1: complexity_limits
@@ -54,14 +52,11 @@ class ComplexityLimits extends MultiAnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    if (!context.isInLibDir) {
-      return;
-    }
+    if (!context.isInLibDir) return;
 
     final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
 
-    var visitor = _Visitor(this, context, content, lineInfo);
+    var visitor = _Visitor(this, content);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addBlock(this, visitor);
@@ -71,11 +66,9 @@ class ComplexityLimits extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final RuleContext context;
   final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.context, this.content, this.lineInfo);
+  _Visitor(this.rule, this.content);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
@@ -109,14 +102,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (isBuildMethod) {
       if (lineCount > 120) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: node.name.offset,
-          lintName: 'complexity_limits',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          return;
-        }
         rule.reportAtOffset(
           node.name.offset,
           node.name.length,
@@ -125,14 +110,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     } else {
       if (lineCount > 60) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: node.name.offset,
-          lintName: 'complexity_limits',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          return;
-        }
         rule.reportAtOffset(
           node.name.offset,
           node.name.length,
@@ -151,14 +128,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     final lineCount = endLine - startLine + 1;
 
     if (lineCount > 60) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.name.offset,
-        lintName: 'complexity_limits',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtOffset(
         node.name.offset,
         node.name.length,
@@ -180,24 +149,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     AstNode? current = node;
 
     while (current != null) {
-      if (_isNestingNode(current)) {
-        depth++;
-      }
-      if (current is MethodDeclaration || current is FunctionDeclaration) {
-        break;
-      }
+      if (_isNestingNode(current)) depth++;
+      if (current is MethodDeclaration || current is FunctionDeclaration) break;
       current = current.parent;
     }
 
     if (depth > 5) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'complexity_limits',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node, diagnosticCode: ComplexityLimits.nestingCode);
     }
   }
@@ -215,14 +172,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkNestedTernary(ConditionalExpression node) {
     if (node.thenExpression is ConditionalExpression ||
         node.elseExpression is ConditionalExpression) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'complexity_limits',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node, diagnosticCode: ComplexityLimits.nestedTernaryCode);
     }
   }

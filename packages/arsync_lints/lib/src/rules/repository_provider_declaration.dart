@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule: repository_provider_declaration
@@ -41,35 +39,23 @@ class RepositoryProviderDeclaration extends MultiAnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) {
-      return;
-    }
+    if (!PathUtils.isInRepositories(path)) return;
 
     final fileName = PathUtils.getFileName(path);
+    if (!fileName.endsWith('_repository')) return;
 
-    // Skip if file doesn't end with _repository
-    if (!fileName.endsWith('_repository')) {
-      return;
-    }
-
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, content, lineInfo);
+    final visitor = _Visitor(this);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Track provider declarations
     final providerDeclarations = <VariableDeclaration>[];
 
     for (final declaration in node.declarations) {
@@ -78,7 +64,6 @@ class _Visitor extends SimpleAstVisitor<void> {
           final initializer = variable.initializer;
           if (initializer == null) continue;
 
-          // Check if this is a Provider declaration
           final source = initializer.toSource();
           if (source.startsWith('Provider')) {
             providerDeclarations.add(variable);
@@ -87,37 +72,18 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Check if any RepoProvider exists
     final hasRepoProvider = providerDeclarations.any(
       (decl) => decl.name.lexeme.endsWith('RepoProvider'),
     );
 
     if (providerDeclarations.isEmpty) {
-      // No provider at all - report on the file (first declaration)
       final firstDecl = node.declarations.firstOrNull;
       if (firstDecl != null) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: firstDecl.offset,
-          lintName: 'repository_provider_declaration',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          return;
-        }
         rule.reportAtNode(
             firstDecl, diagnosticCode: RepositoryProviderDeclaration.missingProviderCode);
       }
     } else if (!hasRepoProvider) {
-      // Has providers but none end with RepoProvider
       for (final decl in providerDeclarations) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: decl.name.offset,
-          lintName: 'repository_provider_declaration',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          continue;
-        }
         rule.reportAtOffset(
           decl.name.offset,
           decl.name.length,

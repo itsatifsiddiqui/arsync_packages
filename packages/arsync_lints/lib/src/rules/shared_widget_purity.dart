@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule A2: shared_widget_purity
@@ -31,7 +29,6 @@ class SharedWidgetPurity extends MultiAnalysisRule {
   @override
   List<DiagnosticCode> get diagnosticCodes => [importCode, singleWidgetCode];
 
-  /// Banned import patterns for shared widgets.
   static const _bannedPatterns = [
     'providers/',
     'package:flutter_riverpod',
@@ -39,7 +36,6 @@ class SharedWidgetPurity extends MultiAnalysisRule {
     'package:hooks_riverpod',
   ];
 
-  /// Widget base classes
   static const _widgetBaseClasses = {
     'StatelessWidget',
     'StatefulWidget',
@@ -55,23 +51,16 @@ class SharedWidgetPurity extends MultiAnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInWidgets(path)) {
-      return;
-    }
+    if (!PathUtils.isInWidgets(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addImportDirective(this, visitor);
     registry.addCompilationUnit(this, visitor);
   }
 
   static bool isBannedImport(String importUri) {
     for (final pattern in _bannedPatterns) {
-      if (importUri.contains(pattern)) {
-        return true;
-      }
+      if (importUri.contains(pattern)) return true;
     }
     return false;
   }
@@ -79,18 +68,14 @@ class SharedWidgetPurity extends MultiAnalysisRule {
   static bool isWidgetClass(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return false;
-
-    final superclassName = extendsClause.superclass.name.lexeme;
-    return _widgetBaseClasses.contains(superclassName);
+    return _widgetBaseClasses.contains(extendsClause.superclass.name.lexeme);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitImportDirective(ImportDirective node) {
@@ -98,14 +83,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (importUri == null) return;
 
     if (SharedWidgetPurity.isBannedImport(importUri)) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'shared_widget_purity',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node, diagnosticCode: SharedWidgetPurity.importCode);
     }
   }
@@ -127,14 +104,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (publicWidgets.length > 1) {
       for (var i = 1; i < publicWidgets.length; i++) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: publicWidgets[i].name.offset,
-          lintName: 'shared_widget_purity',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          continue;
-        }
         rule.reportAtOffset(
           publicWidgets[i].name.offset,
           publicWidgets[i].name.length,

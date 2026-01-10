@@ -73,7 +73,7 @@ class HookSafetyControllerFix extends ResolvedCorrectionProducer {
 
 /// Quick fix for `hook_safety_enforcement` rule - FormState key replacement.
 ///
-/// Replaces GlobalKey<FormState> with GlobalObjectKey:
+/// Replaces `GlobalKey<FormState>` with `GlobalObjectKey`:
 /// - Before: `GlobalKey<FormState>()`
 /// - After: `GlobalObjectKey<FormState>(context)`
 class HookSafetyFormKeyFix extends ResolvedCorrectionProducer {

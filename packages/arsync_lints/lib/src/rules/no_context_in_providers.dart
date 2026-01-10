@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule B3: no_context_in_providers
@@ -28,14 +26,9 @@ class NoContextInProviders extends AnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) {
-      return;
-    }
+    if (!PathUtils.isInProviders(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addConstructorDeclaration(this, visitor);
@@ -44,10 +37,8 @@ class NoContextInProviders extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
@@ -70,14 +61,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final param in parameters.parameters) {
       final typeName = _getParameterTypeName(param);
       if (typeName == 'BuildContext') {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: param.offset,
-          lintName: 'no_context_in_providers',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          continue;
-        }
         rule.reportAtNode(param);
       }
     }

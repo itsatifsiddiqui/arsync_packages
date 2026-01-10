@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule: provider_file_naming
@@ -38,21 +36,12 @@ class ProviderFileNaming extends MultiAnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) {
-      return;
-    }
+    if (!PathUtils.isInProviders(path)) return;
 
     final fileName = PathUtils.getFileName(path);
+    if (fileName == 'index' || fileName.startsWith('_')) return;
 
-    // Skip index.dart and other special files
-    if (fileName == 'index' || fileName.startsWith('_')) {
-      return;
-    }
-
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, fileName, content, lineInfo);
+    final visitor = _Visitor(this, fileName);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -60,27 +49,15 @@ class ProviderFileNaming extends MultiAnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
   final String fileName;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.fileName, this.content, this.lineInfo);
+  _Visitor(this.rule, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Check if file ends with _provider
     if (!fileName.endsWith('_provider')) {
-      // Report on the first public class
       for (final declaration in node.declarations) {
         if (declaration is ClassDeclaration &&
             !declaration.name.lexeme.startsWith('_')) {
-          if (IgnoreUtils.shouldIgnoreAtOffset(
-            offset: declaration.name.offset,
-            lintName: 'provider_file_naming',
-            content: content,
-            lineInfo: lineInfo,
-          )) {
-            break;
-          }
           rule.reportAtOffset(
             declaration.name.offset,
             declaration.name.length,
@@ -92,11 +69,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       return;
     }
 
-    // Extract the prefix (e.g., "auth" from "auth_provider")
     final prefix = fileName.replaceAll('_provider', '');
     final expectedNotifierPrefix = PathUtils.snakeToPascal(prefix);
 
-    // Collect all Notifier classes and find first public class
     final notifierClasses = <String>[];
     ClassDeclaration? firstPublicClass;
 
@@ -107,7 +82,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
         firstPublicClass ??= declaration;
 
-        // Check if it's a Notifier class
         final extendsClause = declaration.extendsClause;
         if (extendsClause != null) {
           final superclassName = extendsClause.superclass.name.lexeme;
@@ -118,20 +92,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       }
     }
 
-    // Check if any Notifier class starts with the expected prefix
     if (notifierClasses.isNotEmpty) {
       final hasMatchingNotifier = notifierClasses.any((name) =>
           name.startsWith(expectedNotifierPrefix) && name.endsWith('Notifier'));
 
       if (!hasMatchingNotifier && firstPublicClass != null) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: firstPublicClass.name.offset,
-          lintName: 'provider_file_naming',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          return;
-        }
         rule.reportAtOffset(
           firstPublicClass.name.offset,
           firstPublicClass.name.length,

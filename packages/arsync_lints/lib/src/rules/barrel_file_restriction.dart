@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule D4: barrel_file_restriction
@@ -32,17 +30,13 @@ class BarrelFileRestriction extends AnalysisRule {
     final filePath = context.definingUnit.file.path;
     final fileName = PathUtils.getFileNameWithExtension(filePath);
 
-    // Check if file is in banned locations
     final isInBannedLocation = PathUtils.isInScreens(filePath) ||
         PathUtils.isInFeatures(filePath) ||
         PathUtils.isInProviders(filePath);
 
     if (!isInBannedLocation) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, fileName, content, lineInfo);
+    final visitor = _Visitor(this, fileName);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -50,48 +44,26 @@ class BarrelFileRestriction extends AnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
   final String fileName;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.fileName, this.content, this.lineInfo);
+  _Visitor(this.rule, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Check if file is named index.dart
     if (fileName == 'index.dart') {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'barrel_file_restriction',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node);
       return;
     }
 
-    // Check if file only contains export statements
     final directives = node.directives;
     final declarations = node.declarations;
 
-    // If file has no declarations and only has export directives
     if (declarations.isEmpty) {
       final hasOnlyExports = directives.every((directive) =>
           directive is ExportDirective || directive is LibraryDirective);
-
       final hasExports =
           directives.any((directive) => directive is ExportDirective);
 
       if (hasOnlyExports && hasExports) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: node.offset,
-          lintName: 'barrel_file_restriction',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          return;
-        }
         rule.reportAtNode(node);
       }
     }

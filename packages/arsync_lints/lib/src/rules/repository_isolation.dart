@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule A4: repository_isolation
@@ -22,9 +20,6 @@ class RepositoryIsolation extends AnalysisRule {
   @override
   DiagnosticCode get diagnosticCode => code;
 
-  /// Banned import patterns for repositories.
-  /// Note: riverpod is allowed because repositories must define a Provider.
-  /// Note: providers/ is allowed for dependency injection (dioProvider, etc.)
   static const _bannedPatterns = [
     'screens/',
     'widgets/',
@@ -36,24 +31,16 @@ class RepositoryIsolation extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // Only apply to files in lib/repositories/
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) {
-      return;
-    }
+    if (!PathUtils.isInRepositories(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addImportDirective(this, visitor);
   }
 
   static bool isBannedImport(String importUri) {
     for (final pattern in _bannedPatterns) {
-      if (importUri.contains(pattern)) {
-        return true;
-      }
+      if (importUri.contains(pattern)) return true;
     }
     return false;
   }
@@ -61,10 +48,8 @@ class RepositoryIsolation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitImportDirective(ImportDirective node) {
@@ -72,14 +57,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (importUri == null) return;
 
     if (RepositoryIsolation.isBannedImport(importUri)) {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'repository_isolation',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node);
     }
   }

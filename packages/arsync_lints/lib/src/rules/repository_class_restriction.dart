@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule: repository_class_restriction
@@ -40,16 +38,11 @@ class RepositoryClassRestriction extends MultiAnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) {
-      return;
-    }
+    if (!PathUtils.isInRepositories(path)) return;
 
     final fileName = PathUtils.getFileName(path);
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, fileName, content, lineInfo);
+    final visitor = _Visitor(this, fileName);
     registry.addCompilationUnit(this, visitor);
   }
 }
@@ -57,10 +50,8 @@ class RepositoryClassRestriction extends MultiAnalysisRule {
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
   final String fileName;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.fileName, this.content, this.lineInfo);
+  _Visitor(this.rule, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -69,37 +60,18 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final declaration in node.declarations) {
       if (declaration is ClassDeclaration) {
         final className = declaration.name.lexeme;
-
-        // Skip private classes
         if (className.startsWith('_')) continue;
 
-        // First, check if file name is correct (only report once)
         if (!fileName.endsWith('_repository') && !hasReportedFileNameError) {
-          if (!IgnoreUtils.shouldIgnoreAtOffset(
-            offset: declaration.name.offset,
-            lintName: 'repository_class_restriction',
-            content: content,
-            lineInfo: lineInfo,
-          )) {
-            rule.reportAtOffset(
-              declaration.name.offset,
-              declaration.name.length,
-              diagnosticCode: RepositoryClassRestriction.fileNameCode,
-            );
-          }
+          rule.reportAtOffset(
+            declaration.name.offset,
+            declaration.name.length,
+            diagnosticCode: RepositoryClassRestriction.fileNameCode,
+          );
           hasReportedFileNameError = true;
         }
 
-        // Check if class name contains "Repository"
         if (!className.contains('Repository')) {
-          if (IgnoreUtils.shouldIgnoreAtOffset(
-            offset: declaration.name.offset,
-            lintName: 'repository_class_restriction',
-            content: content,
-            lineInfo: lineInfo,
-          )) {
-            continue;
-          }
           rule.reportAtOffset(
             declaration.name.offset,
             declaration.name.length,

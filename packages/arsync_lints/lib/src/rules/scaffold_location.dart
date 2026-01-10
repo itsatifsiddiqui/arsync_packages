@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule E2: scaffold_location
@@ -30,14 +28,9 @@ class ScaffoldLocation extends AnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInWidgets(path)) {
-      return;
-    }
+    if (!PathUtils.isInWidgets(path)) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    final visitor = _Visitor(this, content, lineInfo);
+    final visitor = _Visitor(this);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -45,24 +38,12 @@ class ScaffoldLocation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    final typeName = node.constructorName.type.name.lexeme;
-
-    if (typeName == 'Scaffold') {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'scaffold_location',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
+    if (node.constructorName.type.name.lexeme == 'Scaffold') {
       rule.reportAtNode(node);
     }
   }
@@ -70,14 +51,6 @@ class _Visitor extends SimpleAstVisitor<void> {
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == 'Scaffold') {
-      if (IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'scaffold_location',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        return;
-      }
       rule.reportAtNode(node);
     }
   }

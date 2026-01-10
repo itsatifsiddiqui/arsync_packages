@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule B1: provider_autodispose_enforcement
@@ -30,57 +28,35 @@ class ProviderAutodisposeEnforcement extends AnalysisRule {
     RuleContext context,
   ) {
     final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) {
-      return;
-    }
+    if (!PathUtils.isInProviders(path)) return;
+    if (path.contains('providers/core/')) return;
 
-    // Skip providers/core/ - infrastructure providers that should persist
-    if (path.contains('providers/core/')) {
-      return;
-    }
-
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addTopLevelVariableDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
     for (final variable in node.variables.variables) {
       final name = variable.name.lexeme;
-
       if (!name.endsWith('Provider')) continue;
 
       final initializer = variable.initializer;
       if (initializer == null) continue;
 
       final initializerSource = initializer.toSource();
-
       final hasAutoDispose = initializerSource.contains('autoDispose') ||
           initializerSource.contains('.autoDispose');
-
       final hasKeepAlive = initializerSource.contains('ref.keepAlive()') ||
           initializerSource.contains('ref.keepAlive(');
 
       if (!hasAutoDispose && !hasKeepAlive) {
-        if (IgnoreUtils.shouldIgnoreAtOffset(
-          offset: variable.name.offset,
-          lintName: 'provider_autodispose_enforcement',
-          content: content,
-          lineInfo: lineInfo,
-        )) {
-          continue;
-        }
         rule.reportAtOffset(variable.name.offset, variable.name.length);
       }
     }

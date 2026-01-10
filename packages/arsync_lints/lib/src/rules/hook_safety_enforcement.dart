@@ -1,5 +1,3 @@
-import 'package:analyzer/source/line_info.dart';
-
 import '../arsync_lint_rule.dart';
 
 /// Rule E1: hook_safety_enforcement
@@ -54,24 +52,17 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    if (!context.isInLibDir) {
-      return;
-    }
+    if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final lineInfo = LineInfo.fromContent(content);
-
-    var visitor = _Visitor(this, content, lineInfo);
+    var visitor = _Visitor(this);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _Visitor(this.rule, this.content, this.lineInfo);
+  _Visitor(this.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
@@ -81,13 +72,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (member is MethodDeclaration && member.name.lexeme == 'build') {
         final body = member.body;
 
-        // Check for banned controllers
-        final controllerVisitor = _ControllerVisitor(rule, content, lineInfo);
+        final controllerVisitor = _ControllerVisitor(rule);
         body.accept(controllerVisitor);
 
-        // Check for GlobalKey<FormState>() in HookWidgets
         if (isHookWidget) {
-          final formKeyVisitor = _FormKeyVisitor(rule, content, lineInfo);
+          final formKeyVisitor = _FormKeyVisitor(rule);
           body.accept(formKeyVisitor);
         }
       }
@@ -97,32 +86,22 @@ class _Visitor extends SimpleAstVisitor<void> {
   bool _isHookWidgetClass(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return false;
-
-    final superclassName = extendsClause.superclass.name.lexeme;
-    return HookSafetyEnforcement.hookWidgetClasses.contains(superclassName);
+    return HookSafetyEnforcement.hookWidgetClasses
+        .contains(extendsClause.superclass.name.lexeme);
   }
 }
 
 class _ControllerVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _ControllerVisitor(this.rule, this.content, this.lineInfo);
+  _ControllerVisitor(this.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final typeName = node.constructorName.type.name.lexeme;
 
     if (HookSafetyEnforcement.bannedControllers.contains(typeName)) {
-      if (!IgnoreUtils.shouldIgnoreAtOffset(
-        offset: node.offset,
-        lintName: 'hook_safety_enforcement',
-        content: content,
-        lineInfo: lineInfo,
-      )) {
-        rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.controllerCode);
-      }
+      rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.controllerCode);
     }
 
     super.visitInstanceCreationExpression(node);
@@ -131,10 +110,8 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
 
 class _FormKeyVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final String content;
-  final LineInfo lineInfo;
 
-  _FormKeyVisitor(this.rule, this.content, this.lineInfo);
+  _FormKeyVisitor(this.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -145,14 +122,7 @@ class _FormKeyVisitor extends RecursiveAstVisitor<void> {
       if (typeArgs != null && typeArgs.arguments.isNotEmpty) {
         final typeArg = typeArgs.arguments.first;
         if (typeArg is NamedType && typeArg.name.lexeme == 'FormState') {
-          if (!IgnoreUtils.shouldIgnoreAtOffset(
-            offset: node.offset,
-            lintName: 'hook_safety_enforcement',
-            content: content,
-            lineInfo: lineInfo,
-          )) {
-            rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.formKeyCode);
-          }
+          rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.formKeyCode);
         }
       }
     }
