@@ -1,3 +1,7 @@
+## 0.0.9
+
+- Fix `// ignore:` and `// ignore_for_file:` comments not working
+
 ## 0.0.8
 
 - Improve performance

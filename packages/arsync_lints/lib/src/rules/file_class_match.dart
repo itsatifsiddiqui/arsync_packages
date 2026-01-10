@@ -34,22 +34,29 @@ class FileClassMatch extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (PathUtils.isInProviders(path)) return;
 
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
     final fileName = PathUtils.getFileName(path);
     final expectedClassName = PathUtils.snakeToPascal(fileName);
 
-    final visitor = _Visitor(this, expectedClassName);
+    final visitor = _Visitor(this, ignoreChecker, expectedClassName);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
   final String expectedClassName;
 
-  _Visitor(this.rule, this.expectedClassName);
+  _Visitor(this.rule, this.ignoreChecker, this.expectedClassName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     final classNames = <String>[];
     ClassDeclaration? firstClass;
 

@@ -33,7 +33,11 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addClassDeclaration(this, visitor);
     registry.addTopLevelVariableDeclaration(this, visitor);
   }
@@ -41,13 +45,15 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     final superclassName = extendsClause.superclass.name.lexeme;
     if (superclassName.contains('Notifier') ||
@@ -68,6 +74,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     for (final variable in node.variables.variables) {
       final initializer = variable.initializer;
       if (initializer == null) continue;
+      if (ignoreChecker.shouldIgnoreOffset(variable.name.offset)) continue;
 
       final initializerSource = initializer.toSource();
       if (initializerSource.contains('Provider')) {

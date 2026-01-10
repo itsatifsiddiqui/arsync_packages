@@ -58,7 +58,11 @@ class PresentationLayerIsolation extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInScreens(path) && !PathUtils.isInWidgets(path)) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addImportDirective(this, visitor);
     registry.addClassDeclaration(this, visitor);
   }
@@ -96,13 +100,15 @@ class PresentationLayerIsolation extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitImportDirective(ImportDirective node) {
     final importUri = node.uri.stringValue;
     if (importUri == null) return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     if (PresentationLayerIsolation.isBannedImport(importUri)) {
       rule.reportAtNode(node, diagnosticCode: PresentationLayerIsolation.importCode);
@@ -114,6 +120,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     final className = node.name.lexeme;
     if (className.startsWith('_')) return;
     if (PresentationLayerIsolation.isWidgetClass(node)) return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     if (PresentationLayerIsolation.isParameterClass(node)) {
       rule.reportAtOffset(

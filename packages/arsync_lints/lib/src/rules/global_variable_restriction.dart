@@ -43,12 +43,16 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
     final path = context.definingUnit.file.path;
     final isConstantsFile = PathUtils.isConstantsFile(path);
     final isProvidersFile = PathUtils.isInProviders(path);
     final isRepositoriesFile = PathUtils.isInRepositories(path);
 
-    final visitor = _Visitor(this, isConstantsFile, isProvidersFile, isRepositoriesFile);
+    final visitor = _Visitor(this, ignoreChecker, isConstantsFile, isProvidersFile, isRepositoriesFile);
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
   }
@@ -56,11 +60,12 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
   final bool isConstantsFile;
   final bool isProvidersFile;
   final bool isRepositoriesFile;
 
-  _Visitor(this.rule, this.isConstantsFile, this.isProvidersFile, this.isRepositoriesFile);
+  _Visitor(this.rule, this.ignoreChecker, this.isConstantsFile, this.isProvidersFile, this.isRepositoriesFile);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
@@ -71,6 +76,7 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (isConstantsFile && name.startsWith('k')) continue;
       if (isProvidersFile && name.endsWith('Provider')) continue;
       if (isRepositoriesFile && name.endsWith('Provider')) continue;
+      if (ignoreChecker.shouldIgnoreOffset(variable.name.offset)) continue;
 
       rule.reportAtOffset(
         variable.name.offset,
@@ -89,6 +95,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (name.startsWith('_')) return;
     if (isConstantsFile && name.startsWith('k')) return;
     if (name == 'main') return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     rule.reportAtOffset(
       node.name.offset,

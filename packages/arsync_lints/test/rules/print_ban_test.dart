@@ -60,4 +60,43 @@ void main() {
 }
 ''', [lint(16, 14), lint(34, 15)]);
   }
+
+  Future<void> test_ignore_single_line() async {
+    await assertNoDiagnostics(r'''
+void main() {
+  // ignore: print_ban
+  print('Hello');
+}
+''');
+  }
+
+  Future<void> test_ignore_for_file() async {
+    await assertNoDiagnostics(r'''
+// ignore_for_file: print_ban
+void main() {
+  print('Hello');
+  print('World');
+}
+''');
+  }
+
+  Future<void> test_ignore_partial() async {
+    // First print is ignored, second is not
+    await assertDiagnostics(r'''
+void main() {
+  // ignore: print_ban
+  print('Hello');
+  print('World');
+}
+''', [lint(57, 14)]);
+  }
+
+  Future<void> test_ignore_multiple_lints() async {
+    await assertNoDiagnostics(r'''
+void main() {
+  // ignore: other_lint, print_ban, another
+  print('Hello');
+}
+''');
+  }
 }

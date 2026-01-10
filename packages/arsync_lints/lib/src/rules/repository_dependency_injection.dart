@@ -39,7 +39,11 @@ class RepositoryDependencyInjection extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addFieldDeclaration(this, visitor);
   }
 
@@ -64,11 +68,14 @@ class RepositoryDependencyInjection extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitFieldDeclaration(FieldDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     final parent = node.parent;
     if (parent is! ClassDeclaration) return;
 

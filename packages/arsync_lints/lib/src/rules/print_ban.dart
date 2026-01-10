@@ -30,7 +30,11 @@ class PrintBan extends AnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addMethodInvocation(this, visitor);
     registry.addFunctionExpressionInvocation(this, visitor);
   }
@@ -38,11 +42,13 @@ class PrintBan extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     final methodName = node.methodName.name;
     if (PrintBan._bannedFunctions.contains(methodName) && node.target == null) {
       rule.reportAtNode(node);
@@ -51,6 +57,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     final function = node.function;
     if (function is SimpleIdentifier &&
         PrintBan._bannedFunctions.contains(function.name)) {

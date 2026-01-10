@@ -41,7 +41,11 @@ class ProviderDeclarationSyntax extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFieldDeclaration(this, visitor);
   }
@@ -49,11 +53,14 @@ class ProviderDeclarationSyntax extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     for (final variable in node.variables.variables) {
       final initializer = variable.initializer;
       if (initializer == null) continue;
@@ -63,6 +70,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFieldDeclaration(FieldDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     for (final variable in node.fields.variables) {
       final initializer = variable.initializer;
       if (initializer == null) continue;

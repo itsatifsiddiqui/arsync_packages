@@ -34,7 +34,11 @@ class RepositoryIsolation extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addImportDirective(this, visitor);
   }
 
@@ -48,13 +52,15 @@ class RepositoryIsolation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitImportDirective(ImportDirective node) {
     final importUri = node.uri.stringValue;
     if (importUri == null) return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     if (RepositoryIsolation.isBannedImport(importUri)) {
       rule.reportAtNode(node);

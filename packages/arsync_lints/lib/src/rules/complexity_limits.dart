@@ -55,8 +55,10 @@ class ComplexityLimits extends MultiAnalysisRule {
     if (!context.isInLibDir) return;
 
     final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
 
-    var visitor = _Visitor(this, content);
+    var visitor = _Visitor(this, ignoreChecker, content);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addBlock(this, visitor);
@@ -66,27 +68,32 @@ class ComplexityLimits extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
   final String content;
 
-  _Visitor(this.rule, this.content);
+  _Visitor(this.rule, this.ignoreChecker, this.content);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     _checkFunctionLines(node);
   }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     _checkMethodLines(node);
   }
 
   @override
   void visitBlock(Block node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     _checkNestingDepth(node);
   }
 
   @override
   void visitConditionalExpression(ConditionalExpression node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     _checkNestedTernary(node);
   }
 

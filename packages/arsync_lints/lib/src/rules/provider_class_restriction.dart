@@ -48,7 +48,11 @@ class ProviderClassRestriction extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addClassDeclaration(this, visitor);
   }
 
@@ -69,11 +73,14 @@ class ProviderClassRestriction extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     final className = node.name.lexeme;
     if (className.startsWith('_')) return;
 

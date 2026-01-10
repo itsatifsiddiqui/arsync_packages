@@ -36,19 +36,26 @@ class BarrelFileRestriction extends AnalysisRule {
 
     if (!isInBannedLocation) return;
 
-    final visitor = _Visitor(this, fileName);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker, fileName);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
   final String fileName;
 
-  _Visitor(this.rule, this.fileName);
+  _Visitor(this.rule, this.ignoreChecker, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     if (fileName == 'index.dart') {
       rule.reportAtNode(node);
       return;

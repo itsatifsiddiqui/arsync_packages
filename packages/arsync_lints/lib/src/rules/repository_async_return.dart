@@ -29,18 +29,25 @@ class RepositoryAsyncReturn extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     for (final member in node.members) {
       if (member is MethodDeclaration) {
         _checkMethod(member);

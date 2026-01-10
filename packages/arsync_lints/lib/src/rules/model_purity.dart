@@ -50,7 +50,11 @@ class ModelPurity extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInModels(path)) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addImportDirective(this, visitor);
     registry.addClassDeclaration(this, visitor);
   }
@@ -65,13 +69,15 @@ class ModelPurity extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitImportDirective(ImportDirective node) {
     final importUri = node.uri.stringValue;
     if (importUri == null) return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     if (ModelPurity.isBannedImport(importUri)) {
       rule.reportAtNode(node, diagnosticCode: ModelPurity.importCode);
@@ -80,6 +86,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     final hasFreezed = node.metadata.any((annotation) {
       final name = annotation.name.name;
       return name == 'freezed' || name == 'Freezed';

@@ -32,17 +32,20 @@ class IgnoreFileBan extends AnalysisRule {
     if (!context.isInLibDir) return;
 
     final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
 
-    final visitor = _Visitor(this, content);
+    final visitor = _Visitor(this, ignoreChecker, content);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
   final String content;
 
-  _Visitor(this.rule, this.content);
+  _Visitor(this.rule, this.ignoreChecker, this.content);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
@@ -50,6 +53,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     for (final match in matches) {
       final offset = match.start;
+      if (ignoreChecker.shouldIgnoreOffset(offset)) continue;
       final length = match.end - match.start;
       rule.reportAtOffset(offset, length);
     }

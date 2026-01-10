@@ -150,6 +150,69 @@ class ImportUtils {
   }
 }
 
+/// Helper class for checking ignore comments for a specific file and lint.
+/// Use the static [forRule] factory to get a cached instance.
+///
+/// TODO: When https://github.com/dart-lang/sdk/issues/62173 is fixed,
+/// migrate to native analyzer ignore handling and remove this class.
+class IgnoreChecker {
+  /// Cache: contentHash -> lintName -> IgnoreChecker
+  static final Map<int, Map<String, IgnoreChecker>> _cache = {};
+
+  final String _content;
+  final LineInfo _lineInfo;
+  final String _lintName;
+
+  /// Whether the entire file should be ignored for this lint.
+  final bool ignoreForFile;
+
+  IgnoreChecker._({
+    required String content,
+    required String lintName,
+  })  : _content = content,
+        _lintName = lintName,
+        _lineInfo = LineInfoCache.get(content),
+        ignoreForFile = IgnoreUtils.hasIgnoreForFile(content, lintName);
+
+  /// Get a cached IgnoreChecker for a rule.
+  /// This is the preferred way to create an IgnoreChecker - it caches
+  /// instances by file content and lint name for maximum performance.
+  ///
+  /// Usage in registerNodeProcessors:
+  /// ```dart
+  /// final checker = IgnoreChecker.forRule(context, name);
+  /// if (checker.ignoreForFile) return;
+  /// ```
+  static IgnoreChecker forRule(
+    String content,
+    String lintName,
+  ) {
+    final contentHash = content.hashCode;
+    final fileCache = _cache.putIfAbsent(contentHash, () => {});
+    return fileCache.putIfAbsent(
+      lintName,
+      () => IgnoreChecker._(content: content, lintName: lintName),
+    );
+  }
+
+  /// Check if a node should be ignored.
+  bool shouldIgnore(AstNode node) {
+    if (ignoreForFile) return true;
+    return IgnoreUtils._hasIgnoreAtOffset(node.offset, _lintName, _content, _lineInfo);
+  }
+
+  /// Check if an offset should be ignored.
+  bool shouldIgnoreOffset(int offset) {
+    if (ignoreForFile) return true;
+    return IgnoreUtils._hasIgnoreAtOffset(offset, _lintName, _content, _lineInfo);
+  }
+
+  /// Clear the cache. Called automatically when files change.
+  static void clearCache() {
+    _cache.clear();
+  }
+}
+
 /// Utility class for checking ignore comments.
 /// Optimized with caching for performance.
 class IgnoreUtils {

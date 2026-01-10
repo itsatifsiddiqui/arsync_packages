@@ -54,29 +54,35 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     final isHookWidget = _isHookWidgetClass(node);
 
     for (final member in node.members) {
       if (member is MethodDeclaration && member.name.lexeme == 'build') {
         final body = member.body;
 
-        final controllerVisitor = _ControllerVisitor(rule);
+        final controllerVisitor = _ControllerVisitor(rule, ignoreChecker);
         body.accept(controllerVisitor);
 
         if (isHookWidget) {
-          final formKeyVisitor = _FormKeyVisitor(rule);
+          final formKeyVisitor = _FormKeyVisitor(rule, ignoreChecker);
           body.accept(formKeyVisitor);
         }
       }
@@ -93,11 +99,16 @@ class _Visitor extends SimpleAstVisitor<void> {
 
 class _ControllerVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _ControllerVisitor(this.rule);
+  _ControllerVisitor(this.rule, this.ignoreChecker);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (ignoreChecker.shouldIgnore(node)) {
+      super.visitInstanceCreationExpression(node);
+      return;
+    }
     final typeName = node.constructorName.type.name.lexeme;
 
     if (HookSafetyEnforcement.bannedControllers.contains(typeName)) {
@@ -110,11 +121,16 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
 
 class _FormKeyVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _FormKeyVisitor(this.rule);
+  _FormKeyVisitor(this.rule, this.ignoreChecker);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (ignoreChecker.shouldIgnore(node)) {
+      super.visitInstanceCreationExpression(node);
+      return;
+    }
     final typeName = node.constructorName.type.name.lexeme;
 
     if (typeName == 'GlobalKey') {

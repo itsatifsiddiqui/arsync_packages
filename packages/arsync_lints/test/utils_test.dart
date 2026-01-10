@@ -169,4 +169,156 @@ void main() {
       });
     });
   });
+
+  group('IgnoreUtils', () {
+    setUp(() {
+      IgnoreUtils.clearCache();
+      IgnoreChecker.clearCache();
+    });
+
+    group('hasIgnoreForFile', () {
+      test('returns true when ignore_for_file comment exists', () {
+        const content = '''
+// ignore_for_file: my_lint
+void main() {}
+''';
+        expect(IgnoreUtils.hasIgnoreForFile(content, 'my_lint'), true);
+      });
+
+      test('returns true for ignore_for_file with multiple lints', () {
+        const content = '''
+// ignore_for_file: other_lint, my_lint, another_lint
+void main() {}
+''';
+        expect(IgnoreUtils.hasIgnoreForFile(content, 'my_lint'), true);
+      });
+
+      test('returns false when no ignore_for_file comment', () {
+        const content = '''
+void main() {}
+''';
+        expect(IgnoreUtils.hasIgnoreForFile(content, 'my_lint'), false);
+      });
+
+      test('returns false for different lint name', () {
+        const content = '''
+// ignore_for_file: other_lint
+void main() {}
+''';
+        expect(IgnoreUtils.hasIgnoreForFile(content, 'my_lint'), false);
+      });
+
+      test('caches results for performance', () {
+        const content = '''
+// ignore_for_file: my_lint
+void main() {}
+''';
+        // First call
+        expect(IgnoreUtils.hasIgnoreForFile(content, 'my_lint'), true);
+        // Second call should use cache
+        expect(IgnoreUtils.hasIgnoreForFile(content, 'my_lint'), true);
+      });
+    });
+  });
+
+  group('IgnoreChecker', () {
+    setUp(() {
+      IgnoreUtils.clearCache();
+      IgnoreChecker.clearCache();
+    });
+
+    group('forRule factory', () {
+      test('returns cached instance for same content and lint', () {
+        const content = 'void main() {}';
+        final checker1 = IgnoreChecker.forRule(content, 'my_lint');
+        final checker2 = IgnoreChecker.forRule(content, 'my_lint');
+        expect(identical(checker1, checker2), true);
+      });
+
+      test('returns different instance for different lint', () {
+        const content = 'void main() {}';
+        final checker1 = IgnoreChecker.forRule(content, 'my_lint');
+        final checker2 = IgnoreChecker.forRule(content, 'other_lint');
+        expect(identical(checker1, checker2), false);
+      });
+    });
+
+    group('ignoreForFile', () {
+      test('is true when ignore_for_file exists', () {
+        const content = '''
+// ignore_for_file: my_lint
+void main() {}
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.ignoreForFile, true);
+      });
+
+      test('is false when no ignore_for_file', () {
+        const content = 'void main() {}';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.ignoreForFile, false);
+      });
+    });
+
+    group('shouldIgnoreOffset', () {
+      test('returns true when ignore_for_file exists', () {
+        const content = '''
+// ignore_for_file: my_lint
+void main() {}
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.shouldIgnoreOffset(28), true); // offset of main
+      });
+
+      test('returns true when ignore comment on preceding line', () {
+        const content = '''
+// ignore: my_lint
+void main() {}
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.shouldIgnoreOffset(19), true); // offset of void
+      });
+
+      test('returns false when no ignore comment', () {
+        const content = '''
+void main() {}
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.shouldIgnoreOffset(0), false);
+      });
+
+      test('returns false for ignore on wrong line', () {
+        const content = '''
+void first() {}
+// ignore: my_lint
+void second() {}
+void third() {}
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        // first() should not be ignored (ignore is below it)
+        expect(checker.shouldIgnoreOffset(0), false);
+        // second() should be ignored (ignore is on preceding line)
+        expect(checker.shouldIgnoreOffset(37), true);
+        // third() should not be ignored (ignore is too far above)
+        expect(checker.shouldIgnoreOffset(55), false);
+      });
+
+      test('matches lint name in ignore with multiple lints', () {
+        const content = '''
+// ignore: other, my_lint, another
+void main() {}
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.shouldIgnoreOffset(35), true);
+      });
+
+      test('handles same-line ignore comment', () {
+        const content = '''
+void main() {} // ignore: my_lint
+''';
+        final checker = IgnoreChecker.forRule(content, 'my_lint');
+        expect(checker.shouldIgnoreOffset(0), true);
+      });
+    });
+  });
 }

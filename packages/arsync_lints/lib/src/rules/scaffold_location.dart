@@ -30,7 +30,11 @@ class ScaffoldLocation extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInWidgets(path)) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -38,11 +42,13 @@ class ScaffoldLocation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     if (node.constructorName.type.name.lexeme == 'Scaffold') {
       rule.reportAtNode(node);
     }
@@ -50,6 +56,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
     if (node.methodName.name == 'Scaffold') {
       rule.reportAtNode(node);
     }

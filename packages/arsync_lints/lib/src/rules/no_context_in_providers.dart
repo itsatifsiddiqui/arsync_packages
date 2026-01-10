@@ -28,7 +28,11 @@ class NoContextInProviders extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addConstructorDeclaration(this, visitor);
@@ -37,8 +41,9 @@ class NoContextInProviders extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
@@ -59,6 +64,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (parameters == null) return;
 
     for (final param in parameters.parameters) {
+      if (ignoreChecker.shouldIgnore(param)) continue;
       final typeName = _getParameterTypeName(param);
       if (typeName == 'BuildContext') {
         rule.reportAtNode(param);

@@ -30,7 +30,11 @@ class AssetSafety extends AnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -38,8 +42,9 @@ class AssetSafety extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
@@ -76,10 +81,12 @@ class _Visitor extends SimpleAstVisitor<void> {
     final firstArg = argumentList.arguments.first;
 
     if (firstArg is StringLiteral) {
+      if (ignoreChecker.shouldIgnore(firstArg)) return;
       rule.reportAtNode(firstArg);
     }
 
     if (firstArg is NamedExpression && firstArg.expression is StringLiteral) {
+      if (ignoreChecker.shouldIgnore(firstArg.expression)) return;
       rule.reportAtNode(firstArg.expression);
     }
   }

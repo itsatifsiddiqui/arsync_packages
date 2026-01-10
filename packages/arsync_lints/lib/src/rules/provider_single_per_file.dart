@@ -52,10 +52,14 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
     final fileName = PathUtils.getFileName(path);
     if (!fileName.endsWith('_provider')) return;
 
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
     final prefix = fileName.replaceAll('_provider', '');
     final expectedProviderName = '${_snakeToCamel(prefix)}Provider';
 
-    final visitor = _Visitor(this, expectedProviderName);
+    final visitor = _Visitor(this, ignoreChecker, expectedProviderName);
     registry.addCompilationUnit(this, visitor);
   }
 
@@ -76,12 +80,15 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
   final String expectedProviderName;
 
-  _Visitor(this.rule, this.expectedProviderName);
+  _Visitor(this.rule, this.ignoreChecker, this.expectedProviderName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     final providerDeclarations = <VariableDeclaration>[];
 
     for (final declaration in node.declarations) {

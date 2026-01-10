@@ -31,15 +31,20 @@ class ProviderAutodisposeEnforcement extends AnalysisRule {
     if (!PathUtils.isInProviders(path)) return;
     if (path.contains('providers/core/')) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addTopLevelVariableDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
@@ -49,6 +54,7 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       final initializer = variable.initializer;
       if (initializer == null) continue;
+      if (ignoreChecker.shouldIgnoreOffset(variable.name.offset)) continue;
 
       final initializerSource = initializer.toSource();
       final hasAutoDispose = initializerSource.contains('autoDispose') ||

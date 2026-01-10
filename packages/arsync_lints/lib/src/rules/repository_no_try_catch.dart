@@ -29,18 +29,25 @@ class RepositoryNoTryCatch extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
 
-    var visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    var visitor = _Visitor(this, ignoreChecker);
     registry.addTryStatement(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitTryStatement(TryStatement node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
     rule.reportAtNode(node);
   }
 }

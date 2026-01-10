@@ -28,20 +28,26 @@ class AsyncViewModelSafety extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final visitor = _Visitor(this);
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
 
-  _Visitor(this.rule);
+  _Visitor(this.rule, this.ignoreChecker);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return;
+    if (ignoreChecker.shouldIgnore(node)) return;
 
     final superclassName = extendsClause.superclass.name.lexeme;
     if (!superclassName.contains('Notifier') &&
@@ -64,6 +70,7 @@ class _Visitor extends SimpleAstVisitor<void> {
     body.accept(awaitVisitor);
 
     for (final awaitExpr in awaitVisitor.awaitExpressions) {
+      if (ignoreChecker.shouldIgnore(awaitExpr)) continue;
       if (!_isInsideTryBlock(awaitExpr)) {
         rule.reportAtNode(awaitExpr);
       }
