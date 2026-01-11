@@ -110,8 +110,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (publicWidgets.length > 1) {
       for (var i = 1; i < publicWidgets.length; i++) {
-        if (ignoreChecker.shouldIgnoreOffset(publicWidgets[i].name.offset))
+        if (ignoreChecker.shouldIgnoreOffset(publicWidgets[i].name.offset)) {
           continue;
+        }
         rule.reportAtOffset(
           publicWidgets[i].name.offset,
           publicWidgets[i].name.length,
