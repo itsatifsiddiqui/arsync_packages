@@ -2,16 +2,14 @@
 
 A powerful lint package for Flutter/Dart that enforces the **Arsync 4-Layer Architecture** with strict separation of concerns, Riverpod best practices, and clean code standards.
 
-[![Dart](https://img.shields.io/badge/Dart-3.10+-blue.svg)](https://dart.dev)
-[![Flutter](https://img.shields.io/badge/Flutter-3.38+-02569B.svg)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.10%2B-blue.svg)](https://dart.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.38%2B-02569B.svg)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## Requirements
 
 - **Dart SDK**: 3.10.0 or higher
 - **Flutter SDK**: 3.38.0 or higher
-
-This package uses the native `analysis_server_plugin` system introduced in Dart 3.10, which provides better IDE integration and faster analysis compared to the legacy custom_lint approach.
 
 ## Overview
 
@@ -23,7 +21,7 @@ This package uses the native `analysis_server_plugin` system introduced in Dart 
 
 ```yaml
 dev_dependencies:
-  arsync_lints: ^1.0.0
+  arsync_lints: ^0.1.1
 ```
 
 ### 2. Enable the plugin in `analysis_options.yaml`
@@ -51,6 +49,86 @@ After adding the plugin, restart your IDE (VS Code, Android Studio, IntelliJ) to
 # Analyze your project
 dart analyze
 ```
+
+## Project Structure
+
+For `arsync_lints` to work correctly, organize your project like this:
+
+```
+lib/
+├── main.dart
+├── screens/              # UI pages (can use Scaffold)
+│   ├── home/
+│   │   └── home_screen.dart
+│   └── auth/
+│       └── login_screen.dart
+├── widgets/              # Reusable UI components (no Scaffold, no providers)
+│   ├── buttons/
+│   │   └── primary_button.dart
+│   └── cards/
+│       └── user_card.dart
+├── providers/            # State management (Riverpod Notifiers)
+│   ├── core/             # Infrastructure providers (dioProvider, etc.)
+│   │   └── dio_provider.dart
+│   ├── auth_provider.dart
+│   └── user_provider.dart
+├── models/               # Data classes (Freezed)
+│   ├── user.dart
+│   └── auth_state.dart
+├── repositories/         # Data access layer
+│   ├── auth_repository.dart
+│   └── user_repository.dart
+└── utils/
+    ├── constants.dart    # k-prefixed constants and functions
+    └── images.dart       # Asset path constants
+```
+
+## Rules Overview
+
+| # | Rule Name | Description |
+|---|-----------|-------------|
+| 1 | `presentation_layer_isolation` | Prevents screens/widgets from importing repositories or data layer packages |
+| 2 | `shared_widget_purity` | Ensures widgets don't import providers; one public widget per file |
+| 3 | `model_purity` | Models must use @freezed with fromJson; no provider imports |
+| 4 | `repository_isolation` | Repositories cannot import screens or UI-specific packages |
+| 5 | `provider_autodispose_enforcement` | Requires autoDispose on all providers except core/ infrastructure |
+| 6 | `provider_file_naming` | Provider files must end with `_provider.dart` |
+| 7 | `provider_state_class` | Provider state classes must use proper naming conventions |
+| 8 | `provider_declaration_syntax` | Enforces correct Riverpod provider declaration syntax |
+| 9 | `provider_class_restriction` | Only Notifier classes allowed in provider files |
+| 10 | `provider_single_per_file` | One provider per file for maintainability |
+| 11 | `viewmodel_naming_convention` | ViewModels must follow naming conventions |
+| 12 | `no_context_in_providers` | BuildContext not allowed in provider classes |
+| 13 | `async_viewmodel_safety` | Async providers must handle loading/error states properly |
+| 14 | `repository_provider_declaration` | Repository providers must use correct declaration pattern |
+| 15 | `repository_dependency_injection` | Repositories must receive dependencies via constructor |
+| 16 | `repository_class_restriction` | Only Repository classes allowed in repository files |
+| 17 | `repository_no_try_catch` | Repositories should not catch exceptions; let them propagate |
+| 18 | `repository_async_return` | Repository async methods must return proper types |
+| 19 | `complexity_limits` | Enforces max nesting depth and method length limits |
+| 20 | `global_variable_restriction` | No global variables except k-prefixed constants |
+| 21 | `print_ban` | Bans print() statements; use proper logging |
+| 22 | `barrel_file_restriction` | Discourages barrel files that re-export everything |
+| 23 | `ignore_file_ban` | Bans `// ignore_for_file:` comments |
+| 24 | `hook_safety_enforcement` | Hooks must be called unconditionally in build() |
+| 25 | `scaffold_location` | Scaffold only allowed in screens, not shared widgets |
+| 26 | `asset_safety` | Asset paths must use constants, not hardcoded strings |
+| 27 | `file_class_match` | Public class name must match file name |
+| 28 | `avoid_consecutive_sliver_to_box_adapter` | Merge consecutive SliverToBoxAdapters into one |
+| 29 | `avoid_hardcoded_color` | Use theme colors instead of hardcoded Color values |
+| 30 | `avoid_shrink_wrap_in_list_view` | Avoid shrinkWrap in ListView for performance |
+| 31 | `avoid_single_child` | Avoid Row/Column with single child; use simpler widget |
+| 32 | `prefer_dedicated_media_query_methods` | Use MediaQuery.sizeOf() instead of MediaQuery.of().size |
+| 33 | `prefer_space_between_elements` | Use SizedBox for spacing instead of Padding |
+| 34 | `prefer_to_include_sliver_in_name` | Sliver widgets should have "Sliver" in their name |
+| 35 | `unsafe_null_assertion` | Warns against unsafe `!` null assertions |
+| 36 | `avoid_unnecessary_padding_widget` | Avoid wrapping widgets with zero padding |
+| 37 | `unnecessary_hook_widget` | Use StatelessWidget if no hooks are used |
+| 38 | `remove_listener` | Listeners added in initState must be removed in dispose |
+| 39 | `dispose_notifier` | Notifiers with resources must implement dispose |
+| 40 | `unnecessary_container` | Use simpler widgets instead of Container when possible |
+
+---
 
 ## Rules Reference
 
@@ -1000,88 +1078,6 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   Widget build(BuildContext context) => TextField(controller: _controller);
 }
-```
-
----
-
-## Complete Rules List
-
-| # | Rule Name | Category | Target |
-|---|-----------|----------|--------|
-| 1 | `presentation_layer_isolation` | Architecture | screens/, widgets/ |
-| 2 | `shared_widget_purity` | Architecture | widgets/ |
-| 3 | `model_purity` | Architecture | models/ |
-| 4 | `repository_isolation` | Architecture | repositories/ |
-| 5 | `provider_autodispose_enforcement` | Riverpod | providers/ |
-| 6 | `provider_file_naming` | Riverpod | providers/ |
-| 7 | `provider_state_class` | Riverpod | providers/ |
-| 8 | `provider_declaration_syntax` | Riverpod | providers/ |
-| 9 | `provider_class_restriction` | Riverpod | providers/ |
-| 10 | `provider_single_per_file` | Riverpod | providers/ |
-| 11 | `viewmodel_naming_convention` | Riverpod | providers/ |
-| 12 | `no_context_in_providers` | Riverpod | providers/ |
-| 13 | `async_viewmodel_safety` | Riverpod | providers/ |
-| 14 | `repository_provider_declaration` | Repository | repositories/ |
-| 15 | `repository_dependency_injection` | Repository | repositories/ |
-| 16 | `repository_class_restriction` | Repository | repositories/ |
-| 17 | `repository_no_try_catch` | Repository | repositories/ |
-| 18 | `repository_async_return` | Repository | repositories/ |
-| 19 | `complexity_limits` | Code Quality | lib/ |
-| 20 | `global_variable_restriction` | Code Quality | lib/ |
-| 21 | `print_ban` | Code Quality | lib/ |
-| 22 | `barrel_file_restriction` | Code Quality | lib/ |
-| 23 | `ignore_file_ban` | Code Quality | lib/ |
-| 24 | `hook_safety_enforcement` | UI Safety | build() methods |
-| 25 | `scaffold_location` | UI Safety | widgets/ |
-| 26 | `asset_safety` | UI Safety | All files |
-| 27 | `file_class_match` | UI Safety | All files |
-| 28 | `avoid_consecutive_sliver_to_box_adapter` | Flutter Best Practices | All files |
-| 29 | `avoid_hardcoded_color` | Flutter Best Practices | All files |
-| 30 | `avoid_shrink_wrap_in_list_view` | Flutter Best Practices | All files |
-| 31 | `avoid_single_child` | Flutter Best Practices | All files |
-| 32 | `prefer_dedicated_media_query_methods` | Flutter Best Practices | All files |
-| 33 | `prefer_space_between_elements` | Flutter Best Practices | All files |
-| 34 | `prefer_to_include_sliver_in_name` | Flutter Best Practices | All files |
-| 35 | `unsafe_null_assertion` | Flutter Best Practices | All files |
-| 36 | `avoid_unnecessary_padding_widget` | Flutter Best Practices | All files |
-| 37 | `unnecessary_hook_widget` | Flutter Best Practices | All files |
-| 38 | `remove_listener` | Resource Management | State classes |
-| 39 | `dispose_notifier` | Resource Management | State classes |
-| 40 | `unnecessary_container` | Flutter Best Practices | All files |
-
----
-
-## Project Structure
-
-For `arsync_lints` to work correctly, organize your project like this:
-
-```
-lib/
-├── main.dart
-├── screens/              # UI pages (can use Scaffold)
-│   ├── home/
-│   │   └── home_screen.dart
-│   └── auth/
-│       └── login_screen.dart
-├── widgets/              # Reusable UI components (no Scaffold, no providers)
-│   ├── buttons/
-│   │   └── primary_button.dart
-│   └── cards/
-│       └── user_card.dart
-├── providers/            # State management (Riverpod Notifiers)
-│   ├── core/             # Infrastructure providers (dioProvider, etc.)
-│   │   └── dio_provider.dart
-│   ├── auth_provider.dart
-│   └── user_provider.dart
-├── models/               # Data classes (Freezed)
-│   ├── user.dart
-│   └── auth_state.dart
-├── repositories/         # Data access layer
-│   ├── auth_repository.dart
-│   └── user_repository.dart
-└── utils/
-    ├── constants.dart    # k-prefixed constants and functions
-    └── images.dart       # Asset path constants
 ```
 
 ## Suppressing Rules
