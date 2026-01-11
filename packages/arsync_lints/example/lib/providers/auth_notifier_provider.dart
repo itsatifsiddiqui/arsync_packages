@@ -51,10 +51,7 @@ class AuthNotifier extends Notifier<AuthState> {
         user: user,
       );
     } catch (e, _) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
       // In real app: use a logger from utils/ or services/
     }
   }

@@ -1,0 +1,419 @@
+// Example file demonstrating Category F: Flutter Best Practices lint rules
+
+import 'package:flutter/material.dart';
+
+// ============================================================================
+// avoid_consecutive_sliver_to_box_adapter
+// ============================================================================
+
+/// BAD: Consecutive SliverToBoxAdapter usage
+class BadConsecutiveSliverExample extends StatelessWidget {
+  const BadConsecutiveSliverExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      // ignore: avoid_consecutive_sliver_to_box_adapter
+      slivers: <Widget>[
+        // These consecutive SliverToBoxAdapter widgets trigger the lint
+        const SliverToBoxAdapter(child: Text('Item 1')),
+        const SliverToBoxAdapter(child: Text('Item 2')),
+        const SliverToBoxAdapter(child: Text('Item 3')),
+      ],
+    );
+  }
+}
+
+/// GOOD: Using SliverList.list instead of consecutive SliverToBoxAdapter
+class GoodSliverListExample extends StatelessWidget {
+  const GoodSliverListExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        SliverList.list(
+          children: const [
+            Text('Item 1'),
+            Text('Item 2'),
+            Text('Item 3'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// avoid_hardcoded_color
+// ============================================================================
+
+/// BAD: Hardcoded color values
+class BadHardcodedColorExample extends StatelessWidget {
+  const BadHardcodedColorExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          // ignore: avoid_hardcoded_color
+          color: const Color(0xFF00FF00), // LINT: Hardcoded color
+        ),
+        Container(
+          // ignore: avoid_hardcoded_color
+          color: Colors.red, // LINT: Hardcoded color from Colors class
+        ),
+      ],
+    );
+  }
+}
+
+/// GOOD: Using Theme colors
+class GoodThemeColorExample extends StatelessWidget {
+  const GoodThemeColorExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        Container(
+          color: Theme.of(context).colorScheme.secondary,
+        ),
+        // Colors.transparent is allowed
+        Container(
+          color: Colors.transparent,
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// avoid_shrink_wrap_in_list_view
+// ============================================================================
+
+/// BAD: ListView with shrinkWrap inside Column
+class BadShrinkWrapExample extends StatelessWidget {
+  const BadShrinkWrapExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        // ignore: avoid_shrink_wrap_in_list_view
+        ListView(
+          shrinkWrap: true, // LINT: shrinkWrap causes performance issues
+          children: const <Widget>[
+            Text('Hello'),
+            Text('World'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// GOOD: Using CustomScrollView with SliverList
+class GoodSliverExample extends StatelessWidget {
+  const GoodSliverExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        SliverList.list(
+          children: const [
+            Text('Hello'),
+            Text('World'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// avoid_single_child
+// ============================================================================
+
+/// BAD: Column with single child
+class BadSingleChildExample extends StatelessWidget {
+  const BadSingleChildExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // ignore: avoid_single_child
+    return Column(
+      children: const <Widget>[
+        Text('Only child'), // LINT: Single child in multi-child widget
+      ],
+    );
+  }
+}
+
+/// GOOD: Using appropriate single-child widget
+class GoodSingleChildExample extends StatelessWidget {
+  const GoodSingleChildExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Centered child'),
+    );
+  }
+}
+
+/// GOOD: Multiple children in Column
+class GoodMultipleChildrenExample extends StatelessWidget {
+  const GoodMultipleChildrenExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: <Widget>[
+        Text('First child'),
+        Text('Second child'),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// prefer_dedicated_media_query_methods
+// ============================================================================
+
+/// BAD: Using MediaQuery.of() generic method
+class BadMediaQueryExample extends StatelessWidget {
+  const BadMediaQueryExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // ignore: prefer_dedicated_media_query_methods
+    final size = MediaQuery.of(context).size; // LINT
+    // ignore: prefer_dedicated_media_query_methods
+    final width = MediaQuery.sizeOf(context).width; // LINT: use widthOf
+
+    return Container(
+      width: size.width,
+      height: width,
+    );
+  }
+}
+
+/// GOOD: Using dedicated MediaQuery methods
+class GoodMediaQueryExample extends StatelessWidget {
+  const GoodMediaQueryExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final width = MediaQuery.widthOf(context);
+    final height = MediaQuery.heightOf(context);
+
+    return Container(
+      width: width,
+      height: height,
+    );
+  }
+}
+
+// ============================================================================
+// prefer_space_between_elements
+// ============================================================================
+
+/// BAD: Missing blank lines between elements
+// ignore: prefer_space_between_elements
+class BadSpacingExample extends StatelessWidget {
+  final String title;
+  // ignore: prefer_space_between_elements
+  const BadSpacingExample(this.title, {super.key}); // Missing blank line
+  // ignore: prefer_space_between_elements
+  @override
+  Widget build(BuildContext context) {
+    // Missing blank line
+    return Text(title);
+  }
+}
+
+/// GOOD: Proper spacing between elements
+class GoodSpacingExample extends StatelessWidget {
+  final String title;
+
+  const GoodSpacingExample(this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(title);
+  }
+}
+
+// ============================================================================
+// prefer_to_include_sliver_in_name
+// ============================================================================
+
+/// BAD: Widget returning Sliver without "Sliver" in name
+// ignore: prefer_to_include_sliver_in_name
+class MyCustomList extends StatelessWidget {
+  const MyCustomList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SliverToBoxAdapter(
+      child: Text('Hello'),
+    ); // LINT: Returns Sliver but name doesn't contain "Sliver"
+  }
+}
+
+/// GOOD: Widget with "Sliver" in class name
+class SliverMyCustomList extends StatelessWidget {
+  const SliverMyCustomList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SliverToBoxAdapter(
+      child: Text('Hello'),
+    );
+  }
+}
+
+/// GOOD: Widget with "sliver" in named constructor
+class MyOtherList extends StatelessWidget {
+  const MyOtherList({super.key});
+  const MyOtherList.sliver({super.key}); // Named constructor contains "sliver"
+
+  @override
+  Widget build(BuildContext context) {
+    return const SliverToBoxAdapter(
+      child: Text('Hello'),
+    );
+  }
+}
+
+// ============================================================================
+// unsafe_null_assertion
+// ============================================================================
+
+/// BAD: Using force null assertion operator (!)
+class BadNullAssertionExample {
+  String getValue(String? name) {
+    // ignore: unsafe_null_assertion
+    return name!; // LINT: Force null assertion is unsafe
+  }
+
+  String getUserName(User? user) {
+    // ignore: unsafe_null_assertion
+    return user!.name; // LINT: Force null assertion on member access
+  }
+}
+
+/// GOOD: Using null-aware operators and if-null
+class GoodNullHandlingExample {
+  String getValue(String? name) {
+    return name ?? 'default'; // Safe: provides default value
+  }
+
+  String? getUserName(User? user) {
+    return user?.name; // Safe: null-aware access
+  }
+
+  String getUserNameOrDefault(User? user) {
+    return user?.name ?? 'Unknown'; // Safe: combined null handling
+  }
+}
+
+/// GOOD: Using pattern matching for null handling
+class PatternMatchingExample {
+  String processUser(User? user) {
+    if (user case User(:final name)) {
+      // Safe: pattern matching verifies non-null
+      return 'User name: $name';
+    }
+    return 'No user';
+  }
+
+  String processValue(String? value) {
+    return switch (value) {
+      final v? when v.isNotEmpty => 'Value: $v',
+      null => 'No value',
+      _ => 'Empty value',
+    };
+  }
+}
+
+// ============================================================================
+// avoid_unnecessary_padding_widget
+// ============================================================================
+
+/// BAD: Padding wrapping Container - use Container's margin instead
+class BadPaddingWrapsContainerExample extends StatelessWidget {
+  const BadPaddingWrapsContainerExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // ignore: avoid_unnecessary_padding_widget
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: const Text('Hello'),
+      ),
+    );
+  }
+}
+
+/// GOOD: Use Container's margin property
+class GoodContainerMarginExample extends StatelessWidget {
+  const GoodContainerMarginExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      color: Theme.of(context).colorScheme.surface,
+      child: const Text('Hello'),
+    );
+  }
+}
+
+/// BAD: Container wrapping Padding - use Container's padding instead
+class BadContainerWrapsPaddingExample extends StatelessWidget {
+  const BadContainerWrapsPaddingExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // ignore: avoid_unnecessary_padding_widget
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text('Hello'),
+      ),
+    );
+  }
+}
+
+/// GOOD: Use Container's padding property
+class GoodContainerPaddingExample extends StatelessWidget {
+  const GoodContainerPaddingExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.all(16),
+      child: const Text('Hello'),
+    );
+  }
+}
+
+/// Helper class for examples
+// ignore: presentation_layer_isolation
+class User {
+  final String name;
+
+  const User(this.name);
+}

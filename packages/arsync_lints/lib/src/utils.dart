@@ -9,7 +9,10 @@ class LineInfoCache {
 
   /// Get or create cached LineInfo for the given content.
   static LineInfo get(String content) {
-    return _cache.putIfAbsent(content.hashCode, () => LineInfo.fromContent(content));
+    return _cache.putIfAbsent(
+      content.hashCode,
+      () => LineInfo.fromContent(content),
+    );
   }
 
   /// Clear the cache.
@@ -19,10 +22,24 @@ class LineInfoCache {
 }
 
 /// Utility class for path checking and common operations.
+/// Optimized with caching for repeated calls on the same path.
 class PathUtils {
+  /// Cache for normalized paths
+  static final Map<String, String> _normalizedPaths = {};
+
+  /// Cache for snake_to_pascal conversions
+  static final Map<String, String> _snakeToPascalCache = {};
+
+  /// Pre-compiled regex for pascalToSnake
+  static final RegExp _pascalToSnakeRegex = RegExp(r'([A-Z])');
+
   /// Normalizes a file path to use forward slashes (cross-platform support).
+  /// Results are cached for efficiency.
   static String normalizePath(String path) {
-    return path.replaceAll(r'\', '/');
+    return _normalizedPaths.putIfAbsent(
+      path,
+      () => path.contains(r'\') ? path.replaceAll(r'\', '/') : path,
+    );
   }
 
   /// Checks if the file is inside a specific directory path.
@@ -52,29 +69,40 @@ class PathUtils {
     return p.basename(normalized);
   }
 
-  /// Converts snake_case to PascalCase.
+  /// Converts snake_case to PascalCase. Results are cached.
   static String snakeToPascal(String snakeCase) {
-    return snakeCase
-        .split('_')
-        .map((word) => word.isEmpty
-            ? ''
-            : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}')
-        .join();
+    return _snakeToPascalCache.putIfAbsent(snakeCase, () {
+      final parts = snakeCase.split('_');
+      final buffer = StringBuffer();
+      for (final word in parts) {
+        if (word.isNotEmpty) {
+          buffer.write(word[0].toUpperCase());
+          if (word.length > 1) {
+            buffer.write(word.substring(1).toLowerCase());
+          }
+        }
+      }
+      return buffer.toString();
+    });
   }
 
   /// Converts PascalCase to snake_case.
   static String pascalToSnake(String pascalCase) {
     return pascalCase
         .replaceAllMapped(
-            RegExp(r'([A-Z])'), (match) => '_${match.group(0)!.toLowerCase()}')
+          _pascalToSnakeRegex,
+          (match) => '_${match.group(0)!.toLowerCase()}',
+        )
         .replaceFirst('_', '');
   }
 
   /// Checks if the file is in screens directory.
-  static bool isInScreens(String filePath) => isInDirectory(filePath, 'screens');
+  static bool isInScreens(String filePath) =>
+      isInDirectory(filePath, 'screens');
 
   /// Checks if the file is in widgets directory.
-  static bool isInWidgets(String filePath) => isInDirectory(filePath, 'widgets');
+  static bool isInWidgets(String filePath) =>
+      isInDirectory(filePath, 'widgets');
 
   /// Checks if the file is in models directory.
   static bool isInModels(String filePath) => isInDirectory(filePath, 'models');
@@ -103,12 +131,25 @@ class PathUtils {
     return normalized.endsWith('/constants.dart') ||
         normalized.endsWith('/utils/constants.dart');
   }
+
+  /// Clear all caches.
+  static void clearCache() {
+    _normalizedPaths.clear();
+    _snakeToPascalCache.clear();
+  }
 }
 
 /// Utility class for import checking.
+/// Optimized with cached RegExp patterns for wildcard matching.
 class ImportUtils {
+  /// Cache for compiled wildcard regex patterns
+  static final Map<String, RegExp> _wildcardPatternCache = {};
+
   /// Checks if an import matches a banned pattern.
-  static bool matchesBannedImport(String importUri, List<String> bannedPatterns) {
+  static bool matchesBannedImport(
+    String importUri,
+    List<String> bannedPatterns,
+  ) {
     for (final pattern in bannedPatterns) {
       if (_matchesPattern(importUri, pattern)) {
         return true;
@@ -124,13 +165,16 @@ class ImportUtils {
   /// - Simple prefix: 'package:cloud_firestore'
   /// - Contains match: 'repositories/' matches any import containing this path
   static bool _matchesPattern(String importUri, String pattern) {
-    // Handle wildcard patterns
+    // Handle wildcard patterns (cached regex)
     if (pattern.contains('*')) {
-      final regexPattern = pattern
-          .replaceAll('*', '.*')
-          .replaceAll('/', r'\/')
-          .replaceAll('.', r'\.');
-      return RegExp('^$regexPattern').hasMatch(importUri);
+      final regex = _wildcardPatternCache.putIfAbsent(pattern, () {
+        final regexPattern = pattern
+            .replaceAll('*', '.*')
+            .replaceAll('/', r'\/')
+            .replaceAll('.', r'\.');
+        return RegExp('^$regexPattern');
+      });
+      return regex.hasMatch(importUri);
     }
 
     // Handle path segment patterns (e.g., 'repositories/' matches any import with this path)
@@ -148,6 +192,103 @@ class ImportUtils {
     // Exact or prefix match
     return importUri.startsWith(pattern) || importUri == pattern;
   }
+
+  /// Clear the cache.
+  static void clearCache() {
+    _wildcardPatternCache.clear();
+  }
+}
+
+/// Pre-computed index of all ignore comments in a file.
+/// Parses the file once and stores line -> lint names mapping for fast lookups.
+class FileIgnoreIndex {
+  /// Cache: contentHash -> FileIgnoreIndex
+  static final Map<int, FileIgnoreIndex> _cache = {};
+
+  /// Map of lineNumber -> Set of lint names ignored on that line
+  final Map<int, Set<String>> _lineIgnores;
+
+  /// Set of lint names ignored for the entire file
+  final Set<String> _fileIgnores;
+
+  FileIgnoreIndex._({
+    required Map<int, Set<String>> lineIgnores,
+    required Set<String> fileIgnores,
+  }) : _lineIgnores = lineIgnores,
+       _fileIgnores = fileIgnores;
+
+  /// Get or create cached FileIgnoreIndex for a file.
+  static FileIgnoreIndex forContent(String content) {
+    final contentHash = content.hashCode;
+    return _cache.putIfAbsent(contentHash, () => _parseFile(content));
+  }
+
+  /// Parse all ignore comments in a file and build the index.
+  static FileIgnoreIndex _parseFile(String content) {
+    final lineIgnores = <int, Set<String>>{};
+    final fileIgnores = <String>{};
+
+    // Single regex to match both ignore and ignore_for_file comments
+    // Captures: group(1) = "for_file" or null, group(2) = lint names
+    final ignorePattern = RegExp(
+      r'//\s*ignore(_for_file)?\s*:\s*([^\n]+)',
+      caseSensitive: false,
+    );
+
+    final lineInfo = LineInfoCache.get(content);
+    final matches = ignorePattern.allMatches(content);
+
+    for (final match in matches) {
+      final isForFile = match.group(1) != null;
+      final lintNamesStr = match.group(2)!;
+
+      // Parse comma-separated lint names, handling whitespace
+      final lintNames = lintNamesStr
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .where((s) => s.isNotEmpty && !s.startsWith('type='))
+          .toSet();
+
+      if (isForFile) {
+        fileIgnores.addAll(lintNames);
+      } else {
+        // Get line number for this ignore comment
+        final lineNumber = lineInfo.getLocation(match.start).lineNumber;
+        lineIgnores.putIfAbsent(lineNumber, () => {}).addAll(lintNames);
+      }
+    }
+
+    return FileIgnoreIndex._(
+      lineIgnores: lineIgnores,
+      fileIgnores: fileIgnores,
+    );
+  }
+
+  /// Check if a lint is ignored for the entire file.
+  bool isIgnoredForFile(String lintName) {
+    return _fileIgnores.contains(lintName.toLowerCase());
+  }
+
+  /// Check if a lint is ignored at a specific line (checks line and line before).
+  bool isIgnoredAtLine(int lineNumber, String lintName) {
+    final lintLower = lintName.toLowerCase();
+    // Check current line and line before
+    final currentLineIgnores = _lineIgnores[lineNumber];
+    if (currentLineIgnores != null && currentLineIgnores.contains(lintLower)) {
+      return true;
+    }
+    // Check previous line (common pattern: ignore comment on line before)
+    final prevLineIgnores = _lineIgnores[lineNumber - 1];
+    if (prevLineIgnores != null && prevLineIgnores.contains(lintLower)) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Clear the cache.
+  static void clearCache() {
+    _cache.clear();
+  }
 }
 
 /// Helper class for checking ignore comments for a specific file and lint.
@@ -159,20 +300,20 @@ class IgnoreChecker {
   /// Cache: contentHash -> lintName -> IgnoreChecker
   static final Map<int, Map<String, IgnoreChecker>> _cache = {};
 
-  final String _content;
   final LineInfo _lineInfo;
   final String _lintName;
+  final FileIgnoreIndex _index;
 
   /// Whether the entire file should be ignored for this lint.
   final bool ignoreForFile;
 
-  IgnoreChecker._({
-    required String content,
-    required String lintName,
-  })  : _content = content,
-        _lintName = lintName,
-        _lineInfo = LineInfoCache.get(content),
-        ignoreForFile = IgnoreUtils.hasIgnoreForFile(content, lintName);
+  IgnoreChecker._({required String content, required String lintName})
+    : _lintName = lintName,
+      _lineInfo = LineInfoCache.get(content),
+      _index = FileIgnoreIndex.forContent(content),
+      ignoreForFile = FileIgnoreIndex.forContent(
+        content,
+      ).isIgnoredForFile(lintName);
 
   /// Get a cached IgnoreChecker for a rule.
   /// This is the preferred way to create an IgnoreChecker - it caches
@@ -183,10 +324,7 @@ class IgnoreChecker {
   /// final checker = IgnoreChecker.forRule(context, name);
   /// if (checker.ignoreForFile) return;
   /// ```
-  static IgnoreChecker forRule(
-    String content,
-    String lintName,
-  ) {
+  static IgnoreChecker forRule(String content, String lintName) {
     final contentHash = content.hashCode;
     final fileCache = _cache.putIfAbsent(contentHash, () => {});
     return fileCache.putIfAbsent(
@@ -198,65 +336,32 @@ class IgnoreChecker {
   /// Check if a node should be ignored.
   bool shouldIgnore(AstNode node) {
     if (ignoreForFile) return true;
-    return IgnoreUtils._hasIgnoreAtOffset(node.offset, _lintName, _content, _lineInfo);
+    final lineNumber = _lineInfo.getLocation(node.offset).lineNumber;
+    return _index.isIgnoredAtLine(lineNumber, _lintName);
   }
 
   /// Check if an offset should be ignored.
   bool shouldIgnoreOffset(int offset) {
     if (ignoreForFile) return true;
-    return IgnoreUtils._hasIgnoreAtOffset(offset, _lintName, _content, _lineInfo);
+    final lineNumber = _lineInfo.getLocation(offset).lineNumber;
+    return _index.isIgnoredAtLine(lineNumber, _lintName);
   }
 
   /// Clear the cache. Called automatically when files change.
   static void clearCache() {
     _cache.clear();
+    FileIgnoreIndex.clearCache();
   }
 }
 
 /// Utility class for checking ignore comments.
-/// Optimized with caching for performance.
+/// Uses FileIgnoreIndex for optimized pre-computed lookups.
 class IgnoreUtils {
-  /// Cache compiled RegExp patterns by lint name for ignore comments
-  static final Map<String, RegExp> _ignorePatterns = {};
-
-  /// Cache compiled RegExp patterns by lint name for ignore_for_file comments
-  static final Map<String, RegExp> _ignoreForFilePatterns = {};
-
-  /// Cache: file content hash -> lint name -> is ignored for file
-  static final Map<int, Map<String, bool>> _ignoreForFileCache = {};
-
-  /// Get or create cached RegExp for ignore comment
-  static RegExp _getIgnorePattern(String lintName) {
-    return _ignorePatterns.putIfAbsent(
-      lintName,
-      () => RegExp(
-        r'//\s*ignore\s*:.*\b' + RegExp.escape(lintName) + r'\b',
-        caseSensitive: false,
-      ),
-    );
-  }
-
-  /// Get or create cached RegExp for ignore_for_file comment
-  static RegExp _getIgnoreForFilePattern(String lintName) {
-    return _ignoreForFilePatterns.putIfAbsent(
-      lintName,
-      () => RegExp(
-        r'//\s*ignore_for_file\s*:.*\b' + RegExp.escape(lintName) + r'\b',
-        caseSensitive: false,
-      ),
-    );
-  }
-
   /// Check if the file has `// ignore_for_file: lint_name`
-  /// Results are cached per file content hash.
-  /// Use this for EARLY EXIT in registerNodeProcessors.
+  /// Uses FileIgnoreIndex for O(1) lookup after initial parse.
   static bool hasIgnoreForFile(String content, String lintName) {
-    final contentHash = content.hashCode;
-    final fileCache = _ignoreForFileCache.putIfAbsent(contentHash, () => {});
-    return fileCache.putIfAbsent(lintName, () {
-      final pattern = _getIgnoreForFilePattern(lintName);
-      return pattern.hasMatch(content);
-    });
+    final index = FileIgnoreIndex.forContent(content);
+    return index.isIgnoredForFile(lintName);
   }
 
   /// Checks if a node should be ignored for a specific lint rule.
@@ -290,53 +395,54 @@ class IgnoreUtils {
     required String content,
     required LineInfo lineInfo,
   }) {
-    // Check for ignore_for_file (uses cache)
-    if (hasIgnoreForFile(content, lintName)) {
+    final index = FileIgnoreIndex.forContent(content);
+
+    // Check for ignore_for_file
+    if (index.isIgnoredForFile(lintName)) {
       return true;
     }
 
     // Check for ignore on the preceding line or same line
-    if (_hasIgnoreAtOffset(offset, lintName, content, lineInfo)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /// Check if there's an `// ignore: lint_name` comment at an offset
-  static bool _hasIgnoreAtOffset(
-    int offset,
-    String lintName,
-    String content,
-    LineInfo lineInfo,
-  ) {
-    // Use cached pattern
-    final pattern = _getIgnorePattern(lintName);
-
-    // Get the line number at the offset
-    final nodeLine = lineInfo.getLocation(offset).lineNumber;
-
-    // Check the line before and the same line
-    for (int line = nodeLine - 1; line <= nodeLine; line++) {
-      if (line < 1) continue;
-
-      final lineStart = lineInfo.getOffsetOfLine(line - 1);
-      final lineEnd = line < lineInfo.lineCount
-          ? lineInfo.getOffsetOfLine(line)
-          : content.length;
-
-      final lineContent = content.substring(lineStart, lineEnd);
-
-      if (pattern.hasMatch(lineContent)) {
-        return true;
-      }
-    }
-
-    return false;
+    final lineNumber = lineInfo.getLocation(offset).lineNumber;
+    return index.isIgnoredAtLine(lineNumber, lintName);
   }
 
   /// Clear all caches. Call between analysis sessions if needed.
   static void clearCache() {
-    _ignoreForFileCache.clear();
+    FileIgnoreIndex.clearCache();
+  }
+}
+
+/// Utility class for type checking in Flutter widgets.
+class TypeUtils {
+  /// Whether the given [type] is a ListView widget.
+  static bool isListViewWidget(String? typeName) => typeName == 'ListView';
+
+  /// Whether the given [type] is a Column widget.
+  static bool isColumnWidget(String? typeName) => typeName == 'Column';
+
+  /// Whether the given [type] is a Row widget.
+  static bool isRowWidget(String? typeName) => typeName == 'Row';
+
+  /// Whether the given file is a test file.
+  static bool isTestFile(String filePath) {
+    final normalized = PathUtils.normalizePath(filePath);
+    final isInTestDir = normalized.contains('/test/');
+    final endsWithTest = normalized.endsWith('_test.dart');
+    final isInLintsDir = normalized.contains('/lints/');
+    final isInLibDir = normalized.contains('/lib/');
+    final endsWithTestDart = normalized.endsWith('/test.dart');
+
+    // for lint rule test files - don't treat as test
+    if (isInTestDir && isInLintsDir && endsWithTest) {
+      return false;
+    }
+
+    // for reflectiveTest (/home/test/lib/test.dart) - don't treat as test
+    if (isInLibDir && endsWithTestDart) {
+      return false;
+    }
+
+    return isInTestDir || endsWithTest;
   }
 }

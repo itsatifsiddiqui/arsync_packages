@@ -68,7 +68,7 @@ These rules prevent layers from "leaking" into each other.
 #### Example: presentation_layer_isolation
 
 ```dart
-// BAD - lib/screens/home_screen.dart
+// NOT RECOMMENDED - lib/screens/home_screen.dart
 import 'package:my_app/repositories/auth_repository.dart'; // ERROR!
 import 'package:dio/dio.dart'; // ERROR!
 
@@ -80,7 +80,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// GOOD - lib/screens/home_screen.dart
+// RECOMMENDED - lib/screens/home_screen.dart
 import 'package:my_app/providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -95,26 +95,26 @@ class HomeScreen extends ConsumerWidget {
 #### Example: shared_widget_purity (Single Widget Per File)
 
 ```dart
-// BAD - lib/widgets/buttons.dart
-class PrimaryButton extends StatelessWidget {} // OK - first public widget
+// NOT RECOMMENDED - lib/widgets/buttons.dart
+class PrimaryButton extends StatelessWidget {} // ALLOWED - first public widget
 class SecondaryButton extends StatelessWidget {} // ERROR! Multiple public widgets
 
-// GOOD - lib/widgets/primary_button.dart
+// RECOMMENDED - lib/widgets/primary_button.dart
 class PrimaryButton extends StatelessWidget {}
-class _ButtonContent extends StatelessWidget {} // OK - private helper
+class _ButtonContent extends StatelessWidget {} // ALLOWED - private helper
 ```
 
 #### Example: Use Records Instead of Parameter Classes
 
 ```dart
-// BAD - lib/screens/profile_screen.dart
+// NOT RECOMMENDED - lib/screens/profile_screen.dart
 class UpdateProfileParams {
   final String userId;
   final String name;
   const UpdateProfileParams({required this.userId, required this.name});
 }
 
-// GOOD - Use Dart records
+// RECOMMENDED - Use Dart records
 typedef UpdateProfileParams = ({
   String userId,
   String name,
@@ -124,6 +124,46 @@ typedef UpdateProfileParams = ({
 // Usage
 void updateProfile(UpdateProfileParams params) {
   print(params.userId);
+}
+```
+
+#### Example: model_purity
+
+```dart
+// NOT RECOMMENDED - lib/models/user.dart
+import 'package:riverpod/riverpod.dart'; // ERROR: No provider imports in models!
+
+class User {
+  final String name;
+  User(this.name);
+}
+
+// RECOMMENDED - lib/models/user.dart
+@freezed
+class User with _$User {
+  const factory User({
+    required String id,
+    required String name,
+  }) = _User;
+
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+}
+```
+
+#### Example: repository_isolation
+
+```dart
+// NOT RECOMMENDED - lib/repositories/user_repository.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // ERROR: UI Riverpod!
+import 'package:my_app/screens/home_screen.dart'; // ERROR: Screen import!
+
+// RECOMMENDED - lib/repositories/user_repository.dart
+import 'package:riverpod/riverpod.dart'; // ALLOWED: Core Riverpod only
+import 'package:dio/dio.dart';
+
+class UserRepository {
+  final Dio _dio;
+  UserRepository(this._dio);
 }
 ```
 
@@ -150,37 +190,37 @@ These rules enforce the "Arsync Riverpod Pattern".
 ```dart
 // File: lib/providers/auth_provider.dart
 
-// GOOD
+// RECOMMENDED
 class AuthNotifier extends Notifier<AuthState> { ... } // Matches file name prefix
 
-// BAD - lib/providers/auth.dart (missing _provider suffix)
-// BAD - lib/providers/auth_provider.dart with class UserNotifier (prefix mismatch)
+// NOT RECOMMENDED - lib/providers/auth.dart (missing _provider suffix)
+// NOT RECOMMENDED - lib/providers/auth_provider.dart with class UserNotifier (prefix mismatch)
 ```
 
 #### Example: provider_declaration_syntax
 
 ```dart
-// BAD - Explicit generics and closure
+// NOT RECOMMENDED - Explicit generics and closure
 final authProvider = NotifierProvider.autoDispose<AuthNotifier, AuthState>(
   () => AuthNotifier(),
 );
 
-// GOOD - Clean .new syntax
+// RECOMMENDED - Clean .new syntax
 final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 ```
 
 #### Example: provider_autodispose_enforcement
 
 ```dart
-// BAD - Memory leak potential
+// NOT RECOMMENDED - Memory leak potential
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
   return AuthNotifier();
 }); // ERROR: Missing autoDispose
 
-// GOOD - Option 1: Use autoDispose
+// RECOMMENDED - Option 1: Use autoDispose
 final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 
-// GOOD - Option 2: Use keepAlive for persistent state
+// RECOMMENDED - Option 2: Use keepAlive for persistent state
 final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 
 class AuthNotifier extends Notifier<AuthState> {
@@ -195,13 +235,13 @@ class AuthNotifier extends Notifier<AuthState> {
 #### Example: provider_state_class
 
 ```dart
-// BAD - State class not @freezed
+// NOT RECOMMENDED - State class not @freezed
 class AuthState {
   final bool isLoggedIn;
   AuthState(this.isLoggedIn);
 }
 
-// GOOD - Immutable state with @freezed
+// RECOMMENDED - Immutable state with @freezed
 @freezed
 class AuthState with _$AuthState {
   const factory AuthState({
@@ -214,11 +254,11 @@ class AuthState with _$AuthState {
 #### Example: provider_single_per_file
 
 ```dart
-// BAD - lib/providers/auth_provider.dart
+// NOT RECOMMENDED - lib/providers/auth_provider.dart
 final authProvider = NotifierProvider.autoDispose(AuthNotifier.new);
 final userProvider = NotifierProvider.autoDispose(UserNotifier.new); // ERROR!
 
-// GOOD - One provider per file
+// RECOMMENDED - One provider per file
 // lib/providers/auth_provider.dart -> authProvider
 // lib/providers/user_provider.dart -> userProvider
 ```
@@ -226,14 +266,14 @@ final userProvider = NotifierProvider.autoDispose(UserNotifier.new); // ERROR!
 #### Example: async_viewmodel_safety
 
 ```dart
-// BAD - Unhandled async errors
+// NOT RECOMMENDED - Unhandled async errors
 class UserNotifier extends AsyncNotifier<User> {
   Future<void> fetchUser() async {
     await userRepository.getUser(); // ERROR: No try/catch
   }
 }
 
-// GOOD - Proper error handling
+// RECOMMENDED - Proper error handling
 class UserNotifier extends AsyncNotifier<User> {
   Future<void> fetchUser() async {
     try {
@@ -242,6 +282,55 @@ class UserNotifier extends AsyncNotifier<User> {
       ref.showExceptionSheet(e);
     }
   }
+}
+```
+
+#### Example: viewmodel_naming_convention
+
+```dart
+// NOT RECOMMENDED - lib/providers/auth_provider.dart
+class AuthViewModel extends Notifier<AuthState> {} // ERROR: Must end with "Notifier"
+class Auth extends Notifier<AuthState> {} // ERROR: Must end with "Notifier"
+
+// RECOMMENDED
+class AuthNotifier extends Notifier<AuthState> {} // Correct naming
+class UserAuthNotifier extends Notifier<AuthState> {} // Also correct
+```
+
+#### Example: no_context_in_providers
+
+```dart
+// NOT RECOMMENDED - BuildContext in provider method
+class AuthNotifier extends Notifier<AuthState> {
+  void showError(BuildContext context) { // ERROR: No BuildContext!
+    ScaffoldMessenger.of(context).showSnackBar(...);
+  }
+}
+
+// RECOMMENDED - UI-agnostic, let the UI handle presentation
+class AuthNotifier extends Notifier<AuthState> {
+  void setError(String message) {
+    state = state.copyWith(errorMessage: message);
+  }
+}
+```
+
+#### Example: provider_class_restriction
+
+```dart
+// NOT RECOMMENDED - lib/providers/auth_provider.dart
+class AuthHelper {} // ERROR: Only Notifier classes allowed
+class AuthUtils {} // ERROR: Move to utils/
+
+@freezed
+class AuthState with _$AuthState {} // ALLOWED: @freezed state class
+
+// RECOMMENDED - Only Notifier and @freezed state classes
+class AuthNotifier extends Notifier<AuthState> {}
+
+@freezed
+class AuthState with _$AuthState {
+  const factory AuthState({...}) = _AuthState;
 }
 ```
 
@@ -262,7 +351,7 @@ class UserNotifier extends AsyncNotifier<User> {
 ```dart
 // lib/repositories/auth_repository.dart
 
-// GOOD - Provider at top ending with RepoProvider
+// RECOMMENDED - Provider at top ending with RepoProvider
 final authRepoProvider = Provider<AuthRepository>((ref) {
   final dio = ref.watch(dioProvider);
   return AuthRepository(dio);
@@ -277,18 +366,18 @@ class AuthRepository {
 #### Example: repository_dependency_injection
 
 ```dart
-// BAD - Direct instantiation
+// NOT RECOMMENDED - Direct instantiation
 class AuthRepository {
   final Dio _dio = Dio(); // ERROR: Create objects directly
 }
 
-// BAD - Ref parameter
+// NOT RECOMMENDED - Ref parameter
 class AuthRepository {
   final Ref ref; // ERROR: Ref not allowed
   AuthRepository(this.ref);
 }
 
-// GOOD - Constructor injection
+// RECOMMENDED - Constructor injection
 class AuthRepository {
   final Dio _dio;
   AuthRepository(this._dio); // Injected via provider
@@ -298,7 +387,7 @@ class AuthRepository {
 #### Example: repository_no_try_catch
 
 ```dart
-// BAD - Swallowing errors
+// NOT RECOMMENDED - Swallowing errors
 class UserRepository {
   Future<User?> getUser(String id) async {
     try {
@@ -309,11 +398,48 @@ class UserRepository {
   }
 }
 
-// GOOD - Let errors bubble up
+// RECOMMENDED - Let errors bubble up
 class UserRepository {
   Future<User> getUser(String id) async {
     return await api.fetchUser(id); // Throws on error
   }
+}
+```
+
+#### Example: repository_class_restriction
+
+```dart
+// NOT RECOMMENDED - lib/repositories/user_helper.dart
+class UserHelper {} // ERROR: File must end with _repository.dart
+
+// NOT RECOMMENDED - lib/repositories/user_repository.dart
+class UserService {} // ERROR: Class must contain "Repository"
+
+// RECOMMENDED - lib/repositories/user_repository.dart
+class UserRepository {
+  Future<User> getUser(String id) async { ... }
+}
+
+// RECOMMENDED - Private helper classes are allowed
+class _UserCacheHelper {} // ALLOWED: Private class
+```
+
+#### Example: repository_async_return
+
+```dart
+// NOT RECOMMENDED - Synchronous public methods
+class UserRepository {
+  User getUser(String id) { ... } // ERROR: Must return Future<T>
+  List<User> getAllUsers() { ... } // ERROR: Must return Future<T> or Stream<T>
+}
+
+// RECOMMENDED - Async public methods
+class UserRepository {
+  Future<User> getUser(String id) async { ... }
+  Stream<List<User>> watchUsers() { ... }
+
+  // Private methods can be sync
+  User _parseUser(Map<String, dynamic> json) { ... } // ALLOWED: Private
 }
 ```
 
@@ -332,7 +458,7 @@ class UserRepository {
 #### Example: complexity_limits
 
 ```dart
-// BAD - Nested ternary
+// NOT RECOMMENDED - Nested ternary
 Widget build(BuildContext context) {
   return isLoading
     ? LoadingWidget()
@@ -341,14 +467,14 @@ Widget build(BuildContext context) {
       : ContentWidget();
 }
 
-// GOOD - Use if/else or switch
+// RECOMMENDED - Use if/else or switch
 Widget build(BuildContext context) {
   if (isLoading) return LoadingWidget();
   if (hasError) return ErrorWidget();
   return ContentWidget();
 }
 
-// BAD - Too many parameters (max 4)
+// NOT RECOMMENDED - Too many parameters (max 4)
 void updateUser(
   String id,
   String name,
@@ -357,15 +483,15 @@ void updateUser(
   String address, // ERROR: More than 4 parameters
 ) {}
 
-// GOOD - Use a parameter object
+// RECOMMENDED - Use a parameter object
 void updateUser(UpdateUserParams params) {}
 
-// BAD - Method exceeds 60 lines
+// NOT RECOMMENDED - Method exceeds 60 lines
 void processData() {
   // ... 61+ lines of code ... // ERROR!
 }
 
-// GOOD - Extract into smaller methods
+// RECOMMENDED - Extract into smaller methods
 void processData() {
   _validateInput();
   _transformData();
@@ -376,19 +502,67 @@ void processData() {
 #### Example: global_variable_restriction
 
 ```dart
-// BAD - lib/utils/helpers.dart
+// NOT RECOMMENDED - lib/utils/helpers.dart
 String globalApiUrl = 'https://api.example.com'; // ERROR!
 void helperFunction() {} // ERROR: Top-level function
 
-// GOOD - lib/utils/constants.dart
-const kApiUrl = 'https://api.example.com'; // OK: k prefix in constants.dart
-void kFormatDate() {} // OK: k prefix in constants.dart
+// RECOMMENDED - lib/utils/constants.dart
+const kApiUrl = 'https://api.example.com'; // ALLOWED: k prefix in constants.dart
+void kFormatDate() {} // ALLOWED: k prefix in constants.dart
 
-// GOOD - lib/providers/config_provider.dart
-final configProvider = Provider((ref) => Config()); // OK: Provider variable
+// RECOMMENDED - lib/providers/config_provider.dart
+final configProvider = Provider((ref) => Config()); // ALLOWED: Provider variable
 
-// GOOD - Private functions anywhere
-void _internalHelper() {} // OK: Private function
+// RECOMMENDED - Private functions anywhere
+void _internalHelper() {} // ALLOWED: Private function
+```
+
+#### Example: print_ban
+
+```dart
+// NOT RECOMMENDED - Using print statements
+void doSomething() {
+  print('Debug info'); // ERROR: Use logging instead
+  debugPrint('More debug'); // ERROR: Also banned
+}
+
+// RECOMMENDED - Use structured logging
+void doSomething() {
+  'Debug info'.log(); // Custom log extension
+  logger.info('Structured log'); // Logging framework
+}
+```
+
+#### Example: barrel_file_restriction
+
+```dart
+// NOT RECOMMENDED - lib/screens/index.dart (barrel file)
+export 'home_screen.dart';
+export 'profile_screen.dart';
+// ERROR: No barrel files in screens/, widgets/, providers/
+
+// NOT RECOMMENDED - lib/widgets/index.dart
+export 'button.dart';
+export 'card.dart';
+// ERROR: Barrel files are banned
+
+// RECOMMENDED - Import directly
+import 'package:my_app/screens/home_screen.dart';
+import 'package:my_app/widgets/button.dart';
+```
+
+#### Example: ignore_file_ban
+
+```dart
+// NOT RECOMMENDED - File-level ignore
+// ignore_for_file: print_ban
+// ERROR: File-level ignores are banned!
+
+print('This would be ignored'); // But we don't allow this
+
+// RECOMMENDED - Line-specific ignore for rare exceptions
+// ignore: print_ban
+print('Debug only - remove before commit');
 ```
 
 ---
@@ -405,7 +579,7 @@ void _internalHelper() {} // OK: Private function
 #### Example: hook_safety_enforcement
 
 ```dart
-// BAD - Memory leak in build
+// NOT RECOMMENDED - Memory leak in build
 class MyWidget extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -414,7 +588,7 @@ class MyWidget extends HookConsumerWidget {
   }
 }
 
-// GOOD - Use hooks
+// RECOMMENDED - Use hooks
 class MyWidget extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -423,7 +597,7 @@ class MyWidget extends HookConsumerWidget {
   }
 }
 
-// BAD - GlobalKey<FormState> resets on keyboard open/orientation change
+// NOT RECOMMENDED - GlobalKey<FormState> resets on keyboard open/orientation change
 class MyFormWidget extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -432,7 +606,7 @@ class MyFormWidget extends HookConsumerWidget {
   }
 }
 
-// GOOD - Use GlobalObjectKey with context for stable identity
+// RECOMMENDED - Use GlobalObjectKey with context for stable identity
 class MyFormWidget extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -442,13 +616,47 @@ class MyFormWidget extends HookConsumerWidget {
 }
 ```
 
+#### Example: scaffold_location
+
+```dart
+// NOT RECOMMENDED - lib/widgets/user_card.dart
+class UserCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold( // ERROR: Scaffold in widgets/ folder
+      body: Text('User info'),
+    );
+  }
+}
+
+// RECOMMENDED - lib/screens/user_screen.dart
+class UserScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold( // ALLOWED: Scaffold in screens/ folder
+      body: UserCard(),
+    );
+  }
+}
+
+// RECOMMENDED - lib/widgets/user_card.dart
+class UserCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Card( // ALLOWED: No Scaffold
+      child: Text('User info'),
+    );
+  }
+}
+```
+
 #### Example: asset_safety
 
 ```dart
-// BAD - Typo-prone string literal
+// NOT RECOMMENDED - Typo-prone string literal
 Image.asset('assets/images/logo.png'); // ERROR!
 
-// GOOD - Use constants
+// RECOMMENDED - Use constants
 // lib/utils/images.dart
 class Images {
   static const logo = 'assets/images/logo.png';
@@ -463,11 +671,335 @@ Image.asset(Images.logo);
 ```dart
 // File: lib/screens/user_profile_screen.dart
 
-// BAD
+// NOT RECOMMENDED
 class ProfilePage {} // ERROR: Should be UserProfileScreen
 
-// GOOD
+// RECOMMENDED
 class UserProfileScreen {} // Matches file name
+```
+
+---
+
+### Category F: Flutter Best Practices
+
+| Rule | Description |
+|------|-------------|
+| `avoid_consecutive_sliver_to_box_adapter` | Use `SliverList.list()` instead of consecutive `SliverToBoxAdapter` widgets |
+| `avoid_hardcoded_color` | Use `Theme.of(context).colorScheme` instead of hardcoded colors |
+| `avoid_shrink_wrap_in_list_view` | Avoid `shrinkWrap: true` in ListView; use `SliverList` instead |
+| `avoid_single_child` | Don't use `Column`/`Row`/`Stack` with single child; use appropriate widget |
+| `prefer_dedicated_media_query_methods` | Use `MediaQuery.sizeOf()` instead of `MediaQuery.of().size` |
+| `prefer_space_between_elements` | Require blank lines between class members |
+| `prefer_to_include_sliver_in_name` | Widgets returning Slivers should have "Sliver" in name |
+| `unsafe_null_assertion` | Avoid force null assertion (`!`); use `??` or null-aware operators |
+| `avoid_unnecessary_padding_widget` | Don't wrap Container with Padding; use Container's margin/padding |
+| `unnecessary_hook_widget` | Use StatelessWidget instead of HookWidget when no hooks are used |
+| `unnecessary_container` | Remove Container when it doesn't use any Container-specific properties |
+
+#### Example: avoid_consecutive_sliver_to_box_adapter
+
+```dart
+// NOT RECOMMENDED - Inefficient consecutive SliverToBoxAdapter
+CustomScrollView(
+  slivers: [
+    SliverToBoxAdapter(child: Text('Item 1')),
+    SliverToBoxAdapter(child: Text('Item 2')),
+    SliverToBoxAdapter(child: Text('Item 3')),
+  ],
+)
+
+// RECOMMENDED - Use SliverList.list
+CustomScrollView(
+  slivers: [
+    SliverList.list(
+      children: [
+        Text('Item 1'),
+        Text('Item 2'),
+        Text('Item 3'),
+      ],
+    ),
+  ],
+)
+```
+
+#### Example: avoid_hardcoded_color
+
+```dart
+// NOT RECOMMENDED - Hardcoded colors don't adapt to themes
+Container(color: Color(0xFF00FF00))
+Container(color: Colors.red)
+
+// RECOMMENDED - Use theme colors
+Container(color: Theme.of(context).colorScheme.primary)
+Container(color: Theme.of(context).colorScheme.surface)
+
+// ALLOWED - Transparent is allowed
+Container(color: Colors.transparent)
+```
+
+#### Example: avoid_shrink_wrap_in_list_view
+
+```dart
+// NOT RECOMMENDED - shrinkWrap causes performance issues
+ListView(
+  shrinkWrap: true, // ERROR: Avoid shrinkWrap
+  children: items,
+)
+
+// RECOMMENDED - Use SliverList in CustomScrollView
+CustomScrollView(
+  slivers: [
+    SliverList.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) => items[index],
+    ),
+  ],
+)
+```
+
+#### Example: avoid_single_child
+
+```dart
+// NOT RECOMMENDED - Multi-child widget with single child
+Column(
+  children: [Text('Hello')], // ERROR: Use single-child widget
+)
+
+Row(
+  children: [Icon(Icons.star)], // ERROR: Unnecessary Row
+)
+
+// RECOMMENDED - Use appropriate single-child widgets
+Center(child: Text('Hello'))
+Align(alignment: Alignment.centerLeft, child: Icon(Icons.star))
+```
+
+#### Example: prefer_dedicated_media_query_methods
+
+```dart
+// NOT RECOMMENDED - Causes unnecessary rebuilds
+Widget build(BuildContext context) {
+  final size = MediaQuery.of(context).size; // ERROR!
+  final padding = MediaQuery.of(context).padding; // ERROR!
+  return Container(width: size.width);
+}
+
+// RECOMMENDED - Use dedicated methods (more efficient)
+Widget build(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  final padding = MediaQuery.paddingOf(context);
+  return Container(width: size.width);
+}
+```
+
+#### Example: prefer_space_between_elements
+
+```dart
+// NOT RECOMMENDED - No spacing between members
+class MyClass {
+  final String name;
+  final int age;
+  void greet() {}
+  void farewell() {} // ERROR: Missing blank line before method
+}
+
+// RECOMMENDED - Blank lines between members
+class MyClass {
+  final String name;
+  final int age;
+
+  void greet() {}
+
+  void farewell() {}
+}
+```
+
+#### Example: prefer_to_include_sliver_in_name
+
+```dart
+// NOT RECOMMENDED - Returns sliver but name doesn't indicate it
+class MyHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter( // ERROR: Name should include "Sliver"
+      child: Text('Header'),
+    );
+  }
+}
+
+// RECOMMENDED - Name indicates it returns a sliver
+class MySliverHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Text('Header'),
+    );
+  }
+}
+```
+
+#### Example: avoid_unnecessary_padding_widget
+
+```dart
+// NOT RECOMMENDED - Padding wrapping Container
+Padding(
+  padding: EdgeInsets.all(16),
+  child: Container( // ERROR: Use Container's margin instead
+    color: Colors.blue,
+    child: Text('Hello'),
+  ),
+)
+
+// RECOMMENDED - Use Container's margin property
+Container(
+  margin: EdgeInsets.all(16),
+  color: Colors.blue,
+  child: Text('Hello'),
+)
+```
+
+#### Example: unsafe_null_assertion
+
+```dart
+// NOT RECOMMENDED - Force null assertion can crash
+String getValue(String? name) => name!;
+
+// RECOMMENDED - Use null coalescing
+String getValue(String? name) => name ?? 'default';
+
+// RECOMMENDED - Use null-aware access
+String? getUserName(User? user) => user?.name;
+```
+
+#### Example: unnecessary_hook_widget
+
+```dart
+// NOT RECOMMENDED - HookWidget without any hooks
+class MyWidget extends HookWidget {
+  @override
+  Widget build(BuildContext context) => Text('Hello');
+}
+
+// RECOMMENDED - Use StatelessWidget when no hooks needed
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Text('Hello');
+}
+
+// RECOMMENDED - HookWidget with hooks
+class MyWidget extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    final controller = useTextEditingController();
+    return TextField(controller: controller);
+  }
+}
+```
+
+#### Example: unnecessary_container
+
+```dart
+// NOT RECOMMENDED - Container with only child
+Container(
+  child: Text('Hello'), // ERROR: Container adds no value
+)
+
+Container(
+  key: Key('myKey'),
+  child: Text('Hello'), // ERROR: Only key and child, Container is useless
+)
+
+// RECOMMENDED - Just use the widget directly
+Text('Hello')
+
+// RECOMMENDED - Container with meaningful properties
+Container(
+  padding: EdgeInsets.all(8),
+  child: Text('Hello'),
+)
+
+Container(
+  color: Theme.of(context).colorScheme.surface,
+  child: Text('Hello'),
+)
+
+Container(
+  decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+  child: Text('Hello'),
+)
+```
+
+---
+
+### Category G: Resource Management
+
+| Rule | Target | Description |
+|------|--------|-------------|
+| `remove_listener` | State classes | Listeners added via `addListener` must be removed in `dispose()` |
+| `dispose_notifier` | State classes | ChangeNotifier instances (controllers) must be disposed |
+
+#### Example: remove_listener
+
+```dart
+// NOT RECOMMENDED - Listener never removed (memory leak)
+class _MyWidgetState extends State<MyWidget> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged); // ERROR!
+  }
+
+  void _onChanged() {}
+
+  @override
+  Widget build(BuildContext context) => Container();
+}
+
+// RECOMMENDED - Properly remove listener
+class _MyWidgetState extends State<MyWidget> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {}
+
+  @override
+  Widget build(BuildContext context) => Container();
+}
+```
+
+#### Example: dispose_notifier
+
+```dart
+// NOT RECOMMENDED - Controller never disposed (memory leak)
+class _MyWidgetState extends State<MyWidget> {
+  final _controller = TextEditingController(); // ERROR!
+
+  @override
+  Widget build(BuildContext context) => TextField(controller: _controller);
+}
+
+// RECOMMENDED - Properly dispose controller
+class _MyWidgetState extends State<MyWidget> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(controller: _controller);
+}
 ```
 
 ---
@@ -503,6 +1035,19 @@ class UserProfileScreen {} // Matches file name
 | 25 | `scaffold_location` | UI Safety | widgets/ |
 | 26 | `asset_safety` | UI Safety | All files |
 | 27 | `file_class_match` | UI Safety | All files |
+| 28 | `avoid_consecutive_sliver_to_box_adapter` | Flutter Best Practices | All files |
+| 29 | `avoid_hardcoded_color` | Flutter Best Practices | All files |
+| 30 | `avoid_shrink_wrap_in_list_view` | Flutter Best Practices | All files |
+| 31 | `avoid_single_child` | Flutter Best Practices | All files |
+| 32 | `prefer_dedicated_media_query_methods` | Flutter Best Practices | All files |
+| 33 | `prefer_space_between_elements` | Flutter Best Practices | All files |
+| 34 | `prefer_to_include_sliver_in_name` | Flutter Best Practices | All files |
+| 35 | `unsafe_null_assertion` | Flutter Best Practices | All files |
+| 36 | `avoid_unnecessary_padding_widget` | Flutter Best Practices | All files |
+| 37 | `unnecessary_hook_widget` | Flutter Best Practices | All files |
+| 38 | `remove_listener` | Resource Management | State classes |
+| 39 | `dispose_notifier` | Resource Management | State classes |
+| 40 | `unnecessary_container` | Flutter Best Practices | All files |
 
 ---
 

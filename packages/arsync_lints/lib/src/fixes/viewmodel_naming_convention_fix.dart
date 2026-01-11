@@ -34,15 +34,11 @@ class ViewModelClassNamingFix extends ResolvedCorrectionProducer {
     final currentName = classNameToken.lexeme;
     if (currentName.endsWith('Notifier')) return;
 
-    // Remove common suffixes before adding Notifier
-    var newName = currentName;
-    for (final suffix in ['ViewModel', 'VM', 'Controller', 'State']) {
-      if (newName.endsWith(suffix)) {
-        newName = newName.substring(0, newName.length - suffix.length);
-        break;
-      }
-    }
-    newName = '${newName}Notifier';
+    // Complete partial suffix or append "Notifier"
+    final completion = _findPartialNotifierSuffix(currentName, 'Notifier');
+    final newName = completion != null
+        ? '$currentName$completion'
+        : '${currentName}Notifier';
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
@@ -50,6 +46,33 @@ class ViewModelClassNamingFix extends ResolvedCorrectionProducer {
         newName,
       );
     });
+  }
+
+  /// Checks if [name] ends with a partial prefix of [suffix].
+  /// Returns the remaining characters needed to complete [suffix], or null if no partial match.
+  /// E.g., "ThemeModeNotifie" with suffix "Notifier" returns "r"
+  /// E.g., "AuthNotif" with suffix "Notifier" returns "ier"
+  String? _findPartialNotifierSuffix(String name, String suffix) {
+    if (name.isEmpty || suffix.isEmpty) return null;
+
+    // Find the longest matching prefix of suffix at the end of name
+    // by comparing characters directly (O(n) without substring allocations)
+    final maxMatchLen = name.length < suffix.length - 1 ? name.length : suffix.length - 1;
+
+    for (var matchLen = maxMatchLen; matchLen >= 1; matchLen--) {
+      var matches = true;
+      final nameStart = name.length - matchLen;
+      for (var i = 0; i < matchLen; i++) {
+        if (name.codeUnitAt(nameStart + i) != suffix.codeUnitAt(i)) {
+          matches = false;
+          break;
+        }
+      }
+      if (matches) {
+        return suffix.substring(matchLen);
+      }
+    }
+    return null;
   }
 
   Token? _findClassNameToken(AstNode? node) {

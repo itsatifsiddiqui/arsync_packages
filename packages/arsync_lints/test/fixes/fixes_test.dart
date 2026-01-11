@@ -137,25 +137,42 @@ void main() {
     });
 
     group('ViewModelNamingConvention Fix Logic', () {
-      test('adds Notifier suffix correctly', () {
+      test('appends Notifier suffix', () {
+        const name = 'Auth';
+        final newName = '${name}Notifier';
+        expect(newName, equals('AuthNotifier'));
+      });
+
+      test('completes partial Notifier suffix (e.g., ThemeModeNotifie -> ThemeModeNotifier)', () {
+        // Helper function matching the fix logic
+        String? findPartialNotifierSuffix(String name, String suffix) {
+          for (var i = suffix.length - 1; i >= 1; i--) {
+            final prefix = suffix.substring(0, i);
+            if (name.endsWith(prefix)) {
+              return suffix.substring(i);
+            }
+          }
+          return null;
+        }
+
         const testCases = {
-          'AuthViewModel': 'AuthNotifier',
-          'UserVM': 'UserNotifier',
-          'LoginController': 'LoginNotifier',
-          'SettingsState': 'SettingsNotifier',
-          'Auth': 'AuthNotifier',
+          'ThemeModeNotifie': 'r',      // Missing 'r'
+          'AuthNotifi': 'er',           // Missing 'er'
+          'UserNotif': 'ier',           // Missing 'ier'
+          'SettingsN': 'otifier',       // Just 'N'
+          'ThemeModeNotifier': null,    // Already complete - no completion needed
+          'AuthViewModel': null,        // No partial match
         };
 
         for (final entry in testCases.entries) {
-          var newName = entry.key;
-          for (final suffix in ['ViewModel', 'VM', 'Controller', 'State']) {
-            if (newName.endsWith(suffix)) {
-              newName = newName.substring(0, newName.length - suffix.length);
-              break;
-            }
+          final completion = findPartialNotifierSuffix(entry.key, 'Notifier');
+          expect(completion, equals(entry.value), reason: 'For ${entry.key}');
+
+          // Verify the full result if there's a completion
+          if (completion != null) {
+            final result = '${entry.key}$completion';
+            expect(result.endsWith('Notifier'), isTrue);
           }
-          newName = '${newName}Notifier';
-          expect(newName, equals(entry.value));
         }
       });
 

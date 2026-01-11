@@ -1,3 +1,7 @@
+## 0.1.0
+
+- Added new rules 
+
 ## 0.0.10
 
 - Modifications to `provider_state_class` rule.
