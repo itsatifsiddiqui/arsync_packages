@@ -1,0 +1,35 @@
+name: arsync_lints_example
+description: Example project demonstrating arsync_lints rules
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+
+# NOTE: This is a simplified example for testing without Flutter SDK.
+# In a real Flutter project, you would uncomment the flutter dependencies below.
+
+dependencies:
+  # State Management (pure Dart versions for testing)
+  riverpod: ^3.1.0
+
+  # Data Classes
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+  # Networking
+  dio: ^5.9.0
+  http: ^1.6.0
+
+dev_dependencies:
+  arsync_lints:
+    path: ../
+  # NOTE: riverpod_lint is temporarily removed due to analyzer version conflict.
+  # riverpod_lint requires analyzer <9.0.0, but arsync_lints requires analyzer ^9.0.0
+  # Uncomment when riverpod_lint updates to support analyzer 9.x:
+  # riverpod_lint: ^3.1.0
+
+  # Code generation
+  build_runner: ^2.10.4
+  freezed: ^3.2.3
+  json_serializable: ^6.11.2

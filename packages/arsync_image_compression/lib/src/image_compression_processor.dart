@@ -44,9 +44,7 @@ class ImageCompressionProcessor implements ImageProcessor {
 
     while (attempts < maxAttempts) {
       // Check if the image is already small enough
-      final currentSize = await ArsyncImagePicker.getFileSizeMB(
-        currentImage,
-      );
+      final currentSize = await ArsyncImagePicker.getFileSizeMB(currentImage);
       if (currentSize <= targetMaxSizeMB) {
         break;
       }

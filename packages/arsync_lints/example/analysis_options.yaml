@@ -1,0 +1,16 @@
+# Dart 3.10+ native plugin system
+plugins:
+  arsync_lints:
+    path: ../
+
+analyzer:
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+
+  errors:
+    # Suppress import errors for packages not in pubspec (for demo purposes)
+    uri_does_not_exist: ignore
+    undefined_class: ignore
+    undefined_function: ignore
+    unused_import: ignore

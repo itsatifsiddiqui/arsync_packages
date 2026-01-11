@@ -1,0 +1,79 @@
+import '../arsync_lint_rule.dart';
+
+/// Rule C2: repository_async_return
+///
+/// Repositories must not block the main thread.
+/// Public methods must return `Future<T>` or `Stream<T>`.
+class RepositoryAsyncReturn extends AnalysisRule {
+  RepositoryAsyncReturn()
+    : super(
+        name: 'repository_async_return',
+        description:
+            'Repository public methods must return Future<T> or Stream<T>.',
+      );
+
+  static const LintCode code = LintCode(
+    'repository_async_return',
+    'Repository public methods must return Future<T> or Stream<T>.',
+    correctionMessage: 'Change the return type to Future<T> or Stream<T>.',
+  );
+
+  @override
+  DiagnosticCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInRepositories(path)) return;
+
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
+    registry.addClassDeclaration(this, visitor);
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final AnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
+
+  _Visitor(this.rule, this.ignoreChecker);
+
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
+    for (final member in node.members) {
+      if (member is MethodDeclaration) {
+        _checkMethod(member);
+      }
+    }
+  }
+
+  void _checkMethod(MethodDeclaration method) {
+    final methodName = method.name.lexeme;
+
+    if (methodName.startsWith('_')) return;
+    if (method.isGetter || method.isSetter) return;
+
+    final returnType = method.returnType;
+    if (returnType == null) return;
+
+    final returnTypeName = returnType.toSource();
+
+    final isValidReturn =
+        returnTypeName.startsWith('Future<') ||
+        returnTypeName.startsWith('Stream<') ||
+        returnTypeName == 'Future' ||
+        returnTypeName == 'Stream';
+
+    if (!isValidReturn) {
+      rule.reportAtNode(returnType);
+    }
+  }
+}

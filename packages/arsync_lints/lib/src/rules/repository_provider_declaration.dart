@@ -1,0 +1,106 @@
+import '../arsync_lint_rule.dart';
+
+/// Rule: repository_provider_declaration
+///
+/// Repository files must define a provider at the top level.
+/// The provider name must end with "RepoProvider".
+///
+/// Good: final authRepoProvider = Provider((ref) => AuthRepository());
+/// Bad: No provider defined, or provider named "authProvider"
+class RepositoryProviderDeclaration extends MultiAnalysisRule {
+  RepositoryProviderDeclaration()
+    : super(
+        name: 'repository_provider_declaration',
+        description:
+            'Repository file must define a provider ending with "RepoProvider".',
+      );
+
+  static const missingProviderCode = LintCode(
+    'repository_provider_declaration',
+    'Repository file must define a provider ending with "RepoProvider".',
+    correctionMessage:
+        'Add a provider like: final authRepoProvider = Provider((ref) => AuthRepository());',
+  );
+
+  static const wrongNamingCode = LintCode(
+    'repository_provider_declaration',
+    'Repository provider name must end with "RepoProvider".',
+    correctionMessage:
+        'Rename the provider to end with "RepoProvider" (e.g., authRepoProvider).',
+  );
+
+  @override
+  List<DiagnosticCode> get diagnosticCodes => [
+    missingProviderCode,
+    wrongNamingCode,
+  ];
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInRepositories(path)) return;
+
+    final fileName = PathUtils.getFileName(path);
+    if (!fileName.endsWith('_repository')) return;
+
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final visitor = _Visitor(this, ignoreChecker);
+    registry.addCompilationUnit(this, visitor);
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
+
+  _Visitor(this.rule, this.ignoreChecker);
+
+  @override
+  void visitCompilationUnit(CompilationUnit node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
+    final providerDeclarations = <VariableDeclaration>[];
+
+    for (final declaration in node.declarations) {
+      if (declaration is TopLevelVariableDeclaration) {
+        for (final variable in declaration.variables.variables) {
+          final initializer = variable.initializer;
+          if (initializer == null) continue;
+
+          final source = initializer.toSource();
+          if (source.startsWith('Provider')) {
+            providerDeclarations.add(variable);
+          }
+        }
+      }
+    }
+
+    final hasRepoProvider = providerDeclarations.any(
+      (decl) => decl.name.lexeme.endsWith('RepoProvider'),
+    );
+
+    if (providerDeclarations.isEmpty) {
+      final firstDecl = node.declarations.firstOrNull;
+      if (firstDecl != null) {
+        rule.reportAtNode(
+          firstDecl,
+          diagnosticCode: RepositoryProviderDeclaration.missingProviderCode,
+        );
+      }
+    } else if (!hasRepoProvider) {
+      for (final decl in providerDeclarations) {
+        rule.reportAtOffset(
+          decl.name.offset,
+          decl.name.length,
+          diagnosticCode: RepositoryProviderDeclaration.wrongNamingCode,
+        );
+      }
+    }
+  }
+}

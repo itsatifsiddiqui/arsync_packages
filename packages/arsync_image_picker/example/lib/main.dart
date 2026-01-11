@@ -213,9 +213,7 @@ class _ImagePickerDemoState extends State<ImagePickerDemo> {
 
     try {
       // Create a temporary service just for cropping this individual image
-      final croppingService = ArsyncImagePicker(
-        appname: 'Individual Crop',
-      );
+      final croppingService = ArsyncImagePicker(appname: 'Individual Crop');
 
       // Add only the cropping processor with custom options
       croppingService.addProcessor(

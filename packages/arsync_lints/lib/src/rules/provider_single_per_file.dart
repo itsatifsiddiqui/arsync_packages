@@ -1,0 +1,136 @@
+import '../arsync_lint_rule.dart';
+
+/// Rule: provider_single_per_file
+///
+/// Each provider file should only contain ONE NotifierProvider that matches
+/// the file name.
+///
+/// Good: auth_provider.dart contains only authProvider + AuthNotifier + AuthState
+/// Bad: auth_provider.dart contains authProvider, userProvider, settingsProvider
+class ProviderSinglePerFile extends MultiAnalysisRule {
+  ProviderSinglePerFile()
+    : super(
+        name: 'provider_single_per_file',
+        description:
+            'Provider file should only contain ONE NotifierProvider that matches file name.',
+      );
+
+  static const multipleProvidersCode = LintCode(
+    'provider_single_per_file',
+    'Provider file should only contain ONE NotifierProvider. '
+        'Move additional providers to their own files.',
+    correctionMessage:
+        'Create a separate file for this provider (e.g., user_provider.dart for userProvider).',
+  );
+
+  static const nameMismatchCode = LintCode(
+    'provider_single_per_file',
+    'Provider variable name does not match file name.',
+    correctionMessage:
+        'Rename the provider to match the file name '
+        '(e.g., auth_provider.dart should have authProvider).',
+  );
+
+  @override
+  List<DiagnosticCode> get diagnosticCodes => [
+    multipleProvidersCode,
+    nameMismatchCode,
+  ];
+
+  static const _providerPatterns = {
+    'NotifierProvider',
+    'AsyncNotifierProvider',
+    'StreamNotifierProvider',
+  };
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
+  ) {
+    final path = context.definingUnit.file.path;
+    if (!PathUtils.isInProviders(path)) return;
+
+    final fileName = PathUtils.getFileName(path);
+    if (!fileName.endsWith('_provider')) return;
+
+    final content = context.definingUnit.content;
+    final ignoreChecker = IgnoreChecker.forRule(content, name);
+    if (ignoreChecker.ignoreForFile) return;
+
+    final prefix = fileName.replaceAll('_provider', '');
+    final expectedProviderName = '${_snakeToCamel(prefix)}Provider';
+
+    final visitor = _Visitor(this, ignoreChecker, expectedProviderName);
+    registry.addCompilationUnit(this, visitor);
+  }
+
+  static String _snakeToCamel(String snake) {
+    final parts = snake.split('_');
+    if (parts.isEmpty) return snake;
+
+    final buffer = StringBuffer(parts.first);
+    for (var i = 1; i < parts.length; i++) {
+      if (parts[i].isNotEmpty) {
+        buffer.write(parts[i][0].toUpperCase());
+        buffer.write(parts[i].substring(1));
+      }
+    }
+    return buffer.toString();
+  }
+}
+
+class _Visitor extends SimpleAstVisitor<void> {
+  final MultiAnalysisRule rule;
+  final IgnoreChecker ignoreChecker;
+  final String expectedProviderName;
+
+  _Visitor(this.rule, this.ignoreChecker, this.expectedProviderName);
+
+  @override
+  void visitCompilationUnit(CompilationUnit node) {
+    if (ignoreChecker.shouldIgnore(node)) return;
+
+    final providerDeclarations = <VariableDeclaration>[];
+
+    for (final declaration in node.declarations) {
+      if (declaration is TopLevelVariableDeclaration) {
+        for (final variable in declaration.variables.variables) {
+          final initializer = variable.initializer;
+          if (initializer == null) continue;
+
+          final source = initializer.toSource();
+          final isNotifierProvider = ProviderSinglePerFile._providerPatterns
+              .any((pattern) => source.startsWith(pattern));
+
+          if (isNotifierProvider) {
+            providerDeclarations.add(variable);
+          }
+        }
+      }
+    }
+
+    if (providerDeclarations.isEmpty) return;
+
+    if (providerDeclarations.length > 1) {
+      for (var i = 1; i < providerDeclarations.length; i++) {
+        rule.reportAtOffset(
+          providerDeclarations[i].name.offset,
+          providerDeclarations[i].name.length,
+          diagnosticCode: ProviderSinglePerFile.multipleProvidersCode,
+        );
+      }
+    }
+
+    final mainProvider = providerDeclarations.first;
+    final providerName = mainProvider.name.lexeme;
+
+    if (providerName != expectedProviderName) {
+      rule.reportAtOffset(
+        mainProvider.name.offset,
+        mainProvider.name.length,
+        diagnosticCode: ProviderSinglePerFile.nameMismatchCode,
+      );
+    }
+  }
+}
