@@ -26,8 +26,9 @@ class ProviderStateClassAddFreezedFix extends ResolvedCorrectionProducer {
     if (classDecl == null) return;
 
     // Check if already has @freezed
-    final hasFreezed = classDecl.metadata.any((a) =>
-        a.name.name == 'freezed' || a.name.name == 'Freezed');
+    final hasFreezed = classDecl.metadata.any(
+      (a) => a.name.name == 'freezed' || a.name.name == 'Freezed',
+    );
     if (hasFreezed) return;
 
     await builder.addDartFileEdit(file, (builder) {
@@ -84,7 +85,8 @@ class ProviderStateClassMoveHereFix extends ResolvedCorrectionProducer {
     final unit = typeNode.thisOrAncestorOfType<CompilationUnit>();
     if (unit == null) return;
 
-    final todoComment = '''
+    final todoComment =
+        '''
 
 // TODO: Move $typeName class here and add @freezed annotation
 // @freezed

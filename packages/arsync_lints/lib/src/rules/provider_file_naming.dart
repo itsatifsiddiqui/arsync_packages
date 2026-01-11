@@ -7,11 +7,11 @@ import '../arsync_lint_rule.dart';
 /// - File must contain a Notifier class with matching prefix (e.g., AuthNotifier)
 class ProviderFileNaming extends MultiAnalysisRule {
   ProviderFileNaming()
-      : super(
-          name: 'provider_file_naming',
-          description:
-              'Provider files must end with _provider.dart and contain a matching Notifier class.',
-        );
+    : super(
+        name: 'provider_file_naming',
+        description:
+            'Provider files must end with _provider.dart and contain a matching Notifier class.',
+      );
 
   static const fileCode = LintCode(
     'provider_file_naming',
@@ -100,8 +100,11 @@ class _Visitor extends SimpleAstVisitor<void> {
     }
 
     if (notifierClasses.isNotEmpty) {
-      final hasMatchingNotifier = notifierClasses.any((name) =>
-          name.startsWith(expectedNotifierPrefix) && name.endsWith('Notifier'));
+      final hasMatchingNotifier = notifierClasses.any(
+        (name) =>
+            name.startsWith(expectedNotifierPrefix) &&
+            name.endsWith('Notifier'),
+      );
 
       if (!hasMatchingNotifier && firstPublicClass != null) {
         rule.reportAtOffset(

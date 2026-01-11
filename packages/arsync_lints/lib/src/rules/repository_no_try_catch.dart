@@ -5,11 +5,11 @@ import '../arsync_lint_rule.dart';
 /// Repositories must throw errors to the ViewModel, not swallow them.
 class RepositoryNoTryCatch extends AnalysisRule {
   RepositoryNoTryCatch()
-      : super(
-          name: 'repository_no_try_catch',
-          description:
-              'Repositories must throw errors, not swallow them with try/catch.',
-        );
+    : super(
+        name: 'repository_no_try_catch',
+        description:
+            'Repositories must throw errors, not swallow them with try/catch.',
+      );
 
   static const LintCode code = LintCode(
     'repository_no_try_catch',

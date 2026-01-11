@@ -30,7 +30,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class AvoidHardcodedColor extends AnalysisRule {
   AvoidHardcodedColor()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'avoid_hardcoded_color',

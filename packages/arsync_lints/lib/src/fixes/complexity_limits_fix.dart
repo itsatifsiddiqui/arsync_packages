@@ -29,23 +29,28 @@ class ComplexityLimitsAddTodoFix extends ResolvedCorrectionProducer {
     String todoMessage;
 
     if (node is FormalParameterList) {
-      todoMessage = 'TODO: Reduce parameters (max 4) - consider using a parameter object using records';
+      todoMessage =
+          'TODO: Reduce parameters (max 4) - consider using a parameter object using records';
     } else if (node is Block) {
-      todoMessage = 'TODO: Reduce nesting depth (max 3) - extract methods or use early returns';
+      todoMessage =
+          'TODO: Reduce nesting depth (max 3) - extract methods or use early returns';
     } else if (node is MethodDeclaration || node is FunctionDeclaration) {
       final name = node is MethodDeclaration
           ? (node as MethodDeclaration).name.lexeme
           : (node as FunctionDeclaration).name.lexeme;
       if (name == 'build') {
-        todoMessage = 'TODO: Reduce build() method length (max 120 lines) - extract widgets';
+        todoMessage =
+            'TODO: Reduce build() method length (max 120 lines) - extract widgets';
       } else {
-        todoMessage = 'TODO: Reduce method length (max 60 lines) - extract helper methods';
+        todoMessage =
+            'TODO: Reduce method length (max 60 lines) - extract helper methods';
       }
     } else if (node is SimpleIdentifier) {
       // Could be method name from reportAtOffset
       todoMessage = 'TODO: Reduce method complexity - extract helper methods';
     } else if (node is ConditionalExpression) {
-      todoMessage = 'TODO: Replace nested ternary with if-else or switch expression';
+      todoMessage =
+          'TODO: Replace nested ternary with if-else or switch expression';
     } else {
       todoMessage = 'TODO: Refactor to reduce complexity';
     }

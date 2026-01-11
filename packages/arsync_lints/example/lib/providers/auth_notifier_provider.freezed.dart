@@ -12,7 +12,8 @@ part of 'auth_notifier_provider.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$AuthState {
@@ -58,24 +59,27 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
     Object? user = freezed,
     Object? error = freezed,
   }) {
-    return _then(_value.copyWith(
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAuthenticated: null == isAuthenticated
-          ? _value.isAuthenticated
-          : isAuthenticated // ignore: cast_nullable_to_non_nullable
-              as bool,
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as User?,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            isLoading: null == isLoading
+                ? _value.isLoading
+                : isLoading // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isAuthenticated: null == isAuthenticated
+                ? _value.isAuthenticated
+                : isAuthenticated // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            user: freezed == user
+                ? _value.user
+                : user // ignore: cast_nullable_to_non_nullable
+                      as User?,
+            error: freezed == error
+                ? _value.error
+                : error // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 
   /// Create a copy of AuthState
@@ -97,8 +101,9 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
 abstract class _$$AuthStateImplCopyWith<$Res>
     implements $AuthStateCopyWith<$Res> {
   factory _$$AuthStateImplCopyWith(
-          _$AuthStateImpl value, $Res Function(_$AuthStateImpl) then) =
-      __$$AuthStateImplCopyWithImpl<$Res>;
+    _$AuthStateImpl value,
+    $Res Function(_$AuthStateImpl) then,
+  ) = __$$AuthStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({bool isLoading, bool isAuthenticated, User? user, String? error});
@@ -112,8 +117,9 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     extends _$AuthStateCopyWithImpl<$Res, _$AuthStateImpl>
     implements _$$AuthStateImplCopyWith<$Res> {
   __$$AuthStateImplCopyWithImpl(
-      _$AuthStateImpl _value, $Res Function(_$AuthStateImpl) _then)
-      : super(_value, _then);
+    _$AuthStateImpl _value,
+    $Res Function(_$AuthStateImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -125,35 +131,38 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     Object? user = freezed,
     Object? error = freezed,
   }) {
-    return _then(_$AuthStateImpl(
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAuthenticated: null == isAuthenticated
-          ? _value.isAuthenticated
-          : isAuthenticated // ignore: cast_nullable_to_non_nullable
-              as bool,
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as User?,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$AuthStateImpl(
+        isLoading: null == isLoading
+            ? _value.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isAuthenticated: null == isAuthenticated
+            ? _value.isAuthenticated
+            : isAuthenticated // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        user: freezed == user
+            ? _value.user
+            : user // ignore: cast_nullable_to_non_nullable
+                  as User?,
+        error: freezed == error
+            ? _value.error
+            : error // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 
 class _$AuthStateImpl implements _AuthState {
-  const _$AuthStateImpl(
-      {this.isLoading = false,
-      this.isAuthenticated = false,
-      this.user,
-      this.error});
+  const _$AuthStateImpl({
+    this.isLoading = false,
+    this.isAuthenticated = false,
+    this.user,
+    this.error,
+  });
 
   @override
   @JsonKey()
@@ -198,11 +207,12 @@ class _$AuthStateImpl implements _AuthState {
 }
 
 abstract class _AuthState implements AuthState {
-  const factory _AuthState(
-      {final bool isLoading,
-      final bool isAuthenticated,
-      final User? user,
-      final String? error}) = _$AuthStateImpl;
+  const factory _AuthState({
+    final bool isLoading,
+    final bool isAuthenticated,
+    final User? user,
+    final String? error,
+  }) = _$AuthStateImpl;
 
   @override
   bool get isLoading;
@@ -255,33 +265,33 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-    Object? email = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+  $Res call({Object? id = null, Object? name = null, Object? email = null}) {
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            email: null == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$$UserImplCopyWith(
-          _$UserImpl value, $Res Function(_$UserImpl) then) =
-      __$$UserImplCopyWithImpl<$Res>;
+    _$UserImpl value,
+    $Res Function(_$UserImpl) then,
+  ) = __$$UserImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String id, String name, String email});
@@ -292,31 +302,29 @@ class __$$UserImplCopyWithImpl<$Res>
     extends _$UserCopyWithImpl<$Res, _$UserImpl>
     implements _$$UserImplCopyWith<$Res> {
   __$$UserImplCopyWithImpl(_$UserImpl _value, $Res Function(_$UserImpl) _then)
-      : super(_value, _then);
+    : super(_value, _then);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-    Object? email = null,
-  }) {
-    return _then(_$UserImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
+  $Res call({Object? id = null, Object? name = null, Object? email = null}) {
+    return _then(
+      _$UserImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        email: null == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
   }
 }
 
@@ -360,10 +368,11 @@ class _$UserImpl implements _User {
 }
 
 abstract class _User implements User {
-  const factory _User(
-      {required final String id,
-      required final String name,
-      required final String email}) = _$UserImpl;
+  const factory _User({
+    required final String id,
+    required final String name,
+    required final String email,
+  }) = _$UserImpl;
 
   @override
   String get id;

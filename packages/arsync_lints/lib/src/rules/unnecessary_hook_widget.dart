@@ -45,7 +45,7 @@ const _statelessWidgetName = 'StatelessWidget';
 /// ```
 class UnnecessaryHookWidget extends AnalysisRule {
   UnnecessaryHookWidget()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'unnecessary_hook_widget',

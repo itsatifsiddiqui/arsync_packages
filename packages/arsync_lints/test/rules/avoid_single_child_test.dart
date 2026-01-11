@@ -66,7 +66,8 @@ Widget myWidget() {
   }
 
   Future<void> test_bad_columnSingleChild() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock Flutter types
 class Widget {
   const Widget();
@@ -87,11 +88,14 @@ Widget myWidget() {
     ],
   );
 }
-''', [lint(260, 68)]);
+''',
+      [lint(260, 68)],
+    );
   }
 
   Future<void> test_bad_rowSingleChild() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock Flutter types
 class Widget {
   const Widget();
@@ -112,7 +116,9 @@ Widget myWidget() {
     ],
   );
 }
-''', [lint(254, 65)]);
+''',
+      [lint(254, 65)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

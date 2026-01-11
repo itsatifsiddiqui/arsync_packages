@@ -97,10 +97,7 @@ class RepositoryDependencyInjectionFix extends ResolvedCorrectionProducer {
         } else {
           // Add to existing parameters
           final lastParam = params.parameters.last;
-          builder.addSimpleInsertion(
-            lastParam.end,
-            ', this.$fieldName',
-          );
+          builder.addSimpleInsertion(lastParam.end, ', this.$fieldName');
         }
       } else {
         // Add a new constructor after the field

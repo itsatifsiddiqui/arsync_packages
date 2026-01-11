@@ -7,11 +7,11 @@ import '../arsync_lint_rule.dart';
 /// Also enforces: use Dart records instead of plain parameter classes.
 class PresentationLayerIsolation extends MultiAnalysisRule {
   PresentationLayerIsolation()
-      : super(
-          name: 'presentation_layer_isolation',
-          description:
-              'Presentation layer cannot import repositories or data sources.',
-        );
+    : super(
+        name: 'presentation_layer_isolation',
+        description:
+            'Presentation layer cannot import repositories or data sources.',
+      );
 
   static const importCode = LintCode(
     'presentation_layer_isolation',
@@ -111,7 +111,10 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (ignoreChecker.shouldIgnore(node)) return;
 
     if (PresentationLayerIsolation.isBannedImport(importUri)) {
-      rule.reportAtNode(node, diagnosticCode: PresentationLayerIsolation.importCode);
+      rule.reportAtNode(
+        node,
+        diagnosticCode: PresentationLayerIsolation.importCode,
+      );
     }
   }
 

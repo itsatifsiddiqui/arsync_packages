@@ -9,10 +9,10 @@ import '../arsync_lint_rule.dart';
 /// - Nested Ternary: Banned
 class ComplexityLimits extends MultiAnalysisRule {
   ComplexityLimits()
-      : super(
-          name: 'complexity_limits',
-          description: 'Enforce code complexity limits.',
-        );
+    : super(
+        name: 'complexity_limits',
+        description: 'Enforce code complexity limits.',
+      );
 
   static const nestingCode = LintCode(
     'complexity_limits',
@@ -24,7 +24,8 @@ class ComplexityLimits extends MultiAnalysisRule {
   static const methodLinesCode = LintCode(
     'complexity_limits',
     'Methods cannot exceed 60 lines.',
-    correctionMessage: 'Extract logic into smaller methods or helper functions.',
+    correctionMessage:
+        'Extract logic into smaller methods or helper functions.',
   );
 
   static const buildLinesCode = LintCode(
@@ -41,11 +42,11 @@ class ComplexityLimits extends MultiAnalysisRule {
 
   @override
   List<DiagnosticCode> get diagnosticCodes => [
-        nestingCode,
-        methodLinesCode,
-        buildLinesCode,
-        nestedTernaryCode,
-      ];
+    nestingCode,
+    methodLinesCode,
+    buildLinesCode,
+    nestedTernaryCode,
+  ];
 
   @override
   void registerNodeProcessors(
@@ -179,7 +180,10 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkNestedTernary(ConditionalExpression node) {
     if (node.thenExpression is ConditionalExpression ||
         node.elseExpression is ConditionalExpression) {
-      rule.reportAtNode(node, diagnosticCode: ComplexityLimits.nestedTernaryCode);
+      rule.reportAtNode(
+        node,
+        diagnosticCode: ComplexityLimits.nestedTernaryCode,
+      );
     }
   }
 }

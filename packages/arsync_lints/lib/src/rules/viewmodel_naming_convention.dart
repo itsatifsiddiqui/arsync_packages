@@ -5,10 +5,10 @@ import '../arsync_lint_rule.dart';
 /// Enforce naming consistency for state management.
 class ViewModelNamingConvention extends MultiAnalysisRule {
   ViewModelNamingConvention()
-      : super(
-          name: 'viewmodel_naming_convention',
-          description: 'Enforce naming conventions for ViewModels and providers.',
-        );
+    : super(
+        name: 'viewmodel_naming_convention',
+        description: 'Enforce naming conventions for ViewModels and providers.',
+      );
 
   static const classCode = LintCode(
     'viewmodel_naming_convention',

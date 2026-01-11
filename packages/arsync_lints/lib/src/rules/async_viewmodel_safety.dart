@@ -5,11 +5,11 @@ import '../arsync_lint_rule.dart';
 /// Async operations in ViewModels must handle errors explicitly.
 class AsyncViewModelSafety extends AnalysisRule {
   AsyncViewModelSafety()
-      : super(
-          name: 'async_viewmodel_safety',
-          description:
-              'Async operations in ViewModels must be wrapped in try/catch.',
-        );
+    : super(
+        name: 'async_viewmodel_safety',
+        description:
+            'Async operations in ViewModels must be wrapped in try/catch.',
+      );
 
   static const LintCode code = LintCode(
     'async_viewmodel_safety',

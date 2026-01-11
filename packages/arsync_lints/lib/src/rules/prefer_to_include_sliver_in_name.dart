@@ -31,7 +31,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class PreferToIncludeSliverInName extends AnalysisRule {
   PreferToIncludeSliverInName()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'prefer_to_include_sliver_in_name',

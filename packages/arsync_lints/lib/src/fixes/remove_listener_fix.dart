@@ -181,7 +181,9 @@ class AddRemoveListenerCallFix extends ResolvedCorrectionProducer {
           // Statement indent is typically brace indent + 2 spaces
           final stmtIndent = '$braceIndent  ';
           builder.addInsertion(block.rightBracket.offset, (builder) {
-            builder.write('$stmtIndent$targetStr.$removeMethod($callbackName);');
+            builder.write(
+              '$stmtIndent$targetStr.$removeMethod($callbackName);',
+            );
             builder.writeln();
           });
         }

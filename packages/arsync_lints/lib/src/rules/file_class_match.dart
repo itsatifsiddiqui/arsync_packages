@@ -8,11 +8,11 @@ import '../arsync_lint_rule.dart';
 /// Files can contain multiple classes, but at least one must match the file name.
 class FileClassMatch extends AnalysisRule {
   FileClassMatch()
-      : super(
-          name: 'file_class_match',
-          description:
-              'No class in this file matches the file name. Expected a class named like the file (snake_case to PascalCase).',
-        );
+    : super(
+        name: 'file_class_match',
+        description:
+            'No class in this file matches the file name. Expected a class named like the file (snake_case to PascalCase).',
+      );
 
   static const LintCode code = LintCode(
     'file_class_match',
@@ -72,7 +72,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (classNames.isEmpty) return;
 
-    final hasMatchingClass = classNames.any((name) => name == expectedClassName);
+    final hasMatchingClass = classNames.any(
+      (name) => name == expectedClassName,
+    );
 
     if (!hasMatchingClass && firstClass != null) {
       rule.reportAtOffset(firstClass.name.offset, firstClass.name.length);

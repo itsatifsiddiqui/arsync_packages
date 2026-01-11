@@ -123,7 +123,8 @@ class MyWidget extends HookWidget {
   }
 
   Future<void> test_bad_hookWidgetWithoutHooks() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -143,11 +144,14 @@ class MyWidget extends HookWidget {
     return const Widget();
   }
 }
-''', [lint(240, 10)]);
+''',
+      [lint(240, 10)],
+    );
   }
 
   Future<void> test_bad_hookWidgetWithUnrelatedMethods() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -172,7 +176,9 @@ class MyWidget extends HookWidget {
     return const Widget();
   }
 }
-''', [lint(240, 10)]);
+''',
+      [lint(240, 10)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

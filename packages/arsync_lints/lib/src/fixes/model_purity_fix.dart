@@ -29,7 +29,8 @@ class ModelPurityImportFix extends ResolvedCorrectionProducer {
     if (importDirective == null) return;
 
     final lineInfo = unitResult.lineInfo;
-    final startLine = lineInfo.getLocation(importDirective.offset).lineNumber - 1;
+    final startLine =
+        lineInfo.getLocation(importDirective.offset).lineNumber - 1;
     final lineStart = lineInfo.getOffsetOfLine(startLine);
 
     var lineEnd = importDirective.end;
@@ -88,8 +89,9 @@ class ModelPurityAddFreezedFix extends ResolvedCorrectionProducer {
     if (classDecl == null) return;
 
     // Check if already has @freezed
-    final hasFreezed = classDecl.metadata.any((a) =>
-        a.name.name == 'freezed' || a.name.name == 'Freezed');
+    final hasFreezed = classDecl.metadata.any(
+      (a) => a.name.name == 'freezed' || a.name.name == 'Freezed',
+    );
     if (hasFreezed) return;
 
     final className = classDecl.name.lexeme;
@@ -105,30 +107,35 @@ class ModelPurityAddFreezedFix extends ResolvedCorrectionProducer {
           final hasDefault = variable.initializer != null;
           final defaultValue = variable.initializer?.toSource();
           final isNullable = type.endsWith('?');
-          fields.add(_FieldInfo(
-            name: fieldName,
-            type: type,
-            isRequired: !isNullable && !hasDefault,
-            hasDefault: hasDefault,
-            defaultValue: defaultValue,
-          ));
+          fields.add(
+            _FieldInfo(
+              name: fieldName,
+              type: type,
+              isRequired: !isNullable && !hasDefault,
+              hasDefault: hasDefault,
+              defaultValue: defaultValue,
+            ),
+          );
         }
       }
     }
 
     // Build factory parameters
-    final params = fields.map((f) {
-      if (f.hasDefault && f.defaultValue != null) {
-        return '@Default(${f.defaultValue}) ${f.type} ${f.name}';
-      } else if (f.isRequired) {
-        return 'required ${f.type} ${f.name}';
-      } else {
-        return '${f.type} ${f.name}';
-      }
-    }).join(',\n    ');
+    final params = fields
+        .map((f) {
+          if (f.hasDefault && f.defaultValue != null) {
+            return '@Default(${f.defaultValue}) ${f.type} ${f.name}';
+          } else if (f.isRequired) {
+            return 'required ${f.type} ${f.name}';
+          } else {
+            return '${f.type} ${f.name}';
+          }
+        })
+        .join(',\n    ');
 
     // Build the new Freezed class
-    final freezedClass = '''@freezed
+    final freezedClass =
+        '''@freezed
 sealed class $className with _\$$className {
   const factory $className({
     $params,
@@ -140,10 +147,15 @@ sealed class $className with _\$$className {
 
     // Check if part directives exist
     final unit = unitResult.unit;
-    final hasFreezedPart = unit.directives.any((d) =>
-        d is PartDirective && d.uri.stringValue?.contains('.freezed.dart') == true);
-    final hasGPart = unit.directives.any((d) =>
-        d is PartDirective && d.uri.stringValue?.contains('.g.dart') == true);
+    final hasFreezedPart = unit.directives.any(
+      (d) =>
+          d is PartDirective &&
+          d.uri.stringValue?.contains('.freezed.dart') == true,
+    );
+    final hasGPart = unit.directives.any(
+      (d) =>
+          d is PartDirective && d.uri.stringValue?.contains('.g.dart') == true,
+    );
 
     // Find where to insert part directives (after imports)
     var partInsertOffset = 0;
@@ -240,7 +252,8 @@ class ModelPurityAddFromJsonFix extends ResolvedCorrectionProducer {
     // Check if already has fromJson
     final hasFromJson = classDecl.members.any((member) {
       if (member is ConstructorDeclaration) {
-        return member.factoryKeyword != null && member.name?.lexeme == 'fromJson';
+        return member.factoryKeyword != null &&
+            member.name?.lexeme == 'fromJson';
       }
       return false;
     });
@@ -250,7 +263,8 @@ class ModelPurityAddFromJsonFix extends ResolvedCorrectionProducer {
     final insertOffset = classDecl.rightBracket.offset;
 
     // Generate fromJson factory
-    final fromJsonCode = '''
+    final fromJsonCode =
+        '''
 
   factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);
 ''';

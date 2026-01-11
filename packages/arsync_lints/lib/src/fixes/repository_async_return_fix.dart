@@ -31,7 +31,8 @@ class RepositoryAsyncReturnFix extends ResolvedCorrectionProducer {
     final currentType = returnType.toSource();
 
     // Don't wrap if already Future or Stream
-    if (currentType.startsWith('Future<') || currentType.startsWith('Stream<')) {
+    if (currentType.startsWith('Future<') ||
+        currentType.startsWith('Stream<')) {
       return;
     }
 

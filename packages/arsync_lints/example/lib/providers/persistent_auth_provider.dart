@@ -16,8 +16,9 @@ sealed class PersistentAuthState with _$PersistentAuthState {
 
 // OK: Using autoDispose with .new syntax (no explicit generics)
 // Provider name matches file name: persistent_auth_provider.dart -> persistentAuthProvider
-final persistentAuthProvider =
-    NotifierProvider.autoDispose(PersistentAuthNotifier.new);
+final persistentAuthProvider = NotifierProvider.autoDispose(
+  PersistentAuthNotifier.new,
+);
 
 class PersistentAuthNotifier extends Notifier<PersistentAuthState> {
   @override

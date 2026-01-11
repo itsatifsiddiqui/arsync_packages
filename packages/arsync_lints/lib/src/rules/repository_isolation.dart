@@ -5,10 +5,10 @@ import '../arsync_lint_rule.dart';
 /// Repositories handle data fetching only. They cannot manage state or UI.
 class RepositoryIsolation extends AnalysisRule {
   RepositoryIsolation()
-      : super(
-          name: 'repository_isolation',
-          description: 'Repositories cannot depend on UI or ViewModels.',
-        );
+    : super(
+        name: 'repository_isolation',
+        description: 'Repositories cannot depend on UI or ViewModels.',
+      );
 
   static const LintCode code = LintCode(
     'repository_isolation',
@@ -20,11 +20,7 @@ class RepositoryIsolation extends AnalysisRule {
   @override
   DiagnosticCode get diagnosticCode => code;
 
-  static const _bannedPatterns = [
-    'screens/',
-    'widgets/',
-    'views/',
-  ];
+  static const _bannedPatterns = ['screens/', 'widgets/', 'views/'];
 
   @override
   void registerNodeProcessors(

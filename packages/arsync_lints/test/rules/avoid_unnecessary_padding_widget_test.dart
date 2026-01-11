@@ -104,7 +104,8 @@ Widget build() {
   }
 
   Future<void> test_bad_paddingWrapsContainer() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class EdgeInsets {
   final double value;
@@ -135,11 +136,14 @@ Widget build() {
     ),
   );
 }
-''', [lint(460, 101)]);
+''',
+      [lint(460, 101)],
+    );
   }
 
   Future<void> test_bad_containerWrapsPadding() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class EdgeInsets {
   final double value;
@@ -170,7 +174,9 @@ Widget build() {
     ),
   );
 }
-''', [lint(460, 103)]);
+''',
+      [lint(460, 103)],
+    );
   }
 
   Future<void> test_good_paddingWrapsContainerWithMargin() async {

@@ -6,11 +6,11 @@ import '../arsync_lint_rule.dart';
 /// Banned: print(), debugPrint()
 class PrintBan extends AnalysisRule {
   PrintBan()
-      : super(
-          name: 'print_ban',
-          description:
-              'print() and debugPrint() are banned. Use .log() extension instead.',
-        );
+    : super(
+        name: 'print_ban',
+        description:
+            'print() and debugPrint() are banned. Use .log() extension instead.',
+      );
 
   static const LintCode code = LintCode(
     'print_ban',

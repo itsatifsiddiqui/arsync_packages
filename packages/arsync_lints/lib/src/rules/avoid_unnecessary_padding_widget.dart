@@ -48,10 +48,10 @@ import '../arsync_lint_rule.dart';
 /// ```
 class AvoidUnnecessaryPaddingWidget extends MultiAnalysisRule {
   AvoidUnnecessaryPaddingWidget()
-      : super(
-          name: 'avoid_unnecessary_padding_widget',
-          description: paddingWrapsContainerCode.problemMessage,
-        );
+    : super(
+        name: 'avoid_unnecessary_padding_widget',
+        description: paddingWrapsContainerCode.problemMessage,
+      );
 
   static const paddingWrapsContainerCode = LintCode(
     'avoid_unnecessary_padding_widget',
@@ -68,8 +68,10 @@ class AvoidUnnecessaryPaddingWidget extends MultiAnalysisRule {
   );
 
   @override
-  List<DiagnosticCode> get diagnosticCodes =>
-      [paddingWrapsContainerCode, containerWrapsPaddingCode];
+  List<DiagnosticCode> get diagnosticCodes => [
+    paddingWrapsContainerCode,
+    containerWrapsPaddingCode,
+  ];
 
   @override
   void registerNodeProcessors(
@@ -123,7 +125,8 @@ class _Visitor extends SimpleAstVisitor<void> {
           rule.reportAtOffset(
             paddingNode.offset,
             paddingNode.length,
-            diagnosticCode: AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
+            diagnosticCode:
+                AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
           );
         }
       }
@@ -148,7 +151,8 @@ class _Visitor extends SimpleAstVisitor<void> {
         rule.reportAtOffset(
           containerNode.offset,
           containerNode.length,
-          diagnosticCode: AvoidUnnecessaryPaddingWidget.containerWrapsPaddingCode,
+          diagnosticCode:
+              AvoidUnnecessaryPaddingWidget.containerWrapsPaddingCode,
         );
       }
     }
@@ -162,8 +166,8 @@ class _Visitor extends SimpleAstVisitor<void> {
   }
 
   bool _hasNamedArgument(InstanceCreationExpression node, String argName) {
-    return node.argumentList.arguments
-        .whereType<NamedExpression>()
-        .any((arg) => arg.name.label.name == argName);
+    return node.argumentList.arguments.whereType<NamedExpression>().any(
+      (arg) => arg.name.label.name == argName,
+    );
   }
 }

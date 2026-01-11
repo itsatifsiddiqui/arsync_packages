@@ -9,11 +9,11 @@ import '../arsync_lint_rule.dart';
 /// Bad: No provider defined, or provider named "authProvider"
 class RepositoryProviderDeclaration extends MultiAnalysisRule {
   RepositoryProviderDeclaration()
-      : super(
-          name: 'repository_provider_declaration',
-          description:
-              'Repository file must define a provider ending with "RepoProvider".',
-        );
+    : super(
+        name: 'repository_provider_declaration',
+        description:
+            'Repository file must define a provider ending with "RepoProvider".',
+      );
 
   static const missingProviderCode = LintCode(
     'repository_provider_declaration',
@@ -30,8 +30,10 @@ class RepositoryProviderDeclaration extends MultiAnalysisRule {
   );
 
   @override
-  List<DiagnosticCode> get diagnosticCodes =>
-      [missingProviderCode, wrongNamingCode];
+  List<DiagnosticCode> get diagnosticCodes => [
+    missingProviderCode,
+    wrongNamingCode,
+  ];
 
   @override
   void registerNodeProcessors(
@@ -87,7 +89,9 @@ class _Visitor extends SimpleAstVisitor<void> {
       final firstDecl = node.declarations.firstOrNull;
       if (firstDecl != null) {
         rule.reportAtNode(
-            firstDecl, diagnosticCode: RepositoryProviderDeclaration.missingProviderCode);
+          firstDecl,
+          diagnosticCode: RepositoryProviderDeclaration.missingProviderCode,
+        );
       }
     } else if (!hasRepoProvider) {
       for (final decl in providerDeclarations) {

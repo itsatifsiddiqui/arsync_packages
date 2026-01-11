@@ -24,11 +24,14 @@ void doSomething(String a, int b, bool c, double d, String e, int f) {}
   }
 
   Future<void> test_bad_nestedTernary() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void test(bool a, bool b) {
   final value = a ? 'first' : b ? 'second' : 'third';
 }
-''', [lint(44, 36)]);
+''',
+      [lint(44, 36)],
+    );
   }
 
   Future<void> test_good_shortMethod() async {

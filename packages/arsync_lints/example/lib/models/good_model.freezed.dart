@@ -12,7 +12,8 @@ part of 'good_model.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 GoodModel _$GoodModelFromJson(Map<String, dynamic> json) {
   return _GoodModel.fromJson(json);
@@ -55,20 +56,20 @@ class _$GoodModelCopyWithImpl<$Res, $Val extends GoodModel>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+  $Res call({Object? id = null, Object? name = null}) {
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -76,8 +77,9 @@ class _$GoodModelCopyWithImpl<$Res, $Val extends GoodModel>
 abstract class _$$GoodModelImplCopyWith<$Res>
     implements $GoodModelCopyWith<$Res> {
   factory _$$GoodModelImplCopyWith(
-          _$GoodModelImpl value, $Res Function(_$GoodModelImpl) then) =
-      __$$GoodModelImplCopyWithImpl<$Res>;
+    _$GoodModelImpl value,
+    $Res Function(_$GoodModelImpl) then,
+  ) = __$$GoodModelImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String id, String name});
@@ -88,27 +90,27 @@ class __$$GoodModelImplCopyWithImpl<$Res>
     extends _$GoodModelCopyWithImpl<$Res, _$GoodModelImpl>
     implements _$$GoodModelImplCopyWith<$Res> {
   __$$GoodModelImplCopyWithImpl(
-      _$GoodModelImpl _value, $Res Function(_$GoodModelImpl) _then)
-      : super(_value, _then);
+    _$GoodModelImpl _value,
+    $Res Function(_$GoodModelImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of GoodModel
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-  }) {
-    return _then(_$GoodModelImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
+  $Res call({Object? id = null, Object? name = null}) {
+    return _then(
+      _$GoodModelImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
   }
 }
 
@@ -153,15 +155,15 @@ class _$GoodModelImpl implements _GoodModel {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$GoodModelImplToJson(
-      this,
-    );
+    return _$$GoodModelImplToJson(this);
   }
 }
 
 abstract class _GoodModel implements GoodModel {
-  const factory _GoodModel(
-      {required final String id, required final String name}) = _$GoodModelImpl;
+  const factory _GoodModel({
+    required final String id,
+    required final String name,
+  }) = _$GoodModelImpl;
 
   factory _GoodModel.fromJson(Map<String, dynamic> json) =
       _$GoodModelImpl.fromJson;
@@ -205,12 +207,13 @@ abstract class $UserCopyWith<$Res> {
   factory $UserCopyWith(User value, $Res Function(User) then) =
       _$UserCopyWithImpl<$Res, User>;
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      String email,
-      String? avatarUrl,
-      bool isVerified});
+  $Res call({
+    String id,
+    String name,
+    String email,
+    String? avatarUrl,
+    bool isVerified,
+  });
 }
 
 /// @nodoc
@@ -234,44 +237,49 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? avatarUrl = freezed,
     Object? isVerified = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isVerified: null == isVerified
-          ? _value.isVerified
-          : isVerified // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            email: null == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String,
+            avatarUrl: freezed == avatarUrl
+                ? _value.avatarUrl
+                : avatarUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            isVerified: null == isVerified
+                ? _value.isVerified
+                : isVerified // ignore: cast_nullable_to_non_nullable
+                      as bool,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$$UserImplCopyWith(
-          _$UserImpl value, $Res Function(_$UserImpl) then) =
-      __$$UserImplCopyWithImpl<$Res>;
+    _$UserImpl value,
+    $Res Function(_$UserImpl) then,
+  ) = __$$UserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      String email,
-      String? avatarUrl,
-      bool isVerified});
+  $Res call({
+    String id,
+    String name,
+    String email,
+    String? avatarUrl,
+    bool isVerified,
+  });
 }
 
 /// @nodoc
@@ -279,7 +287,7 @@ class __$$UserImplCopyWithImpl<$Res>
     extends _$UserCopyWithImpl<$Res, _$UserImpl>
     implements _$$UserImplCopyWith<$Res> {
   __$$UserImplCopyWithImpl(_$UserImpl _value, $Res Function(_$UserImpl) _then)
-      : super(_value, _then);
+    : super(_value, _then);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -292,40 +300,43 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? avatarUrl = freezed,
     Object? isVerified = null,
   }) {
-    return _then(_$UserImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      avatarUrl: freezed == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isVerified: null == isVerified
-          ? _value.isVerified
-          : isVerified // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
+    return _then(
+      _$UserImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        email: null == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String,
+        avatarUrl: freezed == avatarUrl
+            ? _value.avatarUrl
+            : avatarUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        isVerified: null == isVerified
+            ? _value.isVerified
+            : isVerified // ignore: cast_nullable_to_non_nullable
+                  as bool,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$UserImpl implements _User {
-  const _$UserImpl(
-      {required this.id,
-      required this.name,
-      required this.email,
-      this.avatarUrl,
-      this.isVerified = false});
+  const _$UserImpl({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.avatarUrl,
+    this.isVerified = false,
+  });
 
   factory _$UserImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserImplFromJson(json);
@@ -376,19 +387,18 @@ class _$UserImpl implements _User {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$UserImplToJson(
-      this,
-    );
+    return _$$UserImplToJson(this);
   }
 }
 
 abstract class _User implements User {
-  const factory _User(
-      {required final String id,
-      required final String name,
-      required final String email,
-      final String? avatarUrl,
-      final bool isVerified}) = _$UserImpl;
+  const factory _User({
+    required final String id,
+    required final String name,
+    required final String email,
+    final String? avatarUrl,
+    final bool isVerified,
+  }) = _$UserImpl;
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
@@ -435,8 +445,9 @@ mixin _$AuthStateModel {
 /// @nodoc
 abstract class $AuthStateModelCopyWith<$Res> {
   factory $AuthStateModelCopyWith(
-          AuthStateModel value, $Res Function(AuthStateModel) then) =
-      _$AuthStateModelCopyWithImpl<$Res, AuthStateModel>;
+    AuthStateModel value,
+    $Res Function(AuthStateModel) then,
+  ) = _$AuthStateModelCopyWithImpl<$Res, AuthStateModel>;
   @useResult
   $Res call({bool isLoading, bool isAuthenticated, User? user, String? error});
 
@@ -463,24 +474,27 @@ class _$AuthStateModelCopyWithImpl<$Res, $Val extends AuthStateModel>
     Object? user = freezed,
     Object? error = freezed,
   }) {
-    return _then(_value.copyWith(
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAuthenticated: null == isAuthenticated
-          ? _value.isAuthenticated
-          : isAuthenticated // ignore: cast_nullable_to_non_nullable
-              as bool,
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as User?,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            isLoading: null == isLoading
+                ? _value.isLoading
+                : isLoading // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isAuthenticated: null == isAuthenticated
+                ? _value.isAuthenticated
+                : isAuthenticated // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            user: freezed == user
+                ? _value.user
+                : user // ignore: cast_nullable_to_non_nullable
+                      as User?,
+            error: freezed == error
+                ? _value.error
+                : error // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 
   /// Create a copy of AuthStateModel
@@ -501,9 +515,10 @@ class _$AuthStateModelCopyWithImpl<$Res, $Val extends AuthStateModel>
 /// @nodoc
 abstract class _$$AuthStateModelImplCopyWith<$Res>
     implements $AuthStateModelCopyWith<$Res> {
-  factory _$$AuthStateModelImplCopyWith(_$AuthStateModelImpl value,
-          $Res Function(_$AuthStateModelImpl) then) =
-      __$$AuthStateModelImplCopyWithImpl<$Res>;
+  factory _$$AuthStateModelImplCopyWith(
+    _$AuthStateModelImpl value,
+    $Res Function(_$AuthStateModelImpl) then,
+  ) = __$$AuthStateModelImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({bool isLoading, bool isAuthenticated, User? user, String? error});
@@ -517,8 +532,9 @@ class __$$AuthStateModelImplCopyWithImpl<$Res>
     extends _$AuthStateModelCopyWithImpl<$Res, _$AuthStateModelImpl>
     implements _$$AuthStateModelImplCopyWith<$Res> {
   __$$AuthStateModelImplCopyWithImpl(
-      _$AuthStateModelImpl _value, $Res Function(_$AuthStateModelImpl) _then)
-      : super(_value, _then);
+    _$AuthStateModelImpl _value,
+    $Res Function(_$AuthStateModelImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of AuthStateModel
   /// with the given fields replaced by the non-null parameter values.
@@ -530,35 +546,38 @@ class __$$AuthStateModelImplCopyWithImpl<$Res>
     Object? user = freezed,
     Object? error = freezed,
   }) {
-    return _then(_$AuthStateModelImpl(
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAuthenticated: null == isAuthenticated
-          ? _value.isAuthenticated
-          : isAuthenticated // ignore: cast_nullable_to_non_nullable
-              as bool,
-      user: freezed == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as User?,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$AuthStateModelImpl(
+        isLoading: null == isLoading
+            ? _value.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isAuthenticated: null == isAuthenticated
+            ? _value.isAuthenticated
+            : isAuthenticated // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        user: freezed == user
+            ? _value.user
+            : user // ignore: cast_nullable_to_non_nullable
+                  as User?,
+        error: freezed == error
+            ? _value.error
+            : error // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$AuthStateModelImpl implements _AuthStateModel {
-  const _$AuthStateModelImpl(
-      {this.isLoading = false,
-      this.isAuthenticated = false,
-      this.user,
-      this.error});
+  const _$AuthStateModelImpl({
+    this.isLoading = false,
+    this.isAuthenticated = false,
+    this.user,
+    this.error,
+  });
 
   factory _$AuthStateModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$AuthStateModelImplFromJson(json);
@@ -604,22 +623,23 @@ class _$AuthStateModelImpl implements _AuthStateModel {
   @pragma('vm:prefer-inline')
   _$$AuthStateModelImplCopyWith<_$AuthStateModelImpl> get copyWith =>
       __$$AuthStateModelImplCopyWithImpl<_$AuthStateModelImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$AuthStateModelImplToJson(
-      this,
-    );
+    return _$$AuthStateModelImplToJson(this);
   }
 }
 
 abstract class _AuthStateModel implements AuthStateModel {
-  const factory _AuthStateModel(
-      {final bool isLoading,
-      final bool isAuthenticated,
-      final User? user,
-      final String? error}) = _$AuthStateModelImpl;
+  const factory _AuthStateModel({
+    final bool isLoading,
+    final bool isAuthenticated,
+    final User? user,
+    final String? error,
+  }) = _$AuthStateModelImpl;
 
   factory _AuthStateModel.fromJson(Map<String, dynamic> json) =
       _$AuthStateModelImpl.fromJson;

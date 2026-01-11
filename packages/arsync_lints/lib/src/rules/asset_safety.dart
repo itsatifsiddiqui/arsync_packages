@@ -7,11 +7,11 @@ import '../arsync_lint_rule.dart';
 /// Requirement: Must use Images.* from lib/utils/images.dart
 class AssetSafety extends AnalysisRule {
   AssetSafety()
-      : super(
-          name: 'asset_safety',
-          description:
-              'Asset paths must use constants from Images class, not string literals.',
-        );
+    : super(
+        name: 'asset_safety',
+        description:
+            'Asset paths must use constants from Images class, not string literals.',
+      );
 
   static const LintCode code = LintCode(
     'asset_safety',

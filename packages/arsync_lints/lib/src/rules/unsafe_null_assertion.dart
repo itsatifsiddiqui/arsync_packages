@@ -24,7 +24,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class UnsafeNullAssertion extends AnalysisRule {
   UnsafeNullAssertion()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'unsafe_null_assertion',

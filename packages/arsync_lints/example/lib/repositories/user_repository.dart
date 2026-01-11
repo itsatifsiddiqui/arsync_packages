@@ -41,10 +41,10 @@ class UserRepository {
 
   // OK: Returns Future<T>
   Future<User> login(String email, String password) async {
-    final response = await _dio.post('/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
+    final response = await _dio.post(
+      '/auth/login',
+      data: {'email': email, 'password': password},
+    );
     return User.fromJson(response.data['user'] as Map<String, dynamic>);
   }
 
@@ -55,10 +55,10 @@ class UserRepository {
 
   // OK: Returns Future<T>
   Future<User> updateProfile(String name, String email) async {
-    final response = await _dio.patch('/users/me', data: {
-      'name': name,
-      'email': email,
-    });
+    final response = await _dio.patch(
+      '/users/me',
+      data: {'name': name, 'email': email},
+    );
     return User.fromJson(response.data as Map<String, dynamic>);
   }
 }

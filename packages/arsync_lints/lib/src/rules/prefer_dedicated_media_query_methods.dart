@@ -23,7 +23,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class PreferDedicatedMediaQueryMethods extends AnalysisRule {
   PreferDedicatedMediaQueryMethods()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'prefer_dedicated_media_query_methods',

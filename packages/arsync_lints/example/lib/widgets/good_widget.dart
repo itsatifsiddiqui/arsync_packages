@@ -63,10 +63,7 @@ class ErrorMessage extends StatelessWidget {
   final String message;
   final void Function()? onRetry;
 
-  const ErrorMessage({
-    required this.message,
-    this.onRetry,
-  });
+  const ErrorMessage({required this.message, this.onRetry});
 
   Widget build(BuildContext context) {
     // OK: Using constant from Images class

@@ -52,7 +52,9 @@ class RepositoryNoTryCatchFix extends ResolvedCorrectionProducer {
     }
 
     // Build the replacement - just the statements from try body
-    final bodySource = statements.map((s) => '$indent${s.toSource()}').join('\n');
+    final bodySource = statements
+        .map((s) => '$indent${s.toSource()}')
+        .join('\n');
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(

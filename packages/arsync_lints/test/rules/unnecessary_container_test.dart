@@ -273,7 +273,8 @@ Widget build() {
   }
 
   Future<void> test_bad_containerWithOnlyChild() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -291,11 +292,14 @@ Widget build() {
     child: const Text('Hello'),
   );
 }
-''', [lint(224, 46)]);
+''',
+      [lint(224, 46)],
+    );
   }
 
   Future<void> test_bad_containerWithOnlyKeyAndChild() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -318,11 +322,14 @@ Widget build() {
     child: const Text('Hello'),
   );
 }
-''', [lint(293, 75)]);
+''',
+      [lint(293, 75)],
+    );
   }
 
   Future<void> test_bad_containerWithClipBehaviorNone() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -343,7 +350,9 @@ Widget build() {
     child: const Text('Hello'),
   );
 }
-''', [lint(322, 75)]);
+''',
+      [lint(322, 75)],
+    );
   }
 
   Future<void> test_good_containerWithClipBehaviorHardEdge() async {

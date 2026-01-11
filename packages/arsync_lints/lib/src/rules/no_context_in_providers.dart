@@ -5,11 +5,11 @@ import '../arsync_lint_rule.dart';
 /// ViewModels must be UI-agnostic. BuildContext cannot be used as a parameter.
 class NoContextInProviders extends AnalysisRule {
   NoContextInProviders()
-      : super(
-          name: 'no_context_in_providers',
-          description:
-              'BuildContext cannot be used in providers. ViewModels must be UI-agnostic.',
-        );
+    : super(
+        name: 'no_context_in_providers',
+        description:
+            'BuildContext cannot be used in providers. ViewModels must be UI-agnostic.',
+      );
 
   static const LintCode code = LintCode(
     'no_context_in_providers',

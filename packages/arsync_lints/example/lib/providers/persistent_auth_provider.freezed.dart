@@ -12,7 +12,8 @@ part of 'persistent_auth_provider.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$PersistentAuthState {
@@ -30,8 +31,9 @@ mixin _$PersistentAuthState {
 /// @nodoc
 abstract class $PersistentAuthStateCopyWith<$Res> {
   factory $PersistentAuthStateCopyWith(
-          PersistentAuthState value, $Res Function(PersistentAuthState) then) =
-      _$PersistentAuthStateCopyWithImpl<$Res, PersistentAuthState>;
+    PersistentAuthState value,
+    $Res Function(PersistentAuthState) then,
+  ) = _$PersistentAuthStateCopyWithImpl<$Res, PersistentAuthState>;
   @useResult
   $Res call({bool isLoading, bool isAuthenticated, String? error});
 }
@@ -55,29 +57,33 @@ class _$PersistentAuthStateCopyWithImpl<$Res, $Val extends PersistentAuthState>
     Object? isAuthenticated = null,
     Object? error = freezed,
   }) {
-    return _then(_value.copyWith(
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAuthenticated: null == isAuthenticated
-          ? _value.isAuthenticated
-          : isAuthenticated // ignore: cast_nullable_to_non_nullable
-              as bool,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            isLoading: null == isLoading
+                ? _value.isLoading
+                : isLoading // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isAuthenticated: null == isAuthenticated
+                ? _value.isAuthenticated
+                : isAuthenticated // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            error: freezed == error
+                ? _value.error
+                : error // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$PersistentAuthStateImplCopyWith<$Res>
     implements $PersistentAuthStateCopyWith<$Res> {
-  factory _$$PersistentAuthStateImplCopyWith(_$PersistentAuthStateImpl value,
-          $Res Function(_$PersistentAuthStateImpl) then) =
-      __$$PersistentAuthStateImplCopyWithImpl<$Res>;
+  factory _$$PersistentAuthStateImplCopyWith(
+    _$PersistentAuthStateImpl value,
+    $Res Function(_$PersistentAuthStateImpl) then,
+  ) = __$$PersistentAuthStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({bool isLoading, bool isAuthenticated, String? error});
@@ -87,9 +93,10 @@ abstract class _$$PersistentAuthStateImplCopyWith<$Res>
 class __$$PersistentAuthStateImplCopyWithImpl<$Res>
     extends _$PersistentAuthStateCopyWithImpl<$Res, _$PersistentAuthStateImpl>
     implements _$$PersistentAuthStateImplCopyWith<$Res> {
-  __$$PersistentAuthStateImplCopyWithImpl(_$PersistentAuthStateImpl _value,
-      $Res Function(_$PersistentAuthStateImpl) _then)
-      : super(_value, _then);
+  __$$PersistentAuthStateImplCopyWithImpl(
+    _$PersistentAuthStateImpl _value,
+    $Res Function(_$PersistentAuthStateImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of PersistentAuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -100,28 +107,33 @@ class __$$PersistentAuthStateImplCopyWithImpl<$Res>
     Object? isAuthenticated = null,
     Object? error = freezed,
   }) {
-    return _then(_$PersistentAuthStateImpl(
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAuthenticated: null == isAuthenticated
-          ? _value.isAuthenticated
-          : isAuthenticated // ignore: cast_nullable_to_non_nullable
-              as bool,
-      error: freezed == error
-          ? _value.error
-          : error // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$PersistentAuthStateImpl(
+        isLoading: null == isLoading
+            ? _value.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isAuthenticated: null == isAuthenticated
+            ? _value.isAuthenticated
+            : isAuthenticated // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        error: freezed == error
+            ? _value.error
+            : error // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 
 class _$PersistentAuthStateImpl implements _PersistentAuthState {
-  const _$PersistentAuthStateImpl(
-      {this.isLoading = false, this.isAuthenticated = false, this.error});
+  const _$PersistentAuthStateImpl({
+    this.isLoading = false,
+    this.isAuthenticated = false,
+    this.error,
+  });
 
   @override
   @JsonKey()
@@ -160,14 +172,17 @@ class _$PersistentAuthStateImpl implements _PersistentAuthState {
   @pragma('vm:prefer-inline')
   _$$PersistentAuthStateImplCopyWith<_$PersistentAuthStateImpl> get copyWith =>
       __$$PersistentAuthStateImplCopyWithImpl<_$PersistentAuthStateImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 }
 
 abstract class _PersistentAuthState implements PersistentAuthState {
-  const factory _PersistentAuthState(
-      {final bool isLoading,
-      final bool isAuthenticated,
-      final String? error}) = _$PersistentAuthStateImpl;
+  const factory _PersistentAuthState({
+    final bool isLoading,
+    final bool isAuthenticated,
+    final String? error,
+  }) = _$PersistentAuthStateImpl;
 
   @override
   bool get isLoading;

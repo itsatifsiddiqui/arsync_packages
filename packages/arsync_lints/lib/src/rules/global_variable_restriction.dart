@@ -13,11 +13,11 @@ import '../arsync_lint_rule.dart';
 /// - Functions starting with k (utility functions in constants.dart)
 class GlobalVariableRestriction extends MultiAnalysisRule {
   GlobalVariableRestriction()
-      : super(
-          name: 'global_variable_restriction',
-          description:
-              'Top-level variables must be private (_), constants (k prefix in constants.dart), or Providers.',
-        );
+    : super(
+        name: 'global_variable_restriction',
+        description:
+            'Top-level variables must be private (_), constants (k prefix in constants.dart), or Providers.',
+      );
 
   static const variableCode = LintCode(
     'global_variable_restriction',
@@ -52,7 +52,13 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
     final isProvidersFile = PathUtils.isInProviders(path);
     final isRepositoriesFile = PathUtils.isInRepositories(path);
 
-    final visitor = _Visitor(this, ignoreChecker, isConstantsFile, isProvidersFile, isRepositoriesFile);
+    final visitor = _Visitor(
+      this,
+      ignoreChecker,
+      isConstantsFile,
+      isProvidersFile,
+      isRepositoriesFile,
+    );
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFunctionDeclaration(this, visitor);
   }
@@ -65,7 +71,13 @@ class _Visitor extends SimpleAstVisitor<void> {
   final bool isProvidersFile;
   final bool isRepositoriesFile;
 
-  _Visitor(this.rule, this.ignoreChecker, this.isConstantsFile, this.isProvidersFile, this.isRepositoriesFile);
+  _Visitor(
+    this.rule,
+    this.ignoreChecker,
+    this.isConstantsFile,
+    this.isProvidersFile,
+    this.isRepositoriesFile,
+  );
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {

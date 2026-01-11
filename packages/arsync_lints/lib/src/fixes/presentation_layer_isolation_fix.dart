@@ -30,7 +30,8 @@ class PresentationLayerIsolationImportFix extends ResolvedCorrectionProducer {
 
     // Remove the entire import line including newline
     final lineInfo = unitResult.lineInfo;
-    final startLine = lineInfo.getLocation(importDirective.offset).lineNumber - 1;
+    final startLine =
+        lineInfo.getLocation(importDirective.offset).lineNumber - 1;
     final lineStart = lineInfo.getOffsetOfLine(startLine);
 
     var lineEnd = importDirective.end;

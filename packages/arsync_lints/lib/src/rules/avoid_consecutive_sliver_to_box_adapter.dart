@@ -34,7 +34,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class AvoidConsecutiveSliverToBoxAdapter extends AnalysisRule {
   AvoidConsecutiveSliverToBoxAdapter()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'avoid_consecutive_sliver_to_box_adapter',

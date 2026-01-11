@@ -185,7 +185,8 @@ class MyService {
   }
 
   Future<void> test_bad_listenerNotRemoved() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -229,11 +230,14 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   Widget build(BuildContext context) => const Widget();
 }
-''', [lint(654, 33)]);
+''',
+      [lint(654, 33)],
+    );
   }
 
   Future<void> test_bad_listenerAddedInDidChangeDependencies() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -273,7 +277,9 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   Widget build(BuildContext context) => const Widget();
 }
-''', [lint(712, 33)]);
+''',
+      [lint(712, 33)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

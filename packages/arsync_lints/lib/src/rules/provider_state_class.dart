@@ -7,11 +7,11 @@ import '../arsync_lint_rule.dart';
 /// 2. State classes must be defined in the same file (not imported from elsewhere)
 class ProviderStateClass extends MultiAnalysisRule {
   ProviderStateClass()
-      : super(
-          name: 'provider_state_class',
-          description:
-              'State classes must be @freezed and defined in the same provider file.',
-        );
+    : super(
+        name: 'provider_state_class',
+        description:
+            'State classes must be @freezed and defined in the same provider file.',
+      );
 
   static const freezedCode = LintCode(
     'provider_state_class',
@@ -32,9 +32,24 @@ class ProviderStateClass extends MultiAnalysisRule {
 
   static bool isPrimitiveOrBuiltinType(String typeName) {
     const primitives = {
-      'int', 'double', 'num', 'String', 'bool', 'void', 'dynamic', 'Object',
-      'Null', 'Never', 'List', 'Map', 'Set', 'Future', 'Stream', 'Iterable',
-      'AsyncValue', 'Result',
+      'int',
+      'double',
+      'num',
+      'String',
+      'bool',
+      'void',
+      'dynamic',
+      'Object',
+      'Null',
+      'Never',
+      'List',
+      'Map',
+      'Set',
+      'Future',
+      'Stream',
+      'Iterable',
+      'AsyncValue',
+      'Result',
     };
     return primitives.contains(typeName);
   }
@@ -92,12 +107,16 @@ class _Visitor extends SimpleAstVisitor<void> {
               final stateType = typeArgs.arguments.first;
               if (stateType is NamedType) {
                 final stateTypeName = stateType.name.lexeme;
-                if (!ProviderStateClass.isPrimitiveOrBuiltinType(stateTypeName)) {
-                  stateClassUsages.add(_StateClassUsage(
-                    stateTypeName: stateTypeName,
-                    notifierNode: declaration,
-                    stateTypeNode: stateType,
-                  ));
+                if (!ProviderStateClass.isPrimitiveOrBuiltinType(
+                  stateTypeName,
+                )) {
+                  stateClassUsages.add(
+                    _StateClassUsage(
+                      stateTypeName: stateTypeName,
+                      notifierNode: declaration,
+                      stateTypeNode: stateType,
+                    ),
+                  );
                 }
               }
             }
@@ -118,8 +137,9 @@ class _Visitor extends SimpleAstVisitor<void> {
         if (isStateClass) {
           if (!ignoreChecker.shouldIgnore(usage.stateTypeNode)) {
             rule.reportAtNode(
-                usage.stateTypeNode,
-                diagnosticCode: ProviderStateClass.importedStateCode);
+              usage.stateTypeNode,
+              diagnosticCode: ProviderStateClass.importedStateCode,
+            );
           }
         }
         continue;

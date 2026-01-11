@@ -45,7 +45,9 @@ class HookSafetyControllerFix extends ResolvedCorrectionProducer {
 
     // Build the hook call - preserve arguments if any
     final args = creation.argumentList.arguments;
-    final argsSource = args.isNotEmpty ? '(${args.map((e) => e.toSource()).join(', ')})' : '()';
+    final argsSource = args.isNotEmpty
+        ? '(${args.map((e) => e.toSource()).join(', ')})'
+        : '()';
     final replacement = '$hookName$argsSource';
 
     await builder.addDartFileEdit(file, (builder) {

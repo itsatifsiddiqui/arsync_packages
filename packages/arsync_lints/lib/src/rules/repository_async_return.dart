@@ -6,11 +6,11 @@ import '../arsync_lint_rule.dart';
 /// Public methods must return `Future<T>` or `Stream<T>`.
 class RepositoryAsyncReturn extends AnalysisRule {
   RepositoryAsyncReturn()
-      : super(
-          name: 'repository_async_return',
-          description:
-              'Repository public methods must return Future<T> or Stream<T>.',
-        );
+    : super(
+        name: 'repository_async_return',
+        description:
+            'Repository public methods must return Future<T> or Stream<T>.',
+      );
 
   static const LintCode code = LintCode(
     'repository_async_return',
@@ -66,7 +66,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     final returnTypeName = returnType.toSource();
 
-    final isValidReturn = returnTypeName.startsWith('Future<') ||
+    final isValidReturn =
+        returnTypeName.startsWith('Future<') ||
         returnTypeName.startsWith('Stream<') ||
         returnTypeName == 'Future' ||
         returnTypeName == 'Stream';

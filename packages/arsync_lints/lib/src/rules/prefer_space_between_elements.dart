@@ -37,7 +37,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class PreferSpaceBetweenElements extends AnalysisRule {
   PreferSpaceBetweenElements()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'prefer_space_between_elements',
@@ -122,8 +122,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   /// Returns `true` if there is a blank line between [first] and [second].
   bool _hasBlankLineBetween(AstNode first, AstNode second, LineInfo lineInfo) {
     final firstEndLine = lineInfo.getLocation(first.endToken.end).lineNumber;
-    final secondStartLine =
-        lineInfo.getLocation(second.beginToken.offset).lineNumber;
+    final secondStartLine = lineInfo
+        .getLocation(second.beginToken.offset)
+        .lineNumber;
     return (secondStartLine - firstEndLine) > 1;
   }
 }

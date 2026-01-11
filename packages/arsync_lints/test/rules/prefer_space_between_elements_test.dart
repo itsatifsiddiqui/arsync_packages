@@ -45,7 +45,8 @@ class MyWidget extends Widget {
   }
 
   Future<void> test_bad_noSpaceBetweenFieldAndConstructor() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 class Widget {}
 
 class MyWidget extends Widget {
@@ -56,11 +57,14 @@ class MyWidget extends Widget {
     return Widget();
   }
 }
-''', [lint(73, 21)]);
+''',
+      [lint(73, 21)],
+    );
   }
 
   Future<void> test_bad_noSpaceBetweenConstructorAndBuild() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 class Widget {}
 
 class MyWidget extends Widget {
@@ -71,11 +75,14 @@ class MyWidget extends Widget {
     return Widget();
   }
 }
-''', [lint(98, 56)]);
+''',
+      [lint(98, 56)],
+    );
   }
 
   Future<void> test_bad_noSpaceBetweenFieldAndBuild() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 class Widget {}
 
 class MyWidget extends Widget {
@@ -84,7 +91,9 @@ class MyWidget extends Widget {
     return Widget();
   }
 }
-''', [lint(83, 56)]);
+''',
+      [lint(83, 56)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

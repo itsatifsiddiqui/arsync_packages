@@ -15,11 +15,15 @@ void main() {
         ];
 
         expect(
-          bannedPatterns.any((p) => 'package:my_app/repositories/auth.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:my_app/repositories/auth.dart'.contains(p),
+          ),
           true,
         );
         expect(
-          bannedPatterns.any((p) => 'package:cloud_firestore/cloud_firestore.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:cloud_firestore/cloud_firestore.dart'.contains(p),
+          ),
           true,
         );
         expect(
@@ -27,7 +31,9 @@ void main() {
           true,
         );
         expect(
-          bannedPatterns.any((p) => 'package:flutter/material.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:flutter/material.dart'.contains(p),
+          ),
           false,
         );
       });
@@ -40,8 +46,14 @@ void main() {
 
       test('correctly identifies nested screens paths', () {
         // PathUtils.isInScreens checks for '/screens/' in the path
-        expect('/lib/features/auth/screens/login.dart'.contains('/screens/'), true);
-        expect('/lib/modules/home/screens/dashboard.dart'.contains('/screens/'), true);
+        expect(
+          '/lib/features/auth/screens/login.dart'.contains('/screens/'),
+          true,
+        );
+        expect(
+          '/lib/modules/home/screens/dashboard.dart'.contains('/screens/'),
+          true,
+        );
       });
     });
 
@@ -54,11 +66,15 @@ void main() {
         ];
 
         expect(
-          bannedPatterns.any((p) => 'package:flutter_riverpod/flutter_riverpod.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:flutter_riverpod/flutter_riverpod.dart'.contains(p),
+          ),
           true,
         );
         expect(
-          bannedPatterns.any((p) => 'package:my_app/providers/auth.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:my_app/providers/auth.dart'.contains(p),
+          ),
           true,
         );
         expect(
@@ -74,7 +90,9 @@ void main() {
         ];
 
         expect(
-          bannedPatterns.any((p) => 'package:hooks_riverpod/hooks_riverpod.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:hooks_riverpod/hooks_riverpod.dart'.contains(p),
+          ),
           true,
         );
       });
@@ -88,7 +106,10 @@ void main() {
 
       test('correctly identifies nested models path', () {
         // PathUtils.isInModels checks for '/models/' in the path
-        expect('/lib/features/auth/models/user.dart'.contains('/models/'), true);
+        expect(
+          '/lib/features/auth/models/user.dart'.contains('/models/'),
+          true,
+        );
         expect('/lib/domain/models/entity.dart'.contains('/models/'), true);
       });
     });
@@ -103,21 +124,31 @@ void main() {
         const bannedPatterns = ['screens/', 'providers/'];
 
         expect(
-          bannedPatterns.any((p) => 'package:my_app/screens/home.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:my_app/screens/home.dart'.contains(p),
+          ),
           true,
         );
         expect(
-          bannedPatterns.any((p) => 'package:my_app/providers/auth.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:my_app/providers/auth.dart'.contains(p),
+          ),
           true,
         );
         expect(
-          bannedPatterns.any((p) => 'package:my_app/models/user.dart'.contains(p)),
+          bannedPatterns.any(
+            (p) => 'package:my_app/models/user.dart'.contains(p),
+          ),
           false,
         );
       });
 
       test('identifies data source packages as allowed', () {
-        const allowedPatterns = ['package:dio', 'package:http', 'package:cloud_firestore'];
+        const allowedPatterns = [
+          'package:dio',
+          'package:http',
+          'package:cloud_firestore',
+        ];
         for (final pattern in allowedPatterns) {
           expect(pattern.startsWith('package:'), true);
         }
@@ -177,7 +208,12 @@ void main() {
       });
 
       test('detects AsyncNotifier as valid base class', () {
-        const validBaseClasses = ['Notifier', 'AsyncNotifier', 'AutoDisposeNotifier', 'AutoDisposeAsyncNotifier'];
+        const validBaseClasses = [
+          'Notifier',
+          'AsyncNotifier',
+          'AutoDisposeNotifier',
+          'AutoDisposeAsyncNotifier',
+        ];
         for (final className in validBaseClasses) {
           expect(className.contains('Notifier'), true);
         }
@@ -240,7 +276,8 @@ void main() {
       });
 
       test('nested ternary detection pattern', () {
-        const nestedTernary = 'condition1 ? value1 : condition2 ? value2 : value3';
+        const nestedTernary =
+            'condition1 ? value1 : condition2 ? value2 : value3';
         const simpleTernary = 'condition ? value1 : value2';
 
         // Count ternary operators
@@ -290,8 +327,10 @@ void main() {
 
     group('BarrelFileRestriction Logic', () {
       test('identifies index.dart files', () {
-        expect(PathUtils.getFileNameWithExtension('/lib/screens/index.dart'),
-            'index.dart');
+        expect(
+          PathUtils.getFileNameWithExtension('/lib/screens/index.dart'),
+          'index.dart',
+        );
       });
 
       test('correctly identifies banned locations', () {
@@ -362,7 +401,12 @@ void main() {
 
         for (final entry in hookAlternatives.entries) {
           expect(entry.value.startsWith('use'), true);
-          expect(entry.value.contains(entry.key.replaceFirst('Controller', '').replaceFirst('Node', '')), true);
+          expect(
+            entry.value.contains(
+              entry.key.replaceFirst('Controller', '').replaceFirst('Node', ''),
+            ),
+            true,
+          );
         }
       });
 
@@ -396,7 +440,8 @@ void main() {
         // it uses context as the key identity
 
         const badPattern = 'final formKey = GlobalKey<FormState>();';
-        const goodPattern = 'final formKey = GlobalObjectKey<FormState>(context);';
+        const goodPattern =
+            'final formKey = GlobalObjectKey<FormState>(context);';
 
         expect(badPattern.contains('GlobalKey<'), true);
         expect(badPattern.contains('GlobalObjectKey<'), false);
@@ -409,7 +454,10 @@ void main() {
     group('ScaffoldLocation Logic', () {
       test('correctly identifies widgets path', () {
         expect(PathUtils.isInWidgets('/lib/widgets/button.dart'), true);
-        expect(PathUtils.isInWidgets('/lib/widgets/cards/user_card.dart'), true);
+        expect(
+          PathUtils.isInWidgets('/lib/widgets/cards/user_card.dart'),
+          true,
+        );
         expect(PathUtils.isInWidgets('/lib/screens/home.dart'), false);
       });
 
@@ -461,21 +509,30 @@ void main() {
       });
 
       test('handles multiple underscores', () {
-        expect(PathUtils.snakeToPascal('user_profile_screen'), 'UserProfileScreen');
+        expect(
+          PathUtils.snakeToPascal('user_profile_screen'),
+          'UserProfileScreen',
+        );
         expect(PathUtils.snakeToPascal('auth_login_button'), 'AuthLoginButton');
       });
 
       test('extracts file name correctly', () {
-        expect(PathUtils.getFileName('/lib/screens/home_screen.dart'),
-            'home_screen');
-        expect(PathUtils.getFileName('/lib/repositories/auth_repository.dart'),
-            'auth_repository');
+        expect(
+          PathUtils.getFileName('/lib/screens/home_screen.dart'),
+          'home_screen',
+        );
+        expect(
+          PathUtils.getFileName('/lib/repositories/auth_repository.dart'),
+          'auth_repository',
+        );
         expect(PathUtils.getFileName('simple.dart'), 'simple');
       });
 
       test('handles paths with multiple dots', () {
-        expect(PathUtils.getFileName('/lib/screens/home.screen.dart'),
-            'home.screen');
+        expect(
+          PathUtils.getFileName('/lib/screens/home.screen.dart'),
+          'home.screen',
+        );
       });
     });
 
@@ -553,7 +610,10 @@ void main() {
         }
 
         expect(fileNameToNotifierClass('auth_provider'), 'AuthNotifier');
-        expect(fileNameToNotifierClass('user_settings_provider'), 'UserSettingsNotifier');
+        expect(
+          fileNameToNotifierClass('user_settings_provider'),
+          'UserSettingsNotifier',
+        );
         expect(fileNameToNotifierClass('cart_provider'), 'CartNotifier');
       });
 
@@ -593,8 +653,10 @@ void main() {
     group('ProviderDeclarationSyntax Logic', () {
       test('validates .new constructor syntax', () {
         const goodSyntax = 'NotifierProvider.autoDispose(AuthNotifier.new)';
-        const badSyntaxWithGenerics = 'NotifierProvider.autoDispose<AuthNotifier, AuthState>(() => AuthNotifier())';
-        const badSyntaxWithClosure = 'NotifierProvider.autoDispose(() => AuthNotifier())';
+        const badSyntaxWithGenerics =
+            'NotifierProvider.autoDispose<AuthNotifier, AuthState>(() => AuthNotifier())';
+        const badSyntaxWithClosure =
+            'NotifierProvider.autoDispose(() => AuthNotifier())';
 
         expect(goodSyntax.contains('.new'), true);
         expect(goodSyntax.contains('<'), false);
@@ -647,17 +709,11 @@ void main() {
         ];
 
         for (final cls in allowedClasses) {
-          expect(
-            cls.endsWith('Notifier') || cls.endsWith('State'),
-            true,
-          );
+          expect(cls.endsWith('Notifier') || cls.endsWith('State'), true);
         }
 
         for (final cls in disallowedClasses) {
-          expect(
-            cls.endsWith('Notifier') || cls.endsWith('State'),
-            false,
-          );
+          expect(cls.endsWith('Notifier') || cls.endsWith('State'), false);
         }
       });
     });
@@ -672,7 +728,10 @@ void main() {
         }
 
         expect(fileNameToProviderName('auth_provider'), 'authProvider');
-        expect(fileNameToProviderName('user_settings_provider'), 'userSettingsProvider');
+        expect(
+          fileNameToProviderName('user_settings_provider'),
+          'userSettingsProvider',
+        );
         expect(fileNameToProviderName('good_provider'), 'goodProvider');
       });
 
@@ -684,9 +743,12 @@ void main() {
         ];
 
         for (final pattern in providerPatterns) {
-          expect(pattern.startsWith('NotifierProvider') ||
-              pattern.startsWith('AsyncNotifierProvider') ||
-              pattern.startsWith('StreamNotifierProvider'), true);
+          expect(
+            pattern.startsWith('NotifierProvider') ||
+                pattern.startsWith('AsyncNotifierProvider') ||
+                pattern.startsWith('StreamNotifierProvider'),
+            true,
+          );
         }
       });
     });
@@ -700,7 +762,8 @@ void main() {
       });
 
       test('validates Provider declaration pattern', () {
-        const validProvider = 'Provider<AuthRepository>((ref) => AuthRepository(dio))';
+        const validProvider =
+            'Provider<AuthRepository>((ref) => AuthRepository(dio))';
         const invalidProvider = 'AuthRepository()';
 
         expect(validProvider.startsWith('Provider'), true);
@@ -792,7 +855,8 @@ void main() {
 
       test('validates record type syntax', () {
         const recordType = '({String userId, String name, String? phone})';
-        const typedefRecord = 'typedef UpdateProfileParams = ({String userId, String name});';
+        const typedefRecord =
+            'typedef UpdateProfileParams = ({String userId, String name});';
 
         expect(recordType.startsWith('('), true);
         expect(recordType.contains('{'), true);
@@ -827,7 +891,9 @@ void main() {
   group('ImportUtils Tests', () {
     test('matchesBannedImport matches exact pattern', () {
       expect(
-        ImportUtils.matchesBannedImport('package:dio/dio.dart', ['package:dio']),
+        ImportUtils.matchesBannedImport('package:dio/dio.dart', [
+          'package:dio',
+        ]),
         true,
       );
     });
@@ -844,44 +910,62 @@ void main() {
 
     test('matchesBannedImport matches directory pattern', () {
       expect(
-        ImportUtils.matchesBannedImport('../repositories/user_repo.dart', ['repositories/']),
+        ImportUtils.matchesBannedImport('../repositories/user_repo.dart', [
+          'repositories/',
+        ]),
         true,
       );
       expect(
-        ImportUtils.matchesBannedImport('package:app/repositories/auth.dart', ['repositories/']),
+        ImportUtils.matchesBannedImport('package:app/repositories/auth.dart', [
+          'repositories/',
+        ]),
         true,
       );
     });
 
     test('matchesBannedImport does not match unrelated imports', () {
       expect(
-        ImportUtils.matchesBannedImport('package:flutter/material.dart', ['package:dio']),
+        ImportUtils.matchesBannedImport('package:flutter/material.dart', [
+          'package:dio',
+        ]),
         false,
       );
       expect(
-        ImportUtils.matchesBannedImport('../models/user.dart', ['repositories/']),
+        ImportUtils.matchesBannedImport('../models/user.dart', [
+          'repositories/',
+        ]),
         false,
       );
     });
 
     test('matchesBannedImport handles relative imports', () {
       expect(
-        ImportUtils.matchesBannedImport('../providers/auth.dart', ['providers/']),
+        ImportUtils.matchesBannedImport('../providers/auth.dart', [
+          'providers/',
+        ]),
         true,
       );
       expect(
-        ImportUtils.matchesBannedImport('./providers/auth.dart', ['providers/']),
+        ImportUtils.matchesBannedImport('./providers/auth.dart', [
+          'providers/',
+        ]),
         true,
       );
     });
 
     test('matchesBannedImport handles multiple patterns', () {
       expect(
-        ImportUtils.matchesBannedImport('package:dio/dio.dart', ['package:http', 'package:dio']),
+        ImportUtils.matchesBannedImport('package:dio/dio.dart', [
+          'package:http',
+          'package:dio',
+        ]),
         true,
       );
       expect(
-        ImportUtils.matchesBannedImport('../repositories/user.dart', ['screens/', 'repositories/']),
+        ImportUtils.matchesBannedImport('../repositories/user.dart', [
+          'screens/',
+          'repositories/',
+        ]),
         true,
       );
     });
@@ -895,10 +979,7 @@ void main() {
     });
 
     test('handles paths with special characters', () {
-      expect(
-        PathUtils.isInScreens('/lib/screens/home-screen.dart'),
-        true,
-      );
+      expect(PathUtils.isInScreens('/lib/screens/home-screen.dart'), true);
     });
 
     test('handles empty path gracefully', () {

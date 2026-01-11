@@ -14,11 +14,7 @@ class BadUser {
   final String name;
   final String email;
 
-  BadUser({
-    required this.id,
-    required this.name,
-    required this.email,
-  });
+  BadUser({required this.id, required this.name, required this.email});
 
   // Missing: @freezed annotation
   // Missing: factory BadUser.fromJson(Map<String, dynamic> json)

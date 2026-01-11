@@ -10,10 +10,15 @@ import '../repositories/user_repository.dart';
 
 // Mock Flutter types
 class Widget {}
+
 class StatelessWidget extends Widget {}
+
 class BuildContext {}
+
 class Scaffold extends Widget {}
+
 class Card extends Widget {}
+
 class Image {
   Image.asset(String path);
 }

@@ -6,11 +6,11 @@ import '../arsync_lint_rule.dart';
 /// Ban: Scaffold inside lib/widgets/
 class ScaffoldLocation extends AnalysisRule {
   ScaffoldLocation()
-      : super(
-          name: 'scaffold_location',
-          description:
-              'Scaffold is not allowed in widgets folder. Widgets should be fragments, not pages.',
-        );
+    : super(
+        name: 'scaffold_location',
+        description:
+            'Scaffold is not allowed in widgets folder. Widgets should be fragments, not pages.',
+      );
 
   static const LintCode code = LintCode(
     'scaffold_location',

@@ -83,7 +83,8 @@ class MyWidget extends Widget {
   }
 
   Future<void> test_bad_returnsSliverWithoutSliverInName() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -102,7 +103,9 @@ class MyCustomList extends Widget {
     return SliverToBoxAdapter(child: Text('Hello'));
   }
 }
-''', [lint(235, 128)]);
+''',
+      [lint(235, 128)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

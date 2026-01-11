@@ -7,24 +7,18 @@ part of 'good_model.dart';
 // **************************************************************************
 
 _$GoodModelImpl _$$GoodModelImplFromJson(Map<String, dynamic> json) =>
-    _$GoodModelImpl(
-      id: json['id'] as String,
-      name: json['name'] as String,
-    );
+    _$GoodModelImpl(id: json['id'] as String, name: json['name'] as String);
 
 Map<String, dynamic> _$$GoodModelImplToJson(_$GoodModelImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-    };
+    <String, dynamic>{'id': instance.id, 'name': instance.name};
 
 _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
-      isVerified: json['isVerified'] as bool? ?? false,
-    );
+  id: json['id'] as String,
+  name: json['name'] as String,
+  email: json['email'] as String,
+  avatarUrl: json['avatarUrl'] as String?,
+  isVerified: json['isVerified'] as bool? ?? false,
+);
 
 Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
     <String, dynamic>{
@@ -46,10 +40,10 @@ _$AuthStateModelImpl _$$AuthStateModelImplFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$$AuthStateModelImplToJson(
-        _$AuthStateModelImpl instance) =>
-    <String, dynamic>{
-      'isLoading': instance.isLoading,
-      'isAuthenticated': instance.isAuthenticated,
-      'user': instance.user,
-      'error': instance.error,
-    };
+  _$AuthStateModelImpl instance,
+) => <String, dynamic>{
+  'isLoading': instance.isLoading,
+  'isAuthenticated': instance.isAuthenticated,
+  'user': instance.user,
+  'error': instance.error,
+};

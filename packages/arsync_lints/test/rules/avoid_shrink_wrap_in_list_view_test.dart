@@ -78,7 +78,8 @@ Widget myWidget() {
   }
 
   Future<void> test_bad_shrinkWrapInColumn() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock Flutter types
 class Widget {
   const Widget();
@@ -109,7 +110,9 @@ Widget myWidget() {
     ],
   );
 }
-''', [lint(442, 107)]);
+''',
+      [lint(442, 107)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

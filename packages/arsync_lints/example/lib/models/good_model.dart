@@ -9,10 +9,8 @@ part 'good_model.g.dart';
 // OK: Has fromJson factory
 @freezed
 sealed class GoodModel with _$GoodModel {
-  const factory GoodModel({
-    required String id,
-    required String name,
-  }) = _GoodModel;
+  const factory GoodModel({required String id, required String name}) =
+      _GoodModel;
 
   factory GoodModel.fromJson(Map<String, dynamic> json) =>
       _$GoodModelFromJson(json);

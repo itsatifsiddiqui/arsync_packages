@@ -7,11 +7,11 @@ import '../arsync_lint_rule.dart';
 /// Repositories cannot accept Ref as a constructor parameter.
 class RepositoryDependencyInjection extends MultiAnalysisRule {
   RepositoryDependencyInjection()
-      : super(
-          name: 'repository_dependency_injection',
-          description:
-              'Dependencies must be injected through constructor, not created directly.',
-        );
+    : super(
+        name: 'repository_dependency_injection',
+        description:
+            'Dependencies must be injected through constructor, not created directly.',
+      );
 
   static const directInstantiationCode = LintCode(
     'repository_dependency_injection',
@@ -28,8 +28,10 @@ class RepositoryDependencyInjection extends MultiAnalysisRule {
   );
 
   @override
-  List<DiagnosticCode> get diagnosticCodes =>
-      [directInstantiationCode, refNotAllowedCode];
+  List<DiagnosticCode> get diagnosticCodes => [
+    directInstantiationCode,
+    refNotAllowedCode,
+  ];
 
   @override
   void registerNodeProcessors(
@@ -103,7 +105,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       if (RepositoryDependencyInjection.isObjectCreation(initializer)) {
         rule.reportAtNode(
-            initializer, diagnosticCode: RepositoryDependencyInjection.directInstantiationCode);
+          initializer,
+          diagnosticCode: RepositoryDependencyInjection.directInstantiationCode,
+        );
       }
     }
   }

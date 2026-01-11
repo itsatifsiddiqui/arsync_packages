@@ -6,7 +6,8 @@ import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dar
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 /// Quick fix for `repository_class_restriction` rule - add Repository suffix.
-class RepositoryClassRestrictionAddSuffixFix extends ResolvedCorrectionProducer {
+class RepositoryClassRestrictionAddSuffixFix
+    extends ResolvedCorrectionProducer {
   RepositoryClassRestrictionAddSuffixFix({required super.context});
 
   static const _fixKind = FixKind(
@@ -66,7 +67,8 @@ class RepositoryClassRestrictionAddSuffixFix extends ResolvedCorrectionProducer 
 }
 
 /// Quick fix for `repository_class_restriction` rule - make class private.
-class RepositoryClassRestrictionMakePrivateFix extends ResolvedCorrectionProducer {
+class RepositoryClassRestrictionMakePrivateFix
+    extends ResolvedCorrectionProducer {
   RepositoryClassRestrictionMakePrivateFix({required super.context});
 
   static const _fixKind = FixKind(

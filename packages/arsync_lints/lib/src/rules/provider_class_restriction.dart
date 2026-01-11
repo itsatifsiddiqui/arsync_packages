@@ -10,11 +10,11 @@ import '../arsync_lint_rule.dart';
 /// should be in their appropriate directories (models/, utils/, etc.)
 class ProviderClassRestriction extends AnalysisRule {
   ProviderClassRestriction()
-      : super(
-          name: 'provider_class_restriction',
-          description:
-              'Provider files should only contain Notifier classes and @freezed state classes.',
-        );
+    : super(
+        name: 'provider_class_restriction',
+        description:
+            'Provider files should only contain Notifier classes and @freezed state classes.',
+      );
 
   static const LintCode code = LintCode(
     'provider_class_restriction',

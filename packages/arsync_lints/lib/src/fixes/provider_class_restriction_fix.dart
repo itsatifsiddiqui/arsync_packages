@@ -8,7 +8,8 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 /// Quick fix for `provider_class_restriction` rule - make class private.
 ///
 /// If the class is a helper/internal class, this fix makes it private.
-class ProviderClassRestrictionMakePrivateFix extends ResolvedCorrectionProducer {
+class ProviderClassRestrictionMakePrivateFix
+    extends ResolvedCorrectionProducer {
   ProviderClassRestrictionMakePrivateFix({required super.context});
 
   static const _fixKind = FixKind(

@@ -57,7 +57,9 @@ class AvoidShrinkWrapInListViewFix extends ResolvedCorrectionProducer {
     }
 
     await builder.addDartFileEdit(file, (builder) {
-      builder.addDeletion(SourceRange(shrinkWrapArg.offset, endOffset - shrinkWrapArg.offset));
+      builder.addDeletion(
+        SourceRange(shrinkWrapArg.offset, endOffset - shrinkWrapArg.offset),
+      );
     });
   }
 

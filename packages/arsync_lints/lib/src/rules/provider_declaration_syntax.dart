@@ -10,11 +10,11 @@ import '../arsync_lint_rule.dart';
 /// Bad:  `final authProvider = NotifierProvider.autoDispose<AuthNotifier, AuthState>(() => AuthNotifier());`
 class ProviderDeclarationSyntax extends AnalysisRule {
   ProviderDeclarationSyntax()
-      : super(
-          name: 'provider_declaration_syntax',
-          description:
-              'NotifierProvider should use .new constructor syntax without explicit generic parameters.',
-        );
+    : super(
+        name: 'provider_declaration_syntax',
+        description:
+            'NotifierProvider should use .new constructor syntax without explicit generic parameters.',
+      );
 
   static const LintCode code = LintCode(
     'provider_declaration_syntax',
@@ -81,14 +81,14 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   void _checkProviderSyntax(Expression initializer) {
     final source = initializer.toSource();
-    final isTargetedProvider = ProviderDeclarationSyntax._notifierProviderTypes.any(
-      (type) => source.startsWith(type),
-    );
+    final isTargetedProvider = ProviderDeclarationSyntax._notifierProviderTypes
+        .any((type) => source.startsWith(type));
 
     if (!isTargetedProvider) return;
 
     final hasTypeArgs = source.contains('<') && source.contains('>');
-    final usesClosureInsteadOfNew = !source.contains('.new') &&
+    final usesClosureInsteadOfNew =
+        !source.contains('.new') &&
         (source.contains('() {') || source.contains('() =>'));
 
     if (hasTypeArgs || usesClosureInsteadOfNew) {

@@ -35,30 +35,39 @@ void log(String message) {}
   }
 
   Future<void> test_bad_print() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void main() {
   print('Hello');
 }
-''', [lint(16, 14)]);
+''',
+      [lint(16, 14)],
+    );
   }
 
   Future<void> test_bad_debugPrint() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void debugPrint(String message) {}
 
 void main() {
   debugPrint('Hello');
 }
-''', [lint(52, 19)]);
+''',
+      [lint(52, 19)],
+    );
   }
 
   Future<void> test_bad_multiplePrints() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void main() {
   print('First');
   print('Second');
 }
-''', [lint(16, 14), lint(34, 15)]);
+''',
+      [lint(16, 14), lint(34, 15)],
+    );
   }
 
   Future<void> test_ignore_single_line() async {
@@ -82,13 +91,16 @@ void main() {
 
   Future<void> test_ignore_partial() async {
     // First print is ignored, second is not
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 void main() {
   // ignore: print_ban
   print('Hello');
   print('World');
 }
-''', [lint(57, 14)]);
+''',
+      [lint(57, 14)],
+    );
   }
 
   Future<void> test_ignore_multiple_lints() async {

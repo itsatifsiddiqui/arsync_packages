@@ -64,7 +64,8 @@ class ProviderDeclarationSyntaxFix extends ResolvedCorrectionProducer {
     // The node might be the expression itself or we need to traverse up
     AstNode? current = node;
     while (current != null) {
-      if (current is MethodInvocation || current is InstanceCreationExpression) {
+      if (current is MethodInvocation ||
+          current is InstanceCreationExpression) {
         final source = current.toSource();
         if (_isProviderExpression(source)) {
           return current;
@@ -117,7 +118,9 @@ class ProviderDeclarationSyntaxFix extends ResolvedCorrectionProducer {
 
     // Try to extract from closure body
     // Pattern: () => ClassName() or () { return ClassName(); }
-    final closureMatch = RegExp(r'\(\)\s*(?:=>|{\s*return)\s*(\w+)\(\)').firstMatch(source);
+    final closureMatch = RegExp(
+      r'\(\)\s*(?:=>|{\s*return)\s*(\w+)\(\)',
+    ).firstMatch(source);
     if (closureMatch != null) {
       return closureMatch.group(1);
     }

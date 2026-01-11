@@ -9,9 +9,10 @@ import '../../models/user/app_user.dart';
 import 'theme_provider.dart';
 
 ///Override provider in provider scope
-final sharedPreferencesProvider = Provider.autoDispose<SharedPreferencesProvider>((ref) {
-  throw UnimplementedError();
-});
+final sharedPreferencesProvider =
+    Provider.autoDispose<SharedPreferencesProvider>((ref) {
+      throw UnimplementedError();
+    });
 
 class SharedPreferencesProvider {
   const SharedPreferencesProvider(this.prefs, this.ref);

@@ -12,7 +12,8 @@ part of 'good_provider.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$GoodState {
@@ -48,20 +49,20 @@ class _$GoodStateCopyWithImpl<$Res, $Val extends GoodState>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? count = null,
-    Object? isLoading = null,
-  }) {
-    return _then(_value.copyWith(
-      count: null == count
-          ? _value.count
-          : count // ignore: cast_nullable_to_non_nullable
-              as int,
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+  $Res call({Object? count = null, Object? isLoading = null}) {
+    return _then(
+      _value.copyWith(
+            count: null == count
+                ? _value.count
+                : count // ignore: cast_nullable_to_non_nullable
+                      as int,
+            isLoading: null == isLoading
+                ? _value.isLoading
+                : isLoading // ignore: cast_nullable_to_non_nullable
+                      as bool,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -69,8 +70,9 @@ class _$GoodStateCopyWithImpl<$Res, $Val extends GoodState>
 abstract class _$$GoodStateImplCopyWith<$Res>
     implements $GoodStateCopyWith<$Res> {
   factory _$$GoodStateImplCopyWith(
-          _$GoodStateImpl value, $Res Function(_$GoodStateImpl) then) =
-      __$$GoodStateImplCopyWithImpl<$Res>;
+    _$GoodStateImpl value,
+    $Res Function(_$GoodStateImpl) then,
+  ) = __$$GoodStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({int count, bool isLoading});
@@ -81,27 +83,27 @@ class __$$GoodStateImplCopyWithImpl<$Res>
     extends _$GoodStateCopyWithImpl<$Res, _$GoodStateImpl>
     implements _$$GoodStateImplCopyWith<$Res> {
   __$$GoodStateImplCopyWithImpl(
-      _$GoodStateImpl _value, $Res Function(_$GoodStateImpl) _then)
-      : super(_value, _then);
+    _$GoodStateImpl _value,
+    $Res Function(_$GoodStateImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of GoodState
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? count = null,
-    Object? isLoading = null,
-  }) {
-    return _then(_$GoodStateImpl(
-      count: null == count
-          ? _value.count
-          : count // ignore: cast_nullable_to_non_nullable
-              as int,
-      isLoading: null == isLoading
-          ? _value.isLoading
-          : isLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
+  $Res call({Object? count = null, Object? isLoading = null}) {
+    return _then(
+      _$GoodStateImpl(
+        count: null == count
+            ? _value.count
+            : count // ignore: cast_nullable_to_non_nullable
+                  as int,
+        isLoading: null == isLoading
+            ? _value.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+      ),
+    );
   }
 }
 

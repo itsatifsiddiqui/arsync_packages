@@ -7,11 +7,11 @@ import '../arsync_lint_rule.dart';
 /// Allowed in: lib/utils/, lib/widgets/, lib/models/
 class BarrelFileRestriction extends AnalysisRule {
   BarrelFileRestriction()
-      : super(
-          name: 'barrel_file_restriction',
-          description:
-              'Barrel files (index.dart or export-only files) are not allowed in screens, features, or providers folders.',
-        );
+    : super(
+        name: 'barrel_file_restriction',
+        description:
+            'Barrel files (index.dart or export-only files) are not allowed in screens, features, or providers folders.',
+      );
 
   static const LintCode code = LintCode(
     'barrel_file_restriction',
@@ -30,7 +30,8 @@ class BarrelFileRestriction extends AnalysisRule {
     final filePath = context.definingUnit.file.path;
     final fileName = PathUtils.getFileNameWithExtension(filePath);
 
-    final isInBannedLocation = PathUtils.isInScreens(filePath) ||
+    final isInBannedLocation =
+        PathUtils.isInScreens(filePath) ||
         PathUtils.isInFeatures(filePath) ||
         PathUtils.isInProviders(filePath);
 
@@ -65,10 +66,13 @@ class _Visitor extends SimpleAstVisitor<void> {
     final declarations = node.declarations;
 
     if (declarations.isEmpty) {
-      final hasOnlyExports = directives.every((directive) =>
-          directive is ExportDirective || directive is LibraryDirective);
-      final hasExports =
-          directives.any((directive) => directive is ExportDirective);
+      final hasOnlyExports = directives.every(
+        (directive) =>
+            directive is ExportDirective || directive is LibraryDirective,
+      );
+      final hasExports = directives.any(
+        (directive) => directive is ExportDirective,
+      );
 
       if (hasOnlyExports && hasExports) {
         rule.reportAtNode(node);

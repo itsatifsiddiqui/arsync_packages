@@ -89,7 +89,9 @@ class PaddingWrapsContainerFix extends ResolvedCorrectionProducer {
   }
 
   NamedExpression? _findNamedArgument(
-      InstanceCreationExpression node, String argName) {
+    InstanceCreationExpression node,
+    String argName,
+  ) {
     for (final arg in node.argumentList.arguments) {
       if (arg is NamedExpression && arg.name.label.name == argName) {
         return arg;
@@ -143,8 +145,11 @@ class ContainerWrapsPaddingFix extends ResolvedCorrectionProducer {
 
     // Rebuild the entire Container with the padding property and inner child
     final containerSource = containerWidget.toSource();
-    final newContainer =
-        _rebuildContainerWithPadding(containerSource, paddingValue, innerChild);
+    final newContainer = _rebuildContainerWithPadding(
+      containerSource,
+      paddingValue,
+      innerChild,
+    );
 
     await builder.addDartFileEdit(file, (builder) {
       builder.addSimpleReplacement(
@@ -181,8 +186,10 @@ class ContainerWrapsPaddingFix extends ResolvedCorrectionProducer {
       final cleanedArgs = argsContent.replaceAll(childPattern, '').trim();
 
       // Clean up any double commas or leading/trailing commas
-      var finalArgs =
-          cleanedArgs.replaceAll(RegExp(r',\s*,'), ',').replaceAll(RegExp(r'^\s*,\s*'), '').replaceAll(RegExp(r'\s*,\s*$'), '');
+      var finalArgs = cleanedArgs
+          .replaceAll(RegExp(r',\s*,'), ',')
+          .replaceAll(RegExp(r'^\s*,\s*'), '')
+          .replaceAll(RegExp(r'\s*,\s*$'), '');
 
       if (finalArgs.isNotEmpty) {
         args.add(finalArgs);
@@ -214,7 +221,9 @@ class ContainerWrapsPaddingFix extends ResolvedCorrectionProducer {
   }
 
   NamedExpression? _findNamedArgument(
-      InstanceCreationExpression node, String argName) {
+    InstanceCreationExpression node,
+    String argName,
+  ) {
     for (final arg in node.argumentList.arguments) {
       if (arg is NamedExpression && arg.name.label.name == argName) {
         return arg;

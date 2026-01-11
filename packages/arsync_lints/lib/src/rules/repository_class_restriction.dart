@@ -9,11 +9,11 @@ import '../arsync_lint_rule.dart';
 /// Also enforces that files in repositories/ must end with _repository.dart
 class RepositoryClassRestriction extends MultiAnalysisRule {
   RepositoryClassRestriction()
-      : super(
-          name: 'repository_class_restriction',
-          description:
-              'Repository files should only contain classes with "Repository" in the name.',
-        );
+    : super(
+        name: 'repository_class_restriction',
+        description:
+            'Repository files should only contain classes with "Repository" in the name.',
+      );
 
   static const classCode = LintCode(
     'repository_class_restriction',

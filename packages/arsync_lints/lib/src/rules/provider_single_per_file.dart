@@ -9,11 +9,11 @@ import '../arsync_lint_rule.dart';
 /// Bad: auth_provider.dart contains authProvider, userProvider, settingsProvider
 class ProviderSinglePerFile extends MultiAnalysisRule {
   ProviderSinglePerFile()
-      : super(
-          name: 'provider_single_per_file',
-          description:
-              'Provider file should only contain ONE NotifierProvider that matches file name.',
-        );
+    : super(
+        name: 'provider_single_per_file',
+        description:
+            'Provider file should only contain ONE NotifierProvider that matches file name.',
+      );
 
   static const multipleProvidersCode = LintCode(
     'provider_single_per_file',
@@ -32,8 +32,10 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
   );
 
   @override
-  List<DiagnosticCode> get diagnosticCodes =>
-      [multipleProvidersCode, nameMismatchCode];
+  List<DiagnosticCode> get diagnosticCodes => [
+    multipleProvidersCode,
+    nameMismatchCode,
+  ];
 
   static const _providerPatterns = {
     'NotifierProvider',
@@ -98,9 +100,8 @@ class _Visitor extends SimpleAstVisitor<void> {
           if (initializer == null) continue;
 
           final source = initializer.toSource();
-          final isNotifierProvider = ProviderSinglePerFile._providerPatterns.any(
-            (pattern) => source.startsWith(pattern),
-          );
+          final isNotifierProvider = ProviderSinglePerFile._providerPatterns
+              .any((pattern) => source.startsWith(pattern));
 
           if (isNotifierProvider) {
             providerDeclarations.add(variable);

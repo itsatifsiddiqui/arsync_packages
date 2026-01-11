@@ -8,11 +8,11 @@ import '../arsync_lint_rule.dart';
 /// Ban: Using `GlobalKey<FormState>()` in HookWidget build methods.
 class HookSafetyEnforcement extends MultiAnalysisRule {
   HookSafetyEnforcement()
-      : super(
-          name: 'hook_safety_enforcement',
-          description:
-              'Controllers must be created using hooks in build() methods.',
-        );
+    : super(
+        name: 'hook_safety_enforcement',
+        description:
+            'Controllers must be created using hooks in build() methods.',
+      );
 
   static const controllerCode = LintCode(
     'hook_safety_enforcement',
@@ -42,10 +42,7 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
     'FocusNode',
   ];
 
-  static const hookWidgetClasses = {
-    'HookWidget',
-    'HookConsumerWidget',
-  };
+  static const hookWidgetClasses = {'HookWidget', 'HookConsumerWidget'};
 
   @override
   void registerNodeProcessors(
@@ -92,8 +89,9 @@ class _Visitor extends SimpleAstVisitor<void> {
   bool _isHookWidgetClass(ClassDeclaration node) {
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return false;
-    return HookSafetyEnforcement.hookWidgetClasses
-        .contains(extendsClause.superclass.name.lexeme);
+    return HookSafetyEnforcement.hookWidgetClasses.contains(
+      extendsClause.superclass.name.lexeme,
+    );
   }
 }
 
@@ -112,7 +110,10 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
     final typeName = node.constructorName.type.name.lexeme;
 
     if (HookSafetyEnforcement.bannedControllers.contains(typeName)) {
-      rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.controllerCode);
+      rule.reportAtNode(
+        node,
+        diagnosticCode: HookSafetyEnforcement.controllerCode,
+      );
     }
 
     super.visitInstanceCreationExpression(node);
@@ -138,7 +139,10 @@ class _FormKeyVisitor extends RecursiveAstVisitor<void> {
       if (typeArgs != null && typeArgs.arguments.isNotEmpty) {
         final typeArg = typeArgs.arguments.first;
         if (typeArg is NamedType && typeArg.name.lexeme == 'FormState') {
-          rule.reportAtNode(node, diagnosticCode: HookSafetyEnforcement.formKeyCode);
+          rule.reportAtNode(
+            node,
+            diagnosticCode: HookSafetyEnforcement.formKeyCode,
+          );
         }
       }
     }

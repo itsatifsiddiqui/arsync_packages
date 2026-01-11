@@ -121,7 +121,8 @@ class MyService {
   }
 
   Future<void> test_bad_notifierNotDisposed() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -163,11 +164,14 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   Widget build(BuildContext context) => TextField(controller: _controller);
 }
-''', [lint(656, 37)]);
+''',
+      [lint(656, 37)],
+    );
   }
 
   Future<void> test_bad_notifierUsedButNoDisposeMethod() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Widget {
   const Widget();
@@ -204,7 +208,9 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   Widget build(BuildContext context) => TextField(controller: _controller);
 }
-''', [lint(656, 37)]);
+''',
+      [lint(656, 37)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

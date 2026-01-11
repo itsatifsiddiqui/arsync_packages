@@ -184,126 +184,224 @@ class _Plugin extends Plugin {
 
     // Register fixes for Category A: Architectural Layer Isolation
     registry.registerFixForRule(
-        PresentationLayerIsolation.importCode, PresentationLayerIsolationImportFix.new);
+      PresentationLayerIsolation.importCode,
+      PresentationLayerIsolationImportFix.new,
+    );
     registry.registerFixForRule(
-        PresentationLayerIsolation.useRecordCode, PresentationLayerUseRecordFix.new);
+      PresentationLayerIsolation.useRecordCode,
+      PresentationLayerUseRecordFix.new,
+    );
     registry.registerFixForRule(
-        SharedWidgetPurity.importCode, SharedWidgetPurityImportFix.new);
+      SharedWidgetPurity.importCode,
+      SharedWidgetPurityImportFix.new,
+    );
     registry.registerFixForRule(
-        SharedWidgetPurity.singleWidgetCode, SharedWidgetPurityMakePrivateFix.new);
-    registry.registerFixForRule(ModelPurity.importCode, ModelPurityImportFix.new);
-    registry.registerFixForRule(ModelPurity.freezedCode, ModelPurityAddFreezedFix.new);
-    registry.registerFixForRule(ModelPurity.fromJsonCode, ModelPurityAddFromJsonFix.new);
-    registry.registerFixForRule(RepositoryIsolation.code, RepositoryIsolationFix.new);
+      SharedWidgetPurity.singleWidgetCode,
+      SharedWidgetPurityMakePrivateFix.new,
+    );
+    registry.registerFixForRule(
+      ModelPurity.importCode,
+      ModelPurityImportFix.new,
+    );
+    registry.registerFixForRule(
+      ModelPurity.freezedCode,
+      ModelPurityAddFreezedFix.new,
+    );
+    registry.registerFixForRule(
+      ModelPurity.fromJsonCode,
+      ModelPurityAddFromJsonFix.new,
+    );
+    registry.registerFixForRule(
+      RepositoryIsolation.code,
+      RepositoryIsolationFix.new,
+    );
 
     // Register fixes for Category B: Riverpod & State Management
     registry.registerFixForRule(
-        ProviderAutodisposeEnforcement.code, ProviderAutodisposeEnforcementFix.new);
+      ProviderAutodisposeEnforcement.code,
+      ProviderAutodisposeEnforcementFix.new,
+    );
     registry.registerFixForRule(
-        ViewModelNamingConvention.classCode, ViewModelClassNamingFix.new);
+      ViewModelNamingConvention.classCode,
+      ViewModelClassNamingFix.new,
+    );
     registry.registerFixForRule(
-        ViewModelNamingConvention.providerCode, ViewModelProviderNamingFix.new);
+      ViewModelNamingConvention.providerCode,
+      ViewModelProviderNamingFix.new,
+    );
     registry.registerFixForRule(
-        NoContextInProviders.code, NoContextInProvidersFix.new);
+      NoContextInProviders.code,
+      NoContextInProvidersFix.new,
+    );
     registry.registerFixForRule(
-        AsyncViewModelSafety.code, AsyncViewModelSafetyFix.new);
+      AsyncViewModelSafety.code,
+      AsyncViewModelSafetyFix.new,
+    );
     registry.registerFixForRule(
-        ProviderFileNaming.fileCode, ProviderFileNamingFix.new);
+      ProviderFileNaming.fileCode,
+      ProviderFileNamingFix.new,
+    );
     registry.registerFixForRule(
-        ProviderFileNaming.notifierMissingCode, ProviderFileNamingFix.new);
+      ProviderFileNaming.notifierMissingCode,
+      ProviderFileNamingFix.new,
+    );
     registry.registerFixForRule(
-        ProviderStateClass.freezedCode, ProviderStateClassAddFreezedFix.new);
+      ProviderStateClass.freezedCode,
+      ProviderStateClassAddFreezedFix.new,
+    );
     registry.registerFixForRule(
-        ProviderStateClass.importedStateCode, ProviderStateClassMoveHereFix.new);
+      ProviderStateClass.importedStateCode,
+      ProviderStateClassMoveHereFix.new,
+    );
     registry.registerFixForRule(
-        ProviderDeclarationSyntax.code, ProviderDeclarationSyntaxFix.new);
+      ProviderDeclarationSyntax.code,
+      ProviderDeclarationSyntaxFix.new,
+    );
     registry.registerFixForRule(
-        ProviderClassRestriction.code, ProviderClassRestrictionMakePrivateFix.new);
+      ProviderClassRestriction.code,
+      ProviderClassRestrictionMakePrivateFix.new,
+    );
     registry.registerFixForRule(
-        ProviderSinglePerFile.multipleProvidersCode, ProviderSinglePerFileRenameFix.new);
+      ProviderSinglePerFile.multipleProvidersCode,
+      ProviderSinglePerFileRenameFix.new,
+    );
     registry.registerFixForRule(
-        ProviderSinglePerFile.nameMismatchCode, ProviderSinglePerFileRenameFix.new);
+      ProviderSinglePerFile.nameMismatchCode,
+      ProviderSinglePerFileRenameFix.new,
+    );
 
     // Register fixes for Category C: Repository & Data Integrity
     registry.registerFixForRule(
-        RepositoryNoTryCatch.code, RepositoryNoTryCatchFix.new);
+      RepositoryNoTryCatch.code,
+      RepositoryNoTryCatchFix.new,
+    );
     registry.registerFixForRule(
-        RepositoryAsyncReturn.code, RepositoryAsyncReturnFix.new);
+      RepositoryAsyncReturn.code,
+      RepositoryAsyncReturnFix.new,
+    );
     registry.registerFixForRule(
-        RepositoryProviderDeclaration.missingProviderCode,
-        RepositoryProviderDeclarationAddFix.new);
+      RepositoryProviderDeclaration.missingProviderCode,
+      RepositoryProviderDeclarationAddFix.new,
+    );
     registry.registerFixForRule(
-        RepositoryProviderDeclaration.wrongNamingCode,
-        RepositoryProviderDeclarationRenameFix.new);
-    registry.registerFixForRule(RepositoryDependencyInjection.directInstantiationCode,
-        RepositoryDependencyInjectionFix.new);
-    registry.registerFixForRule(RepositoryDependencyInjection.refNotAllowedCode,
-        RepositoryDependencyInjectionFix.new);
+      RepositoryProviderDeclaration.wrongNamingCode,
+      RepositoryProviderDeclarationRenameFix.new,
+    );
     registry.registerFixForRule(
-        RepositoryClassRestriction.classCode, RepositoryClassRestrictionAddSuffixFix.new);
+      RepositoryDependencyInjection.directInstantiationCode,
+      RepositoryDependencyInjectionFix.new,
+    );
     registry.registerFixForRule(
-        RepositoryClassRestriction.fileNameCode, RepositoryClassRestrictionMakePrivateFix.new);
+      RepositoryDependencyInjection.refNotAllowedCode,
+      RepositoryDependencyInjectionFix.new,
+    );
+    registry.registerFixForRule(
+      RepositoryClassRestriction.classCode,
+      RepositoryClassRestrictionAddSuffixFix.new,
+    );
+    registry.registerFixForRule(
+      RepositoryClassRestriction.fileNameCode,
+      RepositoryClassRestrictionMakePrivateFix.new,
+    );
 
     // Register fixes for Category D: Code Quality & Complexity
     registry.registerFixForRule(
-        ComplexityLimits.nestingCode, ComplexityLimitsAddTodoFix.new);
+      ComplexityLimits.nestingCode,
+      ComplexityLimitsAddTodoFix.new,
+    );
     registry.registerFixForRule(
-        ComplexityLimits.methodLinesCode, ComplexityLimitsAddTodoFix.new);
+      ComplexityLimits.methodLinesCode,
+      ComplexityLimitsAddTodoFix.new,
+    );
     registry.registerFixForRule(
-        ComplexityLimits.buildLinesCode, ComplexityLimitsAddTodoFix.new);
+      ComplexityLimits.buildLinesCode,
+      ComplexityLimitsAddTodoFix.new,
+    );
     registry.registerFixForRule(
-        ComplexityLimits.nestedTernaryCode, ComplexityLimitsAddTodoFix.new);
+      ComplexityLimits.nestedTernaryCode,
+      ComplexityLimitsAddTodoFix.new,
+    );
     registry.registerFixForRule(
-        GlobalVariableRestriction.variableCode, GlobalVariableRestrictionFix.new);
+      GlobalVariableRestriction.variableCode,
+      GlobalVariableRestrictionFix.new,
+    );
     registry.registerFixForRule(
-        GlobalVariableRestriction.functionCode, GlobalVariableRestrictionFix.new);
+      GlobalVariableRestriction.functionCode,
+      GlobalVariableRestrictionFix.new,
+    );
     registry.registerFixForRule(PrintBan.code, PrintBanFix.new);
     registry.registerFixForRule(
-        BarrelFileRestriction.code, BarrelFileRestrictionFix.new);
+      BarrelFileRestriction.code,
+      BarrelFileRestrictionFix.new,
+    );
     registry.registerFixForRule(IgnoreFileBan.code, IgnoreFileBanFix.new);
 
     // Register fixes for Category E: UI Safety & Consistency
     registry.registerFixForRule(
-        HookSafetyEnforcement.controllerCode, HookSafetyControllerFix.new);
+      HookSafetyEnforcement.controllerCode,
+      HookSafetyControllerFix.new,
+    );
     registry.registerFixForRule(
-        HookSafetyEnforcement.formKeyCode, HookSafetyFormKeyFix.new);
+      HookSafetyEnforcement.formKeyCode,
+      HookSafetyFormKeyFix.new,
+    );
     registry.registerFixForRule(ScaffoldLocation.code, ScaffoldLocationFix.new);
     registry.registerFixForRule(AssetSafety.code, AssetSafetyFix.new);
     registry.registerFixForRule(FileClassMatch.code, FileClassMatchFix.new);
 
     // Register fixes for Category G: Resource Management
     registry.registerFixForRule(
-        RemoveListener.code, AddRemoveListenerCallFix.new);
+      RemoveListener.code,
+      AddRemoveListenerCallFix.new,
+    );
     registry.registerFixForRule(DisposeNotifier.code, AddDisposeMethodFix.new);
     registry.registerFixForRule(DisposeNotifier.code, AddDisposeCallFix.new);
 
     // Register fixes for Category F: Flutter Best Practices
     registry.registerFixForRule(
-        AvoidConsecutiveSliverToBoxAdapter.code,
-        AvoidConsecutiveSliverToBoxAdapterFix.new);
+      AvoidConsecutiveSliverToBoxAdapter.code,
+      AvoidConsecutiveSliverToBoxAdapterFix.new,
+    );
     registry.registerFixForRule(
-        AvoidHardcodedColor.code, AvoidHardcodedColorFix.new);
+      AvoidHardcodedColor.code,
+      AvoidHardcodedColorFix.new,
+    );
     registry.registerFixForRule(
-        AvoidShrinkWrapInListView.code, AvoidShrinkWrapInListViewFix.new);
+      AvoidShrinkWrapInListView.code,
+      AvoidShrinkWrapInListViewFix.new,
+    );
     registry.registerFixForRule(AvoidSingleChild.code, AvoidSingleChildFix.new);
     registry.registerFixForRule(
-        PreferDedicatedMediaQueryMethods.code,
-        PreferDedicatedMediaQueryMethodsFix.new);
+      PreferDedicatedMediaQueryMethods.code,
+      PreferDedicatedMediaQueryMethodsFix.new,
+    );
     registry.registerFixForRule(
-        PreferSpaceBetweenElements.code, PreferSpaceBetweenElementsFix.new);
+      PreferSpaceBetweenElements.code,
+      PreferSpaceBetweenElementsFix.new,
+    );
     registry.registerFixForRule(
-        PreferToIncludeSliverInName.code, PreferToIncludeSliverInNameFix.new);
+      PreferToIncludeSliverInName.code,
+      PreferToIncludeSliverInNameFix.new,
+    );
     registry.registerFixForRule(
-        UnsafeNullAssertion.code, UnsafeNullAssertionFix.new);
+      UnsafeNullAssertion.code,
+      UnsafeNullAssertionFix.new,
+    );
     registry.registerFixForRule(
-        AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
-        PaddingWrapsContainerFix.new);
+      AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
+      PaddingWrapsContainerFix.new,
+    );
     registry.registerFixForRule(
-        AvoidUnnecessaryPaddingWidget.containerWrapsPaddingCode,
-        ContainerWrapsPaddingFix.new);
+      AvoidUnnecessaryPaddingWidget.containerWrapsPaddingCode,
+      ContainerWrapsPaddingFix.new,
+    );
     registry.registerFixForRule(
-        UnnecessaryHookWidget.code, UnnecessaryHookWidgetFix.new);
+      UnnecessaryHookWidget.code,
+      UnnecessaryHookWidgetFix.new,
+    );
     registry.registerFixForRule(
-        UnnecessaryContainer.code, UnnecessaryContainerFix.new);
+      UnnecessaryContainer.code,
+      UnnecessaryContainerFix.new,
+    );
   }
 }

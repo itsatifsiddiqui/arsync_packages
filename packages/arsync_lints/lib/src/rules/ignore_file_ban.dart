@@ -6,11 +6,11 @@ import '../arsync_lint_rule.dart';
 /// Search for string: // ignore_for_file:
 class IgnoreFileBan extends AnalysisRule {
   IgnoreFileBan()
-      : super(
-          name: 'ignore_file_ban',
-          description:
-              '// ignore_for_file: is banned. Fix the issue or use line-specific ignores.',
-        );
+    : super(
+        name: 'ignore_file_ban',
+        description:
+            '// ignore_for_file: is banned. Fix the issue or use line-specific ignores.',
+      );
 
   static const LintCode code = LintCode(
     'ignore_file_ban',

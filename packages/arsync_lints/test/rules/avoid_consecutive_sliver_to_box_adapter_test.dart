@@ -85,7 +85,8 @@ Widget myWidget() {
   }
 
   Future<void> test_bad_consecutiveSliverToBoxAdapter() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock Flutter types
 class Widget {
   const Widget();
@@ -111,7 +112,9 @@ Widget myWidget() {
     ],
   );
 }
-''', [lint(418, 113)]);
+''',
+      [lint(418, 113)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

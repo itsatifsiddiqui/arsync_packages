@@ -29,7 +29,8 @@ void main() {
         ];
 
         for (final import in imports) {
-          final isRepoImport = import.contains('repositories') ||
+          final isRepoImport =
+              import.contains('repositories') ||
               import.contains('data/') ||
               import.contains('data_source');
           expect(isRepoImport, isTrue);
@@ -40,9 +41,11 @@ void main() {
         const className = 'LoginParams';
         const fields = ['String email', 'String password'];
 
-        final recordType =
-            'typedef $className = ({${fields.join(', ')}});';
-        expect(recordType, equals('typedef LoginParams = ({String email, String password});'));
+        final recordType = 'typedef $className = ({${fields.join(', ')}});';
+        expect(
+          recordType,
+          equals('typedef LoginParams = ({String email, String password});'),
+        );
       });
     });
 
@@ -68,7 +71,8 @@ void main() {
 
     group('ModelPurity Fix Logic', () {
       test('identifies provider/riverpod imports', () {
-        const import = "import 'package:flutter_riverpod/flutter_riverpod.dart';";
+        const import =
+            "import 'package:flutter_riverpod/flutter_riverpod.dart';";
         expect(import.contains('riverpod'), isTrue);
       });
 
@@ -81,8 +85,14 @@ void main() {
 
       test('fromJson factory generation pattern', () {
         const className = 'User';
-        final factory = 'factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);';
-        expect(factory, equals('factory User.fromJson(Map<String, dynamic> json) => _\$UserFromJson(json);'));
+        final factory =
+            'factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);';
+        expect(
+          factory,
+          equals(
+            'factory User.fromJson(Map<String, dynamic> json) => _\$UserFromJson(json);',
+          ),
+        );
       });
     });
 
@@ -96,7 +106,9 @@ void main() {
         ];
 
         const import = "import 'package:app/screens/home_screen.dart';";
-        final isBanned = bannedPatterns.any((p) => import.contains(p.replaceAll('lib/', '')));
+        final isBanned = bannedPatterns.any(
+          (p) => import.contains(p.replaceAll('lib/', '')),
+        );
         expect(isBanned, isTrue);
       });
     });
@@ -143,38 +155,42 @@ void main() {
         expect(newName, equals('AuthNotifier'));
       });
 
-      test('completes partial Notifier suffix (e.g., ThemeModeNotifie -> ThemeModeNotifier)', () {
-        // Helper function matching the fix logic
-        String? findPartialNotifierSuffix(String name, String suffix) {
-          for (var i = suffix.length - 1; i >= 1; i--) {
-            final prefix = suffix.substring(0, i);
-            if (name.endsWith(prefix)) {
-              return suffix.substring(i);
+      test(
+        'completes partial Notifier suffix (e.g., ThemeModeNotifie -> ThemeModeNotifier)',
+        () {
+          // Helper function matching the fix logic
+          String? findPartialNotifierSuffix(String name, String suffix) {
+            for (var i = suffix.length - 1; i >= 1; i--) {
+              final prefix = suffix.substring(0, i);
+              if (name.endsWith(prefix)) {
+                return suffix.substring(i);
+              }
+            }
+            return null;
+          }
+
+          const testCases = {
+            'ThemeModeNotifie': 'r', // Missing 'r'
+            'AuthNotifi': 'er', // Missing 'er'
+            'UserNotif': 'ier', // Missing 'ier'
+            'SettingsN': 'otifier', // Just 'N'
+            'ThemeModeNotifier':
+                null, // Already complete - no completion needed
+            'AuthViewModel': null, // No partial match
+          };
+
+          for (final entry in testCases.entries) {
+            final completion = findPartialNotifierSuffix(entry.key, 'Notifier');
+            expect(completion, equals(entry.value), reason: 'For ${entry.key}');
+
+            // Verify the full result if there's a completion
+            if (completion != null) {
+              final result = '${entry.key}$completion';
+              expect(result.endsWith('Notifier'), isTrue);
             }
           }
-          return null;
-        }
-
-        const testCases = {
-          'ThemeModeNotifie': 'r',      // Missing 'r'
-          'AuthNotifi': 'er',           // Missing 'er'
-          'UserNotif': 'ier',           // Missing 'ier'
-          'SettingsN': 'otifier',       // Just 'N'
-          'ThemeModeNotifier': null,    // Already complete - no completion needed
-          'AuthViewModel': null,        // No partial match
-        };
-
-        for (final entry in testCases.entries) {
-          final completion = findPartialNotifierSuffix(entry.key, 'Notifier');
-          expect(completion, equals(entry.value), reason: 'For ${entry.key}');
-
-          // Verify the full result if there's a completion
-          if (completion != null) {
-            final result = '${entry.key}$completion';
-            expect(result.endsWith('Notifier'), isTrue);
-          }
-        }
-      });
+        },
+      );
 
       test('adds Provider suffix correctly', () {
         const varName = 'auth';
@@ -202,7 +218,8 @@ void main() {
         const statement = 'await repository.fetch();';
         const indent = '    ';
 
-        final tryCatch = '''try {
+        final tryCatch =
+            '''try {
 $indent  $statement
 $indent} catch (e, stackTrace) {
 $indent  // TODO: Handle error appropriately
@@ -223,7 +240,8 @@ $indent}''';
         expect(prefix, equals('auth'));
 
         // Convert to PascalCase and add Notifier
-        final className = '${prefix[0].toUpperCase()}${prefix.substring(1)}Notifier';
+        final className =
+            '${prefix[0].toUpperCase()}${prefix.substring(1)}Notifier';
         expect(className, equals('AuthNotifier'));
       });
     });
@@ -238,7 +256,8 @@ $indent}''';
 
       test('TODO comment for moving state class', () {
         const typeName = 'ExternalState';
-        final todo = '// TODO: Move $typeName class here and add @freezed annotation';
+        final todo =
+            '// TODO: Move $typeName class here and add @freezed annotation';
         expect(todo, contains('ExternalState'));
       });
     });
@@ -325,7 +344,8 @@ try {
 
       test('does not double-wrap Future', () {
         const returnType = 'Future<User>';
-        if (returnType.startsWith('Future<') || returnType.startsWith('Stream<')) {
+        if (returnType.startsWith('Future<') ||
+            returnType.startsWith('Stream<')) {
           expect(true, isTrue); // Already async, skip
         }
       });
@@ -387,7 +407,8 @@ try {
         const innerThenValue = 'y';
         const innerElseValue = 'z';
 
-        final ifElse = '''if ($condition) {
+        final ifElse =
+            '''if ($condition) {
   if ($innerCond) {
     return $thenValue;
   } else {
@@ -513,8 +534,10 @@ void main() {}
           'FocusNode': 'useFocusNode',
         };
 
-        expect(controllerToHook['TextEditingController'],
-            equals('useTextEditingController'));
+        expect(
+          controllerToHook['TextEditingController'],
+          equals('useTextEditingController'),
+        );
         expect(controllerToHook['FocusNode'], equals('useFocusNode'));
       });
 
@@ -566,8 +589,14 @@ void main() {}
         }
 
         expect(generateConstantName('assets/images/logo.png'), equals('logo'));
-        expect(generateConstantName('assets/icons/home_icon.svg'), equals('homeIcon'));
-        expect(generateConstantName('assets/images/user-avatar.png'), equals('userAvatar'));
+        expect(
+          generateConstantName('assets/icons/home_icon.svg'),
+          equals('homeIcon'),
+        );
+        expect(
+          generateConstantName('assets/images/user-avatar.png'),
+          equals('userAvatar'),
+        );
       });
 
       test('generates Images constant reference', () {

@@ -7,10 +7,10 @@ import '../arsync_lint_rule.dart';
 /// that should persist throughout the app lifecycle.
 class ProviderAutodisposeEnforcement extends AnalysisRule {
   ProviderAutodisposeEnforcement()
-      : super(
-          name: 'provider_autodispose_enforcement',
-          description: 'Providers must use .autoDispose to prevent memory leaks.',
-        );
+    : super(
+        name: 'provider_autodispose_enforcement',
+        description: 'Providers must use .autoDispose to prevent memory leaks.',
+      );
 
   static const LintCode code = LintCode(
     'provider_autodispose_enforcement',
@@ -57,9 +57,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (ignoreChecker.shouldIgnoreOffset(variable.name.offset)) continue;
 
       final initializerSource = initializer.toSource();
-      final hasAutoDispose = initializerSource.contains('autoDispose') ||
+      final hasAutoDispose =
+          initializerSource.contains('autoDispose') ||
           initializerSource.contains('.autoDispose');
-      final hasKeepAlive = initializerSource.contains('ref.keepAlive()') ||
+      final hasKeepAlive =
+          initializerSource.contains('ref.keepAlive()') ||
           initializerSource.contains('ref.keepAlive(');
 
       if (!hasAutoDispose && !hasKeepAlive) {

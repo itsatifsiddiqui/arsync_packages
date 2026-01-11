@@ -8,7 +8,8 @@ import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 import '../utils.dart';
 
 /// Quick fix for `repository_provider_declaration` rule - rename provider to end with RepoProvider.
-class RepositoryProviderDeclarationRenameFix extends ResolvedCorrectionProducer {
+class RepositoryProviderDeclarationRenameFix
+    extends ResolvedCorrectionProducer {
   RepositoryProviderDeclarationRenameFix({required super.context});
 
   static const _fixKind = FixKind(

@@ -51,7 +51,8 @@ void main(dynamic context) {
   }
 
   Future<void> test_bad_mediaQueryOf() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Size {
   final double width;
@@ -70,11 +71,14 @@ class MediaQuery {
 void main(dynamic context) {
   final data = MediaQuery.of(context);
 }
-''', [lint(315, 22)]);
+''',
+      [lint(315, 22)],
+    );
   }
 
   Future<void> test_bad_mediaQueryMaybeOf() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Size {
   final double width;
@@ -93,11 +97,14 @@ class MediaQuery {
 void main(dynamic context) {
   final data = MediaQuery.maybeOf(context);
 }
-''', [lint(294, 27)]);
+''',
+      [lint(294, 27)],
+    );
   }
 
   Future<void> test_bad_sizeOfWidth() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 // Mock types
 class Size {
   final double width;
@@ -112,7 +119,9 @@ class MediaQuery {
 void main(dynamic context) {
   final width = MediaQuery.sizeOf(context).width;
 }
-''', [lint(238, 32)]);
+''',
+      [lint(238, 32)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

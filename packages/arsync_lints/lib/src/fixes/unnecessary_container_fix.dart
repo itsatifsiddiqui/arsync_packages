@@ -59,7 +59,9 @@ class UnnecessaryContainerFix extends ResolvedCorrectionProducer {
   }
 
   NamedExpression? _findNamedArgument(
-      InstanceCreationExpression node, String argName) {
+    InstanceCreationExpression node,
+    String argName,
+  ) {
     for (final arg in node.argumentList.arguments) {
       if (arg is NamedExpression && arg.name.label.name == argName) {
         return arg;

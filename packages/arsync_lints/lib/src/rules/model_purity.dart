@@ -6,11 +6,11 @@ import '../arsync_lint_rule.dart';
 /// Must be annotated with @freezed and have a fromJson factory.
 class ModelPurity extends MultiAnalysisRule {
   ModelPurity()
-      : super(
-          name: 'model_purity',
-          description:
-              'Models must be pure data structures without logic dependencies.',
-        );
+    : super(
+        name: 'model_purity',
+        description:
+            'Models must be pure data structures without logic dependencies.',
+      );
 
   static const importCode = LintCode(
     'model_purity',
@@ -31,8 +31,11 @@ class ModelPurity extends MultiAnalysisRule {
   );
 
   @override
-  List<DiagnosticCode> get diagnosticCodes =>
-      [importCode, freezedCode, fromJsonCode];
+  List<DiagnosticCode> get diagnosticCodes => [
+    importCode,
+    freezedCode,
+    fromJsonCode,
+  ];
 
   static const _bannedPatterns = [
     'providers/',

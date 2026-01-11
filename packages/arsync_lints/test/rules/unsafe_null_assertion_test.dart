@@ -46,15 +46,19 @@ void main() {
   }
 
   Future<void> test_bad_forceNullAssertion() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 String getValue(String? name) {
   return name!;
 }
-''', [lint(41, 5)]);
+''',
+      [lint(41, 5)],
+    );
   }
 
   Future<void> test_bad_forceNullAssertionOnMember() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 class User {
   String name = '';
 }
@@ -62,15 +66,20 @@ class User {
 String getName(User? user) {
   return user!.name;
 }
-''', [lint(74, 5)]);
+''',
+      [lint(74, 5)],
+    );
   }
 
   Future<void> test_bad_multipleNullAssertions() async {
-    await assertDiagnostics(r'''
+    await assertDiagnostics(
+      r'''
 String combine(String? a, String? b) {
   return a! + b!;
 }
-''', [lint(48, 2), lint(53, 2)]);
+''',
+      [lint(48, 2), lint(53, 2)],
+    );
   }
 
   Future<void> test_ignore_forFile() async {

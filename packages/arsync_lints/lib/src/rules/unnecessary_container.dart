@@ -45,7 +45,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class UnnecessaryContainer extends AnalysisRule {
   UnnecessaryContainer()
-      : super(name: code.name, description: code.problemMessage);
+    : super(name: code.name, description: code.problemMessage);
 
   static const code = LintCode(
     'unnecessary_container',

@@ -57,7 +57,9 @@ class ViewModelClassNamingFix extends ResolvedCorrectionProducer {
 
     // Find the longest matching prefix of suffix at the end of name
     // by comparing characters directly (O(n) without substring allocations)
-    final maxMatchLen = name.length < suffix.length - 1 ? name.length : suffix.length - 1;
+    final maxMatchLen = name.length < suffix.length - 1
+        ? name.length
+        : suffix.length - 1;
 
     for (var matchLen = maxMatchLen; matchLen >= 1; matchLen--) {
       var matches = true;
