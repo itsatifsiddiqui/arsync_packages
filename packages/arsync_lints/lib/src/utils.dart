@@ -132,6 +132,17 @@ class PathUtils {
         normalized.endsWith('/utils/constants.dart');
   }
 
+  /// Checks if file content is generated code by looking for standard markers.
+  /// All build_runner generated files contain `// GENERATED CODE` or
+  /// `// DO NOT MODIFY BY HAND` at the top.
+  static bool isGeneratedFile(String content) {
+    // Check first 500 chars for performance - generated markers are at top
+    final header = content.length > 500 ? content.substring(0, 500) : content;
+    return header.contains('GENERATED CODE') ||
+        header.contains('DO NOT MODIFY BY HAND');
+  }
+
+
   /// Clear all caches.
   static void clearCache() {
     _normalizedPaths.clear();
@@ -410,6 +421,57 @@ class IgnoreUtils {
   /// Clear all caches. Call between analysis sessions if needed.
   static void clearCache() {
     FileIgnoreIndex.clearCache();
+  }
+}
+
+/// Helper for getting the correct file content for a node in a visitor.
+/// This is needed because `context.definingUnit.content` returns the LIBRARY
+/// content, not the part file content. Part files (.g.dart, .freezed.dart)
+/// need their own content checked for generated markers and ignore comments.
+class NodeContentHelper {
+  /// Gets the content of the file containing the given node.
+  /// Uses `context.allUnits` to find the correct unit.
+  /// Returns null if the unit is not found.
+  static String? getContentForNode(AstNode node, List<dynamic> allUnits) {
+    final nodeUnit = node.root;
+    for (final ctxUnit in allUnits) {
+      if (ctxUnit.unit == nodeUnit) {
+        return ctxUnit.content as String?;
+      }
+    }
+    return null;
+  }
+
+  /// Gets the file path of the file containing the given node.
+  /// Uses `context.allUnits` to find the correct unit.
+  /// Returns null if the unit is not found.
+  static String? getFilePathForNode(AstNode node, List<dynamic> allUnits) {
+    final nodeUnit = node.root;
+    for (final ctxUnit in allUnits) {
+      if (ctxUnit.unit == nodeUnit) {
+        return ctxUnit.file?.path as String?;
+      }
+    }
+    return null;
+  }
+
+  /// Checks if the node is in a generated file and returns false if so.
+  /// Otherwise, checks ignore comments and returns the result.
+  /// Returns true if the node should be skipped (generated file or ignored).
+  static bool shouldSkipNode(
+    AstNode node,
+    List<dynamic> allUnits,
+    String ruleName,
+  ) {
+    final content = getContentForNode(node, allUnits);
+    if (content == null) return false;
+
+    // Skip generated files
+    if (PathUtils.isGeneratedFile(content)) return true;
+
+    // Check ignore comments
+    final ignoreChecker = IgnoreChecker.forRule(content, ruleName);
+    return ignoreChecker.shouldIgnore(node);
   }
 }
 

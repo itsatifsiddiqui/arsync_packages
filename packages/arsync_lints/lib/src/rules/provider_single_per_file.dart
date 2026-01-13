@@ -54,14 +54,14 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
     final fileName = PathUtils.getFileName(path);
     if (!fileName.endsWith('_provider')) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
     final prefix = fileName.replaceAll('_provider', '');
     final expectedProviderName = '${_snakeToCamel(prefix)}Provider';
 
-    final visitor = _Visitor(this, ignoreChecker, expectedProviderName);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
+
+    final visitor = _Visitor(this, context.allUnits, expectedProviderName);
     registry.addCompilationUnit(this, visitor);
   }
 
@@ -82,14 +82,15 @@ class ProviderSinglePerFile extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
   final String expectedProviderName;
 
-  _Visitor(this.rule, this.ignoreChecker, this.expectedProviderName);
+  _Visitor(this.rule, this.allUnits, this.expectedProviderName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     final providerDeclarations = <VariableDeclaration>[];
 

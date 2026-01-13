@@ -30,11 +30,9 @@ class AssetSafety extends AnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
-    final visitor = _Visitor(this, ignoreChecker);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    final visitor = _Visitor(this, context.allUnits);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -42,51 +40,55 @@ class AssetSafety extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final typeName = node.constructorName.type.name.lexeme;
     final constructorName = node.constructorName.name?.name;
 
     if (typeName == 'Image' && constructorName == 'asset') {
-      _checkFirstArgument(node.argumentList);
+      _checkFirstArgument(node, node.argumentList);
     }
     if (typeName == 'SvgPicture' && constructorName == 'asset') {
-      _checkFirstArgument(node.argumentList);
+      _checkFirstArgument(node, node.argumentList);
     }
     if (typeName == 'AssetImage') {
-      _checkFirstArgument(node.argumentList);
+      _checkFirstArgument(node, node.argumentList);
     }
   }
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final target = node.target;
     final methodName = node.methodName.name;
 
     if (target is SimpleIdentifier) {
       if ((target.name == 'Image' || target.name == 'SvgPicture') &&
           methodName == 'asset') {
-        _checkFirstArgument(node.argumentList);
+        _checkFirstArgument(node, node.argumentList);
       }
     }
   }
 
-  void _checkFirstArgument(ArgumentList argumentList) {
+  void _checkFirstArgument(AstNode parentNode, ArgumentList argumentList) {
     if (argumentList.arguments.isEmpty) return;
 
     final firstArg = argumentList.arguments.first;
 
     if (firstArg is StringLiteral) {
-      if (ignoreChecker.shouldIgnore(firstArg)) return;
       rule.reportAtNode(firstArg);
     }
 
     if (firstArg is NamedExpression && firstArg.expression is StringLiteral) {
-      if (ignoreChecker.shouldIgnore(firstArg.expression)) return;
       rule.reportAtNode(firstArg.expression);
     }
   }

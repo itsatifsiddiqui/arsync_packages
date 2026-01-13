@@ -55,11 +55,9 @@ class ComplexityLimits extends MultiAnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
-    var visitor = _Visitor(this, ignoreChecker, content);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    final visitor = _Visitor(this, context.allUnits);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addBlock(this, visitor);
@@ -69,38 +67,45 @@ class ComplexityLimits extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
-  final String content;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker, this.content);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkFunctionLines(node);
   }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkMethodLines(node);
   }
 
   @override
   void visitBlock(Block node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkNestingDepth(node);
   }
 
   @override
   void visitConditionalExpression(ConditionalExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkNestedTernary(node);
   }
 
   void _checkMethodLines(MethodDeclaration node) {
     final body = node.body;
     if (body is! BlockFunctionBody) return;
+
+    // Get the correct content for this node's file
+    final content = NodeContentHelper.getContentForNode(node, allUnits);
+    if (content == null) return;
 
     final startLine = _countLines(content, 0, body.offset);
     final endLine = _countLines(content, 0, body.end);
@@ -130,6 +135,10 @@ class _Visitor extends SimpleAstVisitor<void> {
   void _checkFunctionLines(FunctionDeclaration node) {
     final body = node.functionExpression.body;
     if (body is! BlockFunctionBody) return;
+
+    // Get the correct content for this node's file
+    final content = NodeContentHelper.getContentForNode(node, allUnits);
+    if (content == null) return;
 
     final startLine = _countLines(content, 0, body.offset);
     final endLine = _countLines(content, 0, body.end);

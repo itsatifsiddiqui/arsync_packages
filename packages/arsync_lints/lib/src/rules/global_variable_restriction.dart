@@ -43,18 +43,18 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
     final path = context.definingUnit.file.path;
     final isConstantsFile = PathUtils.isConstantsFile(path);
     final isProvidersFile = PathUtils.isInProviders(path);
     final isRepositoriesFile = PathUtils.isInRepositories(path);
 
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
+
     final visitor = _Visitor(
       this,
-      ignoreChecker,
+      context.allUnits,
       isConstantsFile,
       isProvidersFile,
       isRepositoriesFile,
@@ -66,14 +66,14 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
   final bool isConstantsFile;
   final bool isProvidersFile;
   final bool isRepositoriesFile;
 
   _Visitor(
     this.rule,
-    this.ignoreChecker,
+    this.allUnits,
     this.isConstantsFile,
     this.isProvidersFile,
     this.isRepositoriesFile,
@@ -81,6 +81,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     for (final variable in node.variables.variables) {
       final name = variable.name.lexeme;
 
@@ -88,7 +91,6 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (isConstantsFile && name.startsWith('k')) continue;
       if (isProvidersFile && name.endsWith('Provider')) continue;
       if (isRepositoriesFile && name.endsWith('Provider')) continue;
-      if (ignoreChecker.shouldIgnoreOffset(variable.name.offset)) continue;
 
       rule.reportAtOffset(
         variable.name.offset,
@@ -100,6 +102,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     if (node.parent is! CompilationUnit) return;
 
     final name = node.name.lexeme;
@@ -107,7 +112,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (name.startsWith('_')) return;
     if (isConstantsFile && name.startsWith('k')) return;
     if (name == 'main') return;
-    if (ignoreChecker.shouldIgnore(node)) return;
 
     rule.reportAtOffset(
       node.name.offset,

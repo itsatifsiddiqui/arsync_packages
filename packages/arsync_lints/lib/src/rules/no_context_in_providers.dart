@@ -28,11 +28,11 @@ class NoContextInProviders extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    var visitor = _Visitor(this, ignoreChecker);
+    var visitor = _Visitor(this, context.allUnits);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addConstructorDeclaration(this, visitor);
@@ -41,22 +41,28 @@ class NoContextInProviders extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkParameters(node.functionExpression.parameters);
   }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkParameters(node.parameters);
   }
 
   @override
   void visitConstructorDeclaration(ConstructorDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     _checkParameters(node.parameters);
   }
 
@@ -64,7 +70,6 @@ class _Visitor extends SimpleAstVisitor<void> {
     if (parameters == null) return;
 
     for (final param in parameters.parameters) {
-      if (ignoreChecker.shouldIgnore(param)) continue;
       final typeName = _getParameterTypeName(param);
       if (typeName == 'BuildContext') {
         rule.reportAtNode(param);

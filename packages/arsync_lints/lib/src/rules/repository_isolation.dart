@@ -30,11 +30,11 @@ class RepositoryIsolation extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    var visitor = _Visitor(this, ignoreChecker);
+    var visitor = _Visitor(this, context.allUnits);
     registry.addImportDirective(this, visitor);
   }
 
@@ -48,15 +48,17 @@ class RepositoryIsolation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitImportDirective(ImportDirective node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final importUri = node.uri.stringValue;
     if (importUri == null) return;
-    if (ignoreChecker.shouldIgnore(node)) return;
 
     if (RepositoryIsolation.isBannedImport(importUri)) {
       rule.reportAtNode(node);

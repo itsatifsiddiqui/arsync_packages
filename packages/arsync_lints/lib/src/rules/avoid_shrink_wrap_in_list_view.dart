@@ -56,24 +56,23 @@ class AvoidShrinkWrapInListView extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
-    final visitor = _Visitor(this, ignoreChecker);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    final visitor = _Visitor(this, context.allUnits);
     registry.addInstanceCreationExpression(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     final typeName = node.staticType?.getDisplayString();
     if (TypeUtils.isListViewWidget(typeName) &&

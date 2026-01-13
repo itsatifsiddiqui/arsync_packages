@@ -42,25 +42,26 @@ class RepositoryClassRestriction extends MultiAnalysisRule {
 
     final fileName = PathUtils.getFileName(path);
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    final visitor = _Visitor(this, ignoreChecker, fileName);
+    final visitor = _Visitor(this, context.allUnits, fileName);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
   final String fileName;
 
-  _Visitor(this.rule, this.ignoreChecker, this.fileName);
+  _Visitor(this.rule, this.allUnits, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     bool hasReportedFileNameError = false;
 

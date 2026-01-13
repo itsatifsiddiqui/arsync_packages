@@ -45,4 +45,33 @@ class MyClass {
 }
 ''');
   }
+
+  Future<void> test_skip_generatedFile_withGeneratedCodeMarker() async {
+    // Generated files should be skipped even with nested ternary
+    await assertNoDiagnostics(r'''
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user.dart';
+
+class _$UserImpl {
+  String get status {
+    final active = true;
+    final premium = false;
+    // Nested ternary in generated code should NOT trigger lint
+    return active ? 'active' : premium ? 'premium' : 'inactive';
+  }
+}
+''');
+  }
+
+  Future<void> test_skip_generatedFile_withDoNotModifyMarker() async {
+    // Files with DO NOT MODIFY BY HAND marker should be skipped
+    await assertNoDiagnostics(r'''
+// DO NOT MODIFY BY HAND
+
+void test(bool a, bool b) {
+  final value = a ? 'first' : b ? 'second' : 'third';
+}
+''');
+  }
 }

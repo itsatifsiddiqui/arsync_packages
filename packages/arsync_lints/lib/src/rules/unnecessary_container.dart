@@ -62,20 +62,18 @@ class UnnecessaryContainer extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
-    final visitor = _Visitor(this, ignoreChecker);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    final visitor = _Visitor(this, context.allUnits);
     registry.addInstanceCreationExpression(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
   /// Properties that justify keeping a Container.
   /// If any of these are present, the Container is not unnecessary.
@@ -95,7 +93,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     final className = node.staticType?.getDisplayString();
     if (className != 'Container') return;

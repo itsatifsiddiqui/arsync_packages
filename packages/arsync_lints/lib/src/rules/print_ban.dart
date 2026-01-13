@@ -30,11 +30,9 @@ class PrintBan extends AnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
-    var visitor = _Visitor(this, ignoreChecker);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    final visitor = _Visitor(this, context.allUnits);
     registry.addMethodInvocation(this, visitor);
     registry.addFunctionExpressionInvocation(this, visitor);
   }
@@ -42,13 +40,15 @@ class PrintBan extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final methodName = node.methodName.name;
     if (PrintBan._bannedFunctions.contains(methodName) && node.target == null) {
       rule.reportAtNode(node);
@@ -57,7 +57,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final function = node.function;
     if (function is SimpleIdentifier &&
         PrintBan._bannedFunctions.contains(function.name)) {

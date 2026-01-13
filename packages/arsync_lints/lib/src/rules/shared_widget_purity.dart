@@ -53,11 +53,11 @@ class SharedWidgetPurity extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInWidgets(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    var visitor = _Visitor(this, ignoreChecker);
+    var visitor = _Visitor(this, context.allUnits);
     registry.addImportDirective(this, visitor);
     registry.addCompilationUnit(this, visitor);
   }
@@ -78,15 +78,17 @@ class SharedWidgetPurity extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitImportDirective(ImportDirective node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final importUri = node.uri.stringValue;
     if (importUri == null) return;
-    if (ignoreChecker.shouldIgnore(node)) return;
 
     if (SharedWidgetPurity.isBannedImport(importUri)) {
       rule.reportAtNode(node, diagnosticCode: SharedWidgetPurity.importCode);
@@ -95,6 +97,9 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    // Skip generated files
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final publicWidgets = <ClassDeclaration>[];
 
     for (final declaration in node.declarations) {
@@ -110,7 +115,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
     if (publicWidgets.length > 1) {
       for (var i = 1; i < publicWidgets.length; i++) {
-        if (ignoreChecker.shouldIgnoreOffset(publicWidgets[i].name.offset)) {
+        if (NodeContentHelper.shouldSkipNode(
+          publicWidgets[i],
+          allUnits,
+          rule.name,
+        )) {
           continue;
         }
         rule.reportAtOffset(

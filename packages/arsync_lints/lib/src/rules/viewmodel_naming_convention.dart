@@ -33,11 +33,11 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    var visitor = _Visitor(this, ignoreChecker);
+    var visitor = _Visitor(this, context.allUnits);
     registry.addClassDeclaration(this, visitor);
     registry.addTopLevelVariableDeclaration(this, visitor);
   }
@@ -45,15 +45,17 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     final extendsClause = node.extendsClause;
     if (extendsClause == null) return;
-    if (ignoreChecker.shouldIgnore(node)) return;
 
     final superclassName = extendsClause.superclass.name.lexeme;
     if (superclassName.contains('Notifier') ||
@@ -71,10 +73,12 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
     for (final variable in node.variables.variables) {
       final initializer = variable.initializer;
       if (initializer == null) continue;
-      if (ignoreChecker.shouldIgnoreOffset(variable.name.offset)) continue;
 
       final initializerSource = initializer.toSource();
       if (initializerSource.contains('Provider')) {

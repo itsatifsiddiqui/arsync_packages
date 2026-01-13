@@ -1,3 +1,7 @@
+## 0.1.2
+
+- Fix analyzer exclusion, e.g. for generated files
+
 ## 0.1.1
 
 - update README.md

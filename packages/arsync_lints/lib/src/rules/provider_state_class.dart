@@ -62,23 +62,25 @@ class ProviderStateClass extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    final visitor = _Visitor(this, ignoreChecker);
+    final visitor = _Visitor(this, context.allUnits);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     final definedClasses = <String>{};
     final stateClassUsages = <_StateClassUsage>[];
     final classDeclarations = <String, _ClassInfo>{};
@@ -135,7 +137,11 @@ class _Visitor extends SimpleAstVisitor<void> {
       if (classInfo == null) {
         // Only report if it's a State class that should be in the same file
         if (isStateClass) {
-          if (!ignoreChecker.shouldIgnore(usage.stateTypeNode)) {
+          if (!NodeContentHelper.shouldSkipNode(
+            usage.stateTypeNode,
+            allUnits,
+            rule.name,
+          )) {
             rule.reportAtNode(
               usage.stateTypeNode,
               diagnosticCode: ProviderStateClass.importedStateCode,
@@ -147,7 +153,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
       // State classes must have @freezed
       if (isStateClass && !classInfo.hasFreezed) {
-        if (!ignoreChecker.shouldIgnore(classInfo.node)) {
+        if (!NodeContentHelper.shouldSkipNode(
+          classInfo.node,
+          allUnits,
+          rule.name,
+        )) {
           rule.reportAtOffset(
             classInfo.node.name.offset,
             classInfo.node.name.length,

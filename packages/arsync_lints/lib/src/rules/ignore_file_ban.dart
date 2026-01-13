@@ -31,24 +31,31 @@ class IgnoreFileBan extends AnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    final visitor = _Visitor(this, ignoreChecker, content);
+    final visitor = _Visitor(this, context.allUnits);
     registry.addCompilationUnit(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
-  final String content;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker, this.content);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
+    // Skip generated files
+    final content = NodeContentHelper.getContentForNode(node, allUnits);
+    if (content == null) return;
+    if (PathUtils.isGeneratedFile(content)) return;
+
+    final ignoreChecker = IgnoreChecker.forRule(content, rule.name);
+    if (ignoreChecker.ignoreForFile) return;
+
     final matches = IgnoreFileBan._pattern.allMatches(content);
 
     for (final match in matches) {

@@ -21,7 +21,7 @@ A powerful lint package for Flutter/Dart that enforces the **Arsync 4-Layer Arch
 
 ```yaml
 dev_dependencies:
-  arsync_lints: ^0.1.1
+  arsync_lints: ^0.1.2
 ```
 
 ### 2. Enable the plugin in `analysis_options.yaml`

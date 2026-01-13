@@ -111,4 +111,29 @@ void main() {
 }
 ''');
   }
+
+  Future<void> test_skip_generatedFile_withGeneratedCodeMarker() async {
+    // Files with GENERATED CODE marker should be skipped entirely
+    await assertNoDiagnostics(r'''
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user.dart';
+
+void _$UserFromJson() {
+  print('parsing user');
+}
+''');
+  }
+
+  Future<void> test_skip_generatedFile_withDoNotModifyMarker() async {
+    // Files with DO NOT MODIFY BY HAND marker should be skipped
+    await assertNoDiagnostics(r'''
+// DO NOT MODIFY BY HAND
+
+void main() {
+  print('Hello');
+  debugPrint('World');
+}
+''');
+  }
 }

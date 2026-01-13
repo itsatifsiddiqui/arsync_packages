@@ -41,11 +41,11 @@ class ProviderDeclarationSyntax extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    final visitor = _Visitor(this, ignoreChecker);
+    final visitor = _Visitor(this, context.allUnits);
     registry.addTopLevelVariableDeclaration(this, visitor);
     registry.addFieldDeclaration(this, visitor);
   }
@@ -53,13 +53,14 @@ class ProviderDeclarationSyntax extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     for (final variable in node.variables.variables) {
       final initializer = variable.initializer;
@@ -70,7 +71,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFieldDeclaration(FieldDeclaration node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     for (final variable in node.fields.variables) {
       final initializer = variable.initializer;

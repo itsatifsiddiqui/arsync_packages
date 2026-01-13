@@ -47,16 +47,9 @@ class AvoidHardcodedColor extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    final content = context.definingUnit.content;
-
-    // Skip test files
-    if (TypeUtils.isTestFile(path)) return;
-
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
-
-    final visitor = _Visitor(this, ignoreChecker);
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    final visitor = _Visitor(this, context.allUnits);
     registry
       ..addInstanceCreationExpression(this, visitor)
       ..addMethodInvocation(this, visitor)
@@ -65,14 +58,15 @@ class AvoidHardcodedColor extends AnalysisRule {
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files, test files, and nodes with ignore comments
+    if (_shouldSkipNode(node)) return;
     if (_isInsideColorScheme(node)) return;
 
     final type = node.staticType;
@@ -83,7 +77,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files, test files, and nodes with ignore comments
+    if (_shouldSkipNode(node)) return;
     if (_isInsideColorScheme(node)) return;
 
     final element = node.methodName.element;
@@ -105,7 +100,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files, test files, and nodes with ignore comments
+    if (_shouldSkipNode(node)) return;
     if (_isInsideColorScheme(node)) return;
 
     final element = node.element;
@@ -127,6 +123,17 @@ class _Visitor extends SimpleAstVisitor<void> {
         }
       }
     }
+  }
+
+  bool _shouldSkipNode(AstNode node) {
+    // Check for generated files and ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return true;
+
+    // Check for test files
+    final path = NodeContentHelper.getFilePathForNode(node, allUnits);
+    if (path != null && TypeUtils.isTestFile(path)) return true;
+
+    return false;
   }
 
   bool _isColorClass(Element? element) {

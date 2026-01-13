@@ -30,11 +30,11 @@ class ScaffoldLocation extends AnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInWidgets(path)) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    final visitor = _Visitor(this, ignoreChecker);
+    final visitor = _Visitor(this, context.allUnits);
     registry.addInstanceCreationExpression(this, visitor);
     registry.addMethodInvocation(this, visitor);
   }
@@ -42,13 +42,14 @@ class ScaffoldLocation extends AnalysisRule {
 
 class _Visitor extends SimpleAstVisitor<void> {
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     if (node.constructorName.type.name.lexeme == 'Scaffold') {
       rule.reportAtNode(node);
     }
@@ -56,7 +57,8 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     if (node.methodName.name == 'Scaffold') {
       rule.reportAtNode(node);
     }

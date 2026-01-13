@@ -78,24 +78,25 @@ class DisposeNotifier extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    final visitor = _Visitor(this, ignoreChecker);
+    final visitor = _Visitor(this, context.allUnits);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   final AnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     // Check if this class extends State<T>
     if (!_isStateClass(node)) return;
@@ -131,8 +132,8 @@ class _Visitor extends SimpleAstVisitor<void> {
         final name = variable.name.lexeme;
         // Only warn if the notifier is actually used somewhere
         if (referencedNames.contains(name) && !disposedNames.contains(name)) {
-          // Check if this specific line is ignored
-          if (!ignoreChecker.shouldIgnore(variable)) {
+          // Check if this specific node is ignored
+          if (!NodeContentHelper.shouldSkipNode(variable, allUnits, rule.name)) {
             rule.reportAtNode(variable, arguments: [name]);
           }
         }

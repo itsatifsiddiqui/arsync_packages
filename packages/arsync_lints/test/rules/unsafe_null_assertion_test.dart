@@ -91,4 +91,49 @@ String getValue(String? name) {
 }
 ''');
   }
+
+  Future<void> test_skip_generatedFile_withGeneratedCodeMarker() async {
+    // Files with GENERATED CODE marker should be skipped entirely
+    await assertNoDiagnostics(r'''
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user.dart';
+
+_$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
+      name: json['name']! as String,
+      email: json['email']! as String,
+    );
+''');
+  }
+
+  Future<void> test_skip_generatedFile_withDoNotModifyMarker() async {
+    // Files with DO NOT MODIFY BY HAND marker should be skipped
+    await assertNoDiagnostics(r'''
+// DO NOT MODIFY BY HAND
+
+String getValue(String? name) {
+  return name!;
+}
+''');
+  }
+
+  Future<void> test_skip_generatedFile_freezedStyle() async {
+    // Freezed-style generated files should be skipped
+    await assertNoDiagnostics(r'''
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint
+
+part of 'app_user.dart';
+
+class _$AppUserImpl implements AppUser {
+  const _$AppUserImpl({required this.name});
+
+  @override
+  final String name;
+
+  String get forcedValue => name!;
+}
+''');
+  }
 }

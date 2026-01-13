@@ -167,6 +167,107 @@ void main() {
         );
       });
     });
+
+    group('isGeneratedFile', () {
+      test('returns true for GENERATED CODE marker', () {
+        const content = '''
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+_\$UserImpl _\$\$UserImplFromJson(Map<String, dynamic> json) => _\$UserImpl(
+      name: json['name'] as String,
+    );
+''';
+        expect(PathUtils.isGeneratedFile(content), true);
+      });
+
+      test('returns true for DO NOT MODIFY BY HAND marker', () {
+        const content = '''
+// DO NOT MODIFY BY HAND
+
+part of 'app_user.dart';
+''';
+        expect(PathUtils.isGeneratedFile(content), true);
+      });
+
+      test('returns true for freezed generated file', () {
+        const content = '''
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use
+
+part of 'user.dart';
+
+class _\$UserImpl implements User {
+  const _\$UserImpl({required this.name});
+  final String name;
+}
+''';
+        expect(PathUtils.isGeneratedFile(content), true);
+      });
+
+      test('returns false for normal source file', () {
+        const content = '''
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text('Hello')),
+    );
+  }
+}
+''';
+        expect(PathUtils.isGeneratedFile(content), false);
+      });
+
+      test('returns false for file with comments but no generated marker', () {
+        const content = '''
+// This is a regular comment
+// Another comment
+
+void main() {
+  print('Hello');
+}
+''';
+        expect(PathUtils.isGeneratedFile(content), false);
+      });
+
+      test('returns false for empty file', () {
+        expect(PathUtils.isGeneratedFile(''), false);
+      });
+
+      test('checks only first 500 characters for performance', () {
+        // Create content where marker appears after 500 chars
+        final padding = 'a' * 600;
+        final content = '''
+// Regular file
+$padding
+// GENERATED CODE - DO NOT MODIFY BY HAND
+''';
+        // Should return false because marker is beyond 500 char check
+        expect(PathUtils.isGeneratedFile(content), false);
+      });
+
+      test('returns true when marker is within first 500 characters', () {
+        const content = '''
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+// Some content here
+void main() {}
+''';
+        expect(PathUtils.isGeneratedFile(content), true);
+      });
+    });
   });
 
   group('ImportUtils', () {

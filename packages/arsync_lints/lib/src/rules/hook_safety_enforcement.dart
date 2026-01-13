@@ -51,35 +51,36 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    final content = context.definingUnit.content;
-    final ignoreChecker = IgnoreChecker.forRule(content, name);
-    if (ignoreChecker.ignoreForFile) return;
+    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
+    // only returns the LIBRARY file content, not part file (.g.dart) content.
+    // The visitor must use allUnits to get the correct file's content.
 
-    var visitor = _Visitor(this, ignoreChecker);
+    var visitor = _Visitor(this, context.allUnits);
     registry.addClassDeclaration(this, visitor);
   }
 }
 
 class _Visitor extends SimpleAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _Visitor(this.rule, this.ignoreChecker);
+  _Visitor(this.rule, this.allUnits);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    if (ignoreChecker.shouldIgnore(node)) return;
+    // Skip generated files and nodes with ignore comments
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     final isHookWidget = _isHookWidgetClass(node);
 
     for (final member in node.members) {
       if (member is MethodDeclaration && member.name.lexeme == 'build') {
         final body = member.body;
 
-        final controllerVisitor = _ControllerVisitor(rule, ignoreChecker);
+        final controllerVisitor = _ControllerVisitor(rule, allUnits);
         body.accept(controllerVisitor);
 
         if (isHookWidget) {
-          final formKeyVisitor = _FormKeyVisitor(rule, ignoreChecker);
+          final formKeyVisitor = _FormKeyVisitor(rule, allUnits);
           body.accept(formKeyVisitor);
         }
       }
@@ -97,13 +98,13 @@ class _Visitor extends SimpleAstVisitor<void> {
 
 class _ControllerVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _ControllerVisitor(this.rule, this.ignoreChecker);
+  _ControllerVisitor(this.rule, this.allUnits);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) {
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) {
       super.visitInstanceCreationExpression(node);
       return;
     }
@@ -122,13 +123,13 @@ class _ControllerVisitor extends RecursiveAstVisitor<void> {
 
 class _FormKeyVisitor extends RecursiveAstVisitor<void> {
   final MultiAnalysisRule rule;
-  final IgnoreChecker ignoreChecker;
+  final List<dynamic> allUnits;
 
-  _FormKeyVisitor(this.rule, this.ignoreChecker);
+  _FormKeyVisitor(this.rule, this.allUnits);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (ignoreChecker.shouldIgnore(node)) {
+    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) {
       super.visitInstanceCreationExpression(node);
       return;
     }
