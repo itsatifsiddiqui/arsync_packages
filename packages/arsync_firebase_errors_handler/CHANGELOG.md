@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Upgraded Firebase platform interface dependencies to latest versions:
+
 ## 0.0.4
 
 * Updated dependencies to latest major versions
