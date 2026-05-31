@@ -1,3 +1,7 @@
+## 0.2.0
+
+* Added simple, optional localization support via a `localize` key lookup
+
 ## 0.1.0
 
 * Replace hardcoded exception codes with typed enums

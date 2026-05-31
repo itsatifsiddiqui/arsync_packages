@@ -11,12 +11,13 @@ A flexible, standardized exception handling system for Flutter applications by A
 - 🔍 **Automatic Exception Detection**: Intelligently identify exception types
 - 🎯 **Specialized Handlers**: Add custom handlers for specific backend services
 - 🛠️ **Highly Customizable**: Modify and extend the toolkit to suit your needs
+- 🌍 **Optional Localization**: Plug in your own translations with one function — no shipped language files
 
 ## Installation
 
 ```yaml
 dependencies:
-  arsync_exception_toolkit: ^0.1.0
+  arsync_exception_toolkit: ^0.2.0
 ```
 
 ## Basic Usage
@@ -141,6 +142,75 @@ final toolkit = ArsyncExceptionToolkit(
 // Add more later
 toolkit.addIgnorableException('user_aborted');
 ```
+
+### Localization (i18n)
+
+Optional and non-breaking — do nothing and you get the built-in English. To
+translate, hand the toolkit your i18n's key lookup via `localize`. Each exception's
+`exceptionCode.id` is the key; fields are read under `<id>.<field>` (`<field>` ∈
+`title`, `message`, `briefTitle`, `briefMessage`), and a missing key falls back to
+English. No switch, no per-error code:
+
+```dart
+final toolkit = ArsyncExceptionToolkit(
+  localize: (key) => key.tr(), // easy_localization
+);
+
+final exception = toolkit.handleException(error); // already localized
+Text(exception.title); // localized, or English fallback
+```
+
+Any key-addressable source works — `easy_localization`, `slang`, or a plain map:
+
+```dart
+localize: (key) => t[key]              // slang
+localize: (key) => myTranslations[key] // plain Map
+```
+
+#### With `intl` / generated `AppLocalizations`
+
+`gen-l10n` has no dynamic key lookup, so add
+[`l10n_mapper_generator`](https://pub.dev/packages/l10n_mapper_generator) — it
+generates a `parseL10n(key)` lookup from your existing ARB via `build_runner`:
+
+```yaml
+dev_dependencies:
+  build_runner: ^2.4.0
+  l10n_mapper_generator: ^3.0.0
+```
+
+```bash
+dart run build_runner build
+```
+
+The generator also adds `parseL10n` to the `AppLocalizations` **instance**, and
+gen-l10n ships a synchronous `lookupAppLocalizations(locale)` — so you can localize
+**without a `BuildContext`**. Resolve an instance and inject it once; your `.arb`
+stays the single source of truth:
+
+```dart
+import 'package:your_app/l10n/app_localizations.dart';
+
+// No context needed — resolve the instance for the active locale.
+final l10n = lookupAppLocalizations(const Locale('en'));
+
+final toolkit = ArsyncExceptionToolkit(
+  localize: (key) => l10n.parseL10n(key),
+);
+
+final exception = toolkit.handleException(error); // already localized
+Text(exception.title); // localized, or English fallback
+```
+
+> Re-resolve `l10n` (and rebuild the toolkit) when the app locale changes so new
+> exceptions pick up the new language.
+
+Your `.arb` stays the single source of truth; the keys are the code ids
+(`ArsyncCoreCode.network.id` is `'network_error'`; extension packages expose their
+own, e.g. `FirebaseAuthCode.wrongPassword`).
+
+`intl` still owns the rest of your app's strings; Arsync just reads its own
+key-addressable map. No switch, no per-error code.
 
 ## Extension Packages (Coming Soon)
 

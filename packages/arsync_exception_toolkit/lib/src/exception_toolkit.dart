@@ -21,18 +21,25 @@ class ArsyncExceptionToolkit {
   /// Strings that, if found in exception messages, will be considered ignorable
   final List<String> _ignorableExceptions;
 
+  /// Optional key lookup applied to every handled exception.
+  final ArsyncTr? _localize;
+
   /// Create an ExceptionService with configuration options.
   ///
   /// [exceptionMapper] - The mapper to use for converting exceptions to AppException objects.
   /// [ignorableExceptions] - Strings that, if found in exception messages, will be ignored.
+  /// [localize] - Optional [ArsyncTr] key lookup applied to every
+  /// [handleException] result; omit to keep the built-in English.
   ArsyncExceptionToolkit({
     List<ArsyncExceptionHandler> handlers = const [],
     bool sortByPriority = true,
     List<String>? ignorableExceptions,
+    ArsyncTr? localize,
   })  : _exceptionMapper = ArsyncExceptionMapper(
           handlers: handlers,
           sortByPriority: sortByPriority,
         ),
+        _localize = localize,
         _ignorableExceptions = ignorableExceptions ?? arsyncIgnorableExceptions;
 
   /// Handle an exception and return an AppException.
@@ -45,9 +52,11 @@ class ArsyncExceptionToolkit {
   }) {
     if (ignoreMatching && shouldIgnoreException(exception)) {
       // Return a ignored exception for ignored exceptions
-      return ArsyncException.ignored(
-        technicalDetails: exception.toString(),
-        originalException: exception,
+      return _applyLocalization(
+        ArsyncException.ignored(
+          technicalDetails: exception.toString(),
+          originalException: exception,
+        ),
       );
     }
 
@@ -60,7 +69,13 @@ class ArsyncExceptionToolkit {
           appException, exception);
     }
 
-    return appException;
+    return _applyLocalization(appException);
+  }
+
+  /// Localizes [exception] when a lookup was provided, else returns it as-is.
+  ArsyncException _applyLocalization(ArsyncException exception) {
+    final localize = _localize;
+    return localize == null ? exception : exception.tr(localize);
   }
 
   /// Access the exception mapper to customize handlers.
