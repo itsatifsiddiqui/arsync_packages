@@ -44,7 +44,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'An assertion failed in the application. Please report this issue.',
         briefTitle: 'App Error',
         briefMessage: 'Application assertion failed',
-        exceptionCode: 'assertion_error',
+        exceptionCode: ArsyncCoreCode.assertion,
         originalException: exception,
         technicalDetails: exception.toString(),
       );
@@ -58,7 +58,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'The application encountered an unexpected state. Please restart the application.',
         briefTitle: 'State Error',
         briefMessage: 'Unexpected application state',
-        exceptionCode: 'state_error',
+        exceptionCode: ArsyncCoreCode.state,
         originalException: exception,
         technicalDetails: exception.toString(),
       );
@@ -72,7 +72,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'The application encountered a type error. Please report this issue.',
         briefTitle: 'Type Error',
         briefMessage: 'Application type error',
-        exceptionCode: 'type_error',
+        exceptionCode: ArsyncCoreCode.type,
         originalException: exception,
         technicalDetails: exception.toString(),
       );
@@ -86,7 +86,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'The application received an invalid argument. Please report this issue.',
         briefTitle: 'Invalid Argument',
         briefMessage: 'Application argument error',
-        exceptionCode: 'argument_error',
+        exceptionCode: ArsyncCoreCode.argument,
         originalException: exception,
         technicalDetails: exception.toString(),
       );
@@ -106,7 +106,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'The application tried to modify data while it was being processed. Please try again.',
         briefTitle: 'Operation Conflict',
         briefMessage: 'Concurrent modification error',
-        exceptionCode: 'concurrent_modification_error',
+        exceptionCode: ArsyncCoreCode.concurrentModification,
         originalException: exception,
         technicalDetails: exception.toString(),
       );
@@ -120,7 +120,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'The application encountered a method error. Please report this issue.',
         briefTitle: 'Operation Error',
         briefMessage: 'Application method error',
-        exceptionCode: 'no_such_method_error',
+        exceptionCode: ArsyncCoreCode.noSuchMethodError,
         originalException: exception,
         technicalDetails: exception.toString(),
       );
@@ -134,7 +134,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
             'The application encountered a range error. Please report this issue.',
         briefTitle: 'Range Error',
         briefMessage: 'Application range error',
-        exceptionCode: 'range_error',
+        exceptionCode: ArsyncCoreCode.range,
         originalException: exception,
         technicalDetails: exception.toString(),
       );

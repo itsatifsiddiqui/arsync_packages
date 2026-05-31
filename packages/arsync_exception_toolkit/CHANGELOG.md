@@ -1,3 +1,7 @@
+## 0.1.0
+
+* Replace hardcoded exception codes with typed enums
+
 ## 0.0.10
 
 * Updated dependencies to latest major versions

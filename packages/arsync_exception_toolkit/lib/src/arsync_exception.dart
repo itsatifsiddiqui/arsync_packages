@@ -1,6 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 
+import 'arsync_exception_code.dart';
+import 'codes/arsync_core_code.dart';
+
 /// Represents a standardized application exception with user-friendly information.
 ///
 /// This class converts raw exceptions into a format that can be displayed to users,
@@ -20,9 +23,10 @@ class ArsyncException {
 
   /// Short message for brief notifications
   final String briefMessage;
+  
 
-  /// Optional exception code for identifying specific exceptions
-  final String? exceptionCode;
+   /// Optional exception code for identifying specific exceptions
+  final ArsyncExceptionCode exceptionCode;
 
   /// Original exception that caused this AppException
   final Object? originalException;
@@ -37,7 +41,7 @@ class ArsyncException {
     required this.message,
     required this.briefTitle,
     required this.briefMessage,
-    this.exceptionCode,
+    required this.exceptionCode,
     this.originalException,
     this.technicalDetails,
   });
@@ -49,7 +53,7 @@ class ArsyncException {
     String? message,
     String? briefTitle,
     String? briefMessage,
-    String? exceptionCode,
+    ArsyncExceptionCode? exceptionCode,
     Object? originalException,
     String? technicalDetails,
   }) {
@@ -82,7 +86,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'network_error',
+      exceptionCode: ArsyncCoreCode.network,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -105,7 +109,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'timeout_error',
+      exceptionCode: ArsyncCoreCode.timeout,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -118,7 +122,7 @@ class ArsyncException {
     String message = 'An unexpected error occurred.',
     String briefTitle = 'Error',
     String briefMessage = 'Something went wrong',
-    String? exceptionCode,
+    ArsyncExceptionCode? exceptionCode,
     Object? originalException,
     String? technicalDetails,
   }) {
@@ -128,7 +132,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: exceptionCode ?? 'unknown_error',
+      exceptionCode: exceptionCode ?? ArsyncCoreCode.generic,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -150,7 +154,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'permission_error',
+      exceptionCode: ArsyncCoreCode.permission,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -172,7 +176,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'not_found_error',
+      exceptionCode: ArsyncCoreCode.notFound,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -195,7 +199,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'auth_error',
+      exceptionCode: ArsyncCoreCode.authentication,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -217,7 +221,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'server_error',
+      exceptionCode: ArsyncCoreCode.server,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -239,7 +243,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'ignored_error',
+      exceptionCode: ArsyncCoreCode.ignored,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -261,7 +265,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'format_error',
+      exceptionCode: ArsyncCoreCode.format,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -283,7 +287,7 @@ class ArsyncException {
       message: message,
       briefTitle: briefTitle,
       briefMessage: briefMessage,
-      exceptionCode: 'unsupported_error',
+      exceptionCode: ArsyncCoreCode.unsupported,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
     );
@@ -320,21 +324,21 @@ class ArsyncException {
         technicalDetails.hashCode;
   }
 
-  bool get isNetworkError => exceptionCode == 'network_error';
+  bool get isNetworkError => exceptionCode == ArsyncCoreCode.network;
 
-  bool get isTimeoutError => exceptionCode == 'timeout_error';
+  bool get isTimeoutError => exceptionCode == ArsyncCoreCode.timeout;
 
-  bool get isGenericError => exceptionCode == 'unknown_error';
+  bool get isGenericError => exceptionCode == ArsyncCoreCode.generic;
 
-  bool get isPermissionError => exceptionCode == 'permission_error';
+  bool get isPermissionError => exceptionCode == ArsyncCoreCode.permission;
 
-  bool get isNotFoundError => exceptionCode == 'not_found_error';
+  bool get isNotFoundError => exceptionCode == ArsyncCoreCode.notFound;
 
-  bool get isAuthError => exceptionCode == 'auth_error';
+  bool get isAuthError => exceptionCode == ArsyncCoreCode.authentication;
 
-  bool get isServerError => exceptionCode == 'server_error';
+  bool get isServerError => exceptionCode == ArsyncCoreCode.server;
 
-  bool get isIgnoredError => exceptionCode == 'ignored_error';
+  bool get isIgnoredError => exceptionCode == ArsyncCoreCode.ignored;
 
   // Alias for isIgnoredError
   bool get shouldIgnore => isIgnoredError;

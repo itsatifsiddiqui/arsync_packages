@@ -55,9 +55,8 @@ class ArsyncExceptionToolkit {
     ArsyncException appException = _exceptionMapper.mapException(exception);
 
     // Apply any registered modifiers for the exception code
-    if (appException.exceptionCode != null &&
-        _exceptionModifiers.containsKey(appException.exceptionCode)) {
-      appException = _exceptionModifiers[appException.exceptionCode]!(
+    if (_exceptionModifiers.containsKey(appException.exceptionCode.id)) {
+      appException = _exceptionModifiers[appException.exceptionCode.id]!(
           appException, exception);
     }
 

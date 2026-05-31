@@ -143,7 +143,7 @@ class _BasicExampleScreenState extends State<BasicExampleScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Code: ${lastException!.exceptionCode ?? 'N/A'}',
+                  'Code: ${lastException!.exceptionCode.id}',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],

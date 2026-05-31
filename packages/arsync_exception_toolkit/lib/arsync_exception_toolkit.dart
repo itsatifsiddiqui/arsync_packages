@@ -5,7 +5,9 @@
 library;
 
 // Core classes
+export 'src/arsync_exception_code.dart';
 export 'src/arsync_exception.dart';
+export 'src/codes/arsync_core_code.dart';
 export 'src/exception_extensions.dart';
 export 'src/exception_handler.dart';
 export 'src/exception_toolkit.dart';
