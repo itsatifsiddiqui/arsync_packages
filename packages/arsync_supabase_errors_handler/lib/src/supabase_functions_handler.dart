@@ -2,6 +2,7 @@ import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase/supabase.dart';
 
+import 'codes/supabase_function_code.dart';
 import 'supabase_error_codes.dart';
 
 /// Handler specifically for Supabase Functions (Edge Functions) exceptions
@@ -86,7 +87,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       message: message,
       briefTitle: 'Function Error',
       briefMessage: 'Function execution failed',
-      exceptionCode: 'supabase_function_$code',
+      exceptionCode: RawArsyncExceptionCode('supabase_function_$code'),
       originalException: exception,
       technicalDetails: technicalDetails,
     );
@@ -151,7 +152,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'The function you\'re trying to call doesn\'t exist. This may be a configuration issue.',
       briefTitle: 'Missing Function',
       briefMessage: 'Function not found',
-      exceptionCode: 'supabase_function_not_found',
+      exceptionCode: SupabaseFunctionCode.functionNotFound,
     ),
     SupabaseErrorCodes.functionExecutionFailed: ArsyncException(
       icon: Icons.dangerous,
@@ -160,7 +161,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'The function encountered an error during execution. Please try again or check your input.',
       briefTitle: 'Execution Failed',
       briefMessage: 'Function execution failed',
-      exceptionCode: 'supabase_function_execution_failed',
+      exceptionCode: SupabaseFunctionCode.executionFailed,
     ),
     SupabaseErrorCodes.functionTimeout: ArsyncException(
       icon: Icons.timer_off,
@@ -169,7 +170,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'The function took too long to complete. Please try again or contact support.',
       briefTitle: 'Timeout',
       briefMessage: 'Function timed out',
-      exceptionCode: 'supabase_function_timeout',
+      exceptionCode: SupabaseFunctionCode.timeout,
     ),
     SupabaseErrorCodes.invalidFunctionPayload: ArsyncException(
       icon: Icons.input,
@@ -178,7 +179,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'The data provided to the function is invalid. Please check your input and try again.',
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid function input',
-      exceptionCode: 'supabase_function_invalid_payload',
+      exceptionCode: SupabaseFunctionCode.invalidPayload,
     ),
     SupabaseErrorCodes.unauthorized: ArsyncException(
       icon: Icons.no_accounts,
@@ -186,7 +187,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       message: 'You don\'t have permission to call this function.',
       briefTitle: 'No Access',
       briefMessage: 'Function access denied',
-      exceptionCode: 'supabase_function_unauthorized',
+      exceptionCode: SupabaseFunctionCode.unauthorized,
     ),
     SupabaseErrorCodes.networkError: ArsyncException(
       icon: Icons.wifi_off,
@@ -195,7 +196,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'Unable to connect to the function service. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'supabase_function_network_error',
+      exceptionCode: SupabaseFunctionCode.networkError,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -204,7 +205,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'The function request timed out. Please check your connection and try again.',
       briefTitle: 'Timeout',
       briefMessage: 'Request timed out',
-      exceptionCode: 'supabase_function_timeout_error',
+      exceptionCode: SupabaseFunctionCode.timeoutError,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -213,7 +214,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'You\'ve made too many function calls. Please wait a few moments and try again.',
       briefTitle: 'Rate Limited',
       briefMessage: 'Too many requests',
-      exceptionCode: 'supabase_function_rate_limited',
+      exceptionCode: SupabaseFunctionCode.rateLimited,
     ),
     SupabaseErrorCodes.serverError: ArsyncException(
       icon: Icons.cloud_off,
@@ -222,7 +223,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'The function server encountered an error. Please try again later.',
       briefTitle: 'Server Error',
       briefMessage: 'Function server error',
-      exceptionCode: 'supabase_function_server_error',
+      exceptionCode: SupabaseFunctionCode.serverError,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -231,7 +232,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
           'An unexpected function error occurred. Please try again or contact support.',
       briefTitle: 'Function Error',
       briefMessage: 'Function failed',
-      exceptionCode: 'supabase_function_unknown_error',
+      exceptionCode: SupabaseFunctionCode.unknownError,
     ),
   };
 }

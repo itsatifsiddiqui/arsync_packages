@@ -2,6 +2,7 @@ import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase/supabase.dart';
 
+import 'codes/supabase_database_code.dart';
 import 'supabase_error_codes.dart';
 
 /// Handler specifically for Supabase Database (PostgreSQL) exceptions
@@ -84,7 +85,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       message: message,
       briefTitle: 'Database Error',
       briefMessage: 'Database operation failed',
-      exceptionCode: 'supabase_db_$code',
+      exceptionCode: RawArsyncExceptionCode('supabase_db_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Database: $code - $message',
     );
@@ -134,7 +135,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'This record already exists in the database. Please try with different data.',
       briefTitle: 'Duplicate Entry',
       briefMessage: 'Record already exists',
-      exceptionCode: 'supabase_db_unique_violation',
+      exceptionCode: SupabaseDatabaseCode.uniqueViolation,
     ),
     SupabaseErrorCodes.foreignKeyViolation: ArsyncException(
       icon: Icons.link_off,
@@ -143,7 +144,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'This operation would violate database references. The referenced record may not exist or cannot be modified.',
       briefTitle: 'Reference Error',
       briefMessage: 'Invalid reference',
-      exceptionCode: 'supabase_db_foreign_key_violation',
+      exceptionCode: SupabaseDatabaseCode.foreignKeyViolation,
     ),
     SupabaseErrorCodes.checkViolation: ArsyncException(
       icon: Icons.rule,
@@ -152,7 +153,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'The data does not meet the requirements for this field. Please check your input.',
       briefTitle: 'Validation Error',
       briefMessage: 'Data validation failed',
-      exceptionCode: 'supabase_db_check_violation',
+      exceptionCode: SupabaseDatabaseCode.checkViolation,
     ),
     SupabaseErrorCodes.notNullViolation: ArsyncException(
       icon: Icons.text_fields,
@@ -161,7 +162,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'A required field is missing. Please complete all required fields.',
       briefTitle: 'Missing Field',
       briefMessage: 'Required field missing',
-      exceptionCode: 'supabase_db_not_null_violation',
+      exceptionCode: SupabaseDatabaseCode.notNullViolation,
     ),
     SupabaseErrorCodes.tableNotFound: ArsyncException(
       icon: Icons.table_chart_outlined,
@@ -170,7 +171,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'The database table you\'re trying to access doesn\'t exist. This may be a configuration issue.',
       briefTitle: 'Missing Table',
       briefMessage: 'Table not found',
-      exceptionCode: 'supabase_db_table_not_found',
+      exceptionCode: SupabaseDatabaseCode.tableNotFound,
     ),
     SupabaseErrorCodes.columnNotFound: ArsyncException(
       icon: Icons.view_column_outlined,
@@ -179,7 +180,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'The database field you\'re trying to access doesn\'t exist. This may be a configuration issue.',
       briefTitle: 'Missing Column',
       briefMessage: 'Column not found',
-      exceptionCode: 'supabase_db_column_not_found',
+      exceptionCode: SupabaseDatabaseCode.columnNotFound,
     ),
     SupabaseErrorCodes.insufficientPrivilege: ArsyncException(
       icon: Icons.no_accounts,
@@ -187,7 +188,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       message: 'You don\'t have permission to perform this database operation.',
       briefTitle: 'No Permission',
       briefMessage: 'Access denied',
-      exceptionCode: 'supabase_db_insufficient_privilege',
+      exceptionCode: SupabaseDatabaseCode.insufficientPrivilege,
     ),
     SupabaseErrorCodes.syntaxError: ArsyncException(
       icon: Icons.code,
@@ -196,7 +197,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'There\'s a syntax error in the database query. This is likely a development issue.',
       briefTitle: 'Syntax Error',
       briefMessage: 'Query syntax error',
-      exceptionCode: 'supabase_db_syntax_error',
+      exceptionCode: SupabaseDatabaseCode.syntaxError,
     ),
     SupabaseErrorCodes.invalidParameter: ArsyncException(
       icon: Icons.input,
@@ -205,7 +206,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'One of the parameters provided to the database is invalid. Please check your input.',
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid parameter',
-      exceptionCode: 'supabase_db_invalid_parameter',
+      exceptionCode: SupabaseDatabaseCode.invalidParameter,
     ),
     SupabaseErrorCodes.dataException: ArsyncException(
       icon: Icons.data_object,
@@ -214,7 +215,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'There was an error processing the data. The input may be in an incorrect format.',
       briefTitle: 'Data Error',
       briefMessage: 'Data processing error',
-      exceptionCode: 'supabase_db_data_exception',
+      exceptionCode: SupabaseDatabaseCode.dataException,
     ),
     SupabaseErrorCodes.connectionFailure: ArsyncException(
       icon: Icons.wifi_off,
@@ -223,7 +224,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'Unable to connect to the database. Please check your internet connection and try again.',
       briefTitle: 'Connection Error',
       briefMessage: 'Database connection failed',
-      exceptionCode: 'supabase_db_connection_failure',
+      exceptionCode: SupabaseDatabaseCode.connectionFailure,
     ),
     SupabaseErrorCodes.networkError: ArsyncException(
       icon: Icons.wifi_off,
@@ -232,7 +233,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'Unable to connect to the database service. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'supabase_db_network_error',
+      exceptionCode: SupabaseDatabaseCode.networkError,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -241,7 +242,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'The database operation timed out. Please try again later or check your query.',
       briefTitle: 'Timeout',
       briefMessage: 'Operation timed out',
-      exceptionCode: 'supabase_db_timeout_error',
+      exceptionCode: SupabaseDatabaseCode.timeoutError,
     ),
     SupabaseErrorCodes.serverError: ArsyncException(
       icon: Icons.cloud_off,
@@ -250,7 +251,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'The database server encountered an error. Please try again later.',
       briefTitle: 'Server Error',
       briefMessage: 'Database server error',
-      exceptionCode: 'supabase_db_server_error',
+      exceptionCode: SupabaseDatabaseCode.serverError,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -259,7 +260,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
           'An unexpected database error occurred. Please try again or contact support.',
       briefTitle: 'Database Error',
       briefMessage: 'Database operation failed',
-      exceptionCode: 'supabase_db_unknown_error',
+      exceptionCode: SupabaseDatabaseCode.unknownError,
     ),
   };
 }

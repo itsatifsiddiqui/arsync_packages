@@ -1,8 +1,9 @@
+import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart'
     show FirebaseException;
 import 'package:flutter/material.dart';
-import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 
+import 'codes/firestore_code.dart';
 import 'firebase_error_codes.dart';
 
 /// Handler specifically for Firestore exceptions
@@ -67,7 +68,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           firestoreException.message ?? 'An unexpected database error occurred',
       briefTitle: 'Database Error',
       briefMessage: 'Database operation failed',
-      exceptionCode: 'firestore_$code',
+      exceptionCode: RawArsyncExceptionCode('firestore_$code'),
       originalException: exception,
       technicalDetails: 'Firestore: $code - ${firestoreException.message}',
     );
@@ -101,7 +102,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'You don\'t have permission to perform this action. Please contact support if you need access.',
       briefTitle: 'Access Denied',
       briefMessage: 'No permission',
-      exceptionCode: 'firestore_permission_denied',
+      exceptionCode: FirestoreCode.permissionDenied,
     ),
     FirebaseErrorCodes.unavailable: ArsyncException(
       icon: Icons.cloud_off,
@@ -110,7 +111,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'Our service is temporarily unavailable. We\'re working to restore it. Please try again soon.',
       briefTitle: 'Service Unavailable',
       briefMessage: 'Service down',
-      exceptionCode: 'firestore_unavailable',
+      exceptionCode: FirestoreCode.unavailable,
     ),
     FirebaseErrorCodes.notFound: ArsyncException(
       icon: Icons.find_replace,
@@ -119,7 +120,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'The requested information could not be found. It may have been deleted or moved.',
       briefTitle: 'Not Found',
       briefMessage: 'Resource not found',
-      exceptionCode: 'firestore_not_found',
+      exceptionCode: FirestoreCode.notFound,
     ),
     FirebaseErrorCodes.alreadyExists: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -128,7 +129,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'This information already exists in our system. Please modify and try again.',
       briefTitle: 'Already Exists',
       briefMessage: 'Already exists',
-      exceptionCode: 'firestore_already_exists',
+      exceptionCode: FirestoreCode.alreadyExists,
     ),
     FirebaseErrorCodes.dataLoss: ArsyncException(
       icon: Icons.data_array,
@@ -137,7 +138,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'Some data was lost during the operation. Please try again or contact support.',
       briefTitle: 'Data Error',
       briefMessage: 'Data error',
-      exceptionCode: 'firestore_data_loss',
+      exceptionCode: FirestoreCode.dataLoss,
     ),
     FirebaseErrorCodes.invalidArgument: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -146,7 +147,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'Some of the information you provided is invalid. Please check and try again.',
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid input',
-      exceptionCode: 'firestore_invalid_argument',
+      exceptionCode: FirestoreCode.invalidArgument,
     ),
     FirebaseErrorCodes.resourceExhausted: ArsyncException(
       icon: Icons.battery_alert,
@@ -155,7 +156,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'System has reached the maximum limit for this resource. Please contact support.',
       briefTitle: 'Limit Reached',
       briefMessage: 'Limit reached',
-      exceptionCode: 'firestore_resource_exhausted',
+      exceptionCode: FirestoreCode.resourceExhausted,
     ),
     FirebaseErrorCodes.failedPrecondition: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -164,7 +165,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'This action cannot be completed because some requirements are not met.',
       briefTitle: 'Requirements Not Met',
       briefMessage: 'Requirements not met',
-      exceptionCode: 'firestore_failed_precondition',
+      exceptionCode: FirestoreCode.failedPrecondition,
     ),
     FirebaseErrorCodes.aborted: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -172,7 +173,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       message: 'The operation was aborted. Please try again.',
       briefTitle: 'Aborted',
       briefMessage: 'Operation aborted',
-      exceptionCode: 'firestore_aborted',
+      exceptionCode: FirestoreCode.aborted,
     ),
     FirebaseErrorCodes.deadlineExceeded: ArsyncException(
       icon: Icons.timer_off,
@@ -180,7 +181,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       message: 'The operation took too long to complete. Please try again.',
       briefTitle: 'Timeout',
       briefMessage: 'Operation timed out',
-      exceptionCode: 'firestore_deadline_exceeded',
+      exceptionCode: FirestoreCode.deadlineExceeded,
     ),
     FirebaseErrorCodes.outOfRange: ArsyncException(
       icon: Icons.error_outline,
@@ -188,7 +189,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       message: 'Operation was attempted past the valid range.',
       briefTitle: 'Out of Range',
       briefMessage: 'Value out of range',
-      exceptionCode: 'firestore_out_of_range',
+      exceptionCode: FirestoreCode.outOfRange,
     ),
     FirebaseErrorCodes.unimplemented: ArsyncException(
       icon: Icons.build_circle,
@@ -197,7 +198,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'The operation you\'re trying to use is not implemented or not supported yet.',
       briefTitle: 'Not Implemented',
       briefMessage: 'Feature not available',
-      exceptionCode: 'firestore_unimplemented',
+      exceptionCode: FirestoreCode.unimplemented,
     ),
     FirebaseErrorCodes.unauthenticated: ArsyncException(
       icon: Icons.lock_outline,
@@ -205,7 +206,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       message: 'You need to be signed in to perform this action.',
       briefTitle: 'Sign In Required',
       briefMessage: 'Authentication required',
-      exceptionCode: 'firestore_unauthenticated',
+      exceptionCode: FirestoreCode.unauthenticated,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -214,7 +215,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'Unable to connect to our servers. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'firestore_network_request_failed',
+      exceptionCode: FirestoreCode.networkRequestFailed,
     ),
     FirebaseErrorCodes.cancelled: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -222,7 +223,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       message: 'The operation was cancelled. Please try again if needed.',
       briefTitle: 'Cancelled',
       briefMessage: 'Cancelled',
-      exceptionCode: 'firestore_cancelled',
+      exceptionCode: FirestoreCode.cancelled,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -231,7 +232,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
           'An unexpected database error occurred. Please try again or contact support if the problem persists.',
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
-      exceptionCode: 'firestore_unknown',
+      exceptionCode: FirestoreCode.unknown,
     ),
   };
 }

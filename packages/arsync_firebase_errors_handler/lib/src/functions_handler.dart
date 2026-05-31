@@ -3,6 +3,7 @@ import 'package:cloud_functions_platform_interface/cloud_functions_platform_inte
 import 'package:flutter/material.dart';
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 
+import 'codes/firebase_functions_code.dart';
 import 'firebase_error_codes.dart';
 
 /// Handler specifically for Firebase Cloud Functions exceptions
@@ -94,7 +95,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'An unexpected error occurred in a cloud function',
       briefTitle: 'Function Error',
       briefMessage: 'Cloud function failed',
-      exceptionCode: 'firebase_functions_$code',
+      exceptionCode: RawArsyncExceptionCode('firebase_functions_$code'),
       originalException: exception,
       technicalDetails: technicalDetails,
     );
@@ -128,7 +129,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'Some of the information you provided is invalid. Please check and try again.',
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid input',
-      exceptionCode: 'firebase_functions_invalid_argument',
+      exceptionCode: FirebaseFunctionsCode.invalidArgument,
     ),
     FirebaseErrorCodes.notFound: ArsyncException(
       icon: Icons.find_replace,
@@ -136,7 +137,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       message: 'The requested resource could not be found.',
       briefTitle: 'Not Found',
       briefMessage: 'Resource not found',
-      exceptionCode: 'firebase_functions_not_found',
+      exceptionCode: FirebaseFunctionsCode.notFound,
     ),
     FirebaseErrorCodes.permissionDenied: ArsyncException(
       icon: Icons.no_accounts,
@@ -145,7 +146,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'You don\'t have permission to perform this action. Please contact support if you need access.',
       briefTitle: 'Access Denied',
       briefMessage: 'No permission',
-      exceptionCode: 'firebase_functions_permission_denied',
+      exceptionCode: FirebaseFunctionsCode.permissionDenied,
     ),
     FirebaseErrorCodes.unauthenticated: ArsyncException(
       icon: Icons.lock_outline,
@@ -153,7 +154,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       message: 'You need to be signed in to perform this action.',
       briefTitle: 'Sign In Required',
       briefMessage: 'Authentication required',
-      exceptionCode: 'firebase_functions_unauthenticated',
+      exceptionCode: FirebaseFunctionsCode.unauthenticated,
     ),
     FirebaseErrorCodes.resourceExhausted: ArsyncException(
       icon: Icons.battery_alert,
@@ -162,7 +163,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'The system has reached the maximum limit for this resource. Please try again later or contact support.',
       briefTitle: 'Limit Reached',
       briefMessage: 'Resource limit reached',
-      exceptionCode: 'firebase_functions_resource_exhausted',
+      exceptionCode: FirebaseFunctionsCode.resourceExhausted,
     ),
     FirebaseErrorCodes.failedPrecondition: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -171,7 +172,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'This action cannot be completed because some requirements are not met.',
       briefTitle: 'Requirements Not Met',
       briefMessage: 'Requirements not met',
-      exceptionCode: 'firebase_functions_failed_precondition',
+      exceptionCode: FirebaseFunctionsCode.failedPrecondition,
     ),
     FirebaseErrorCodes.aborted: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -179,7 +180,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       message: 'The operation was aborted. Please try again.',
       briefTitle: 'Aborted',
       briefMessage: 'Operation aborted',
-      exceptionCode: 'firebase_functions_aborted',
+      exceptionCode: FirebaseFunctionsCode.aborted,
     ),
     FirebaseErrorCodes.deadlineExceeded: ArsyncException(
       icon: Icons.timer_off,
@@ -187,7 +188,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       message: 'The function took too long to complete. Please try again.',
       briefTitle: 'Timeout',
       briefMessage: 'Function timed out',
-      exceptionCode: 'firebase_functions_deadline_exceeded',
+      exceptionCode: FirebaseFunctionsCode.deadlineExceeded,
     ),
     FirebaseErrorCodes.unavailable: ArsyncException(
       icon: Icons.cloud_off,
@@ -196,7 +197,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'Our service is temporarily unavailable. We\'re working to restore it. Please try again soon.',
       briefTitle: 'Service Unavailable',
       briefMessage: 'Service down',
-      exceptionCode: 'firebase_functions_unavailable',
+      exceptionCode: FirebaseFunctionsCode.unavailable,
     ),
     FirebaseErrorCodes.internalError: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -205,7 +206,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'Something went wrong on our end. We\'re working to fix it. Please try again later.',
       briefTitle: 'System Error',
       briefMessage: 'System error',
-      exceptionCode: 'firebase_functions_internal_error',
+      exceptionCode: FirebaseFunctionsCode.internalError,
     ),
     FirebaseErrorCodes.unimplemented: ArsyncException(
       icon: Icons.build_circle,
@@ -214,7 +215,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'The function you\'re trying to use is not implemented or not supported yet.',
       briefTitle: 'Not Implemented',
       briefMessage: 'Feature not available',
-      exceptionCode: 'firebase_functions_unimplemented',
+      exceptionCode: FirebaseFunctionsCode.unimplemented,
     ),
     FirebaseErrorCodes.cancelled: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -222,7 +223,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       message: 'The operation was cancelled. Please try again if needed.',
       briefTitle: 'Cancelled',
       briefMessage: 'Cancelled',
-      exceptionCode: 'firebase_functions_cancelled',
+      exceptionCode: FirebaseFunctionsCode.cancelled,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -231,7 +232,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'Unable to connect to our servers. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'firebase_functions_network_request_failed',
+      exceptionCode: FirebaseFunctionsCode.networkRequestFailed,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -240,7 +241,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
           'An unexpected error occurred in a cloud function. Please try again or contact support if the problem persists.',
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
-      exceptionCode: 'firebase_functions_unknown',
+      exceptionCode: FirebaseFunctionsCode.unknown,
     ),
   };
 }

@@ -15,5 +15,12 @@ export 'src/supabase_realtime_handler.dart';
 export 'src/supabase_error_codes.dart';
 export 'src/toolkit_extensions.dart';
 
+// Typed error codes
+export 'src/codes/supabase_auth_code.dart';
+export 'src/codes/supabase_database_code.dart';
+export 'src/codes/supabase_function_code.dart';
+export 'src/codes/supabase_realtime_code.dart';
+export 'src/codes/supabase_storage_code.dart';
+
 // All-in-one handler
 export 'src/supabase_errors_handler.dart';

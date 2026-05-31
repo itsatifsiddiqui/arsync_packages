@@ -93,7 +93,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message: message,
       briefTitle: 'Auth Error',
       briefMessage: 'Authentication failed',
-      exceptionCode: 'supabase_auth_$code',
+      exceptionCode: RawArsyncExceptionCode('supabase_auth_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Auth: $code - $message',
     );
@@ -138,7 +138,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'The email or password you entered is incorrect. Please try again.',
       briefTitle: 'Sign In Failed',
       briefMessage: 'Invalid email or password',
-      exceptionCode: 'supabase_auth_invalid_credentials',
+      exceptionCode: SupabaseAuthCode.invalidCredentials,
     ),
     SupabaseErrorCodes.userNotFound: ArsyncException(
       icon: Icons.person_off_outlined,
@@ -147,7 +147,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'We couldn\'t find an account with these credentials. Please check your email or create a new account.',
       briefTitle: 'Not Found',
       briefMessage: 'Account not found',
-      exceptionCode: 'supabase_auth_user_not_found',
+      exceptionCode: SupabaseAuthCode.userNotFound,
     ),
     SupabaseErrorCodes.emailNotConfirmed: ArsyncException(
       icon: Icons.mark_email_unread_outlined,
@@ -156,7 +156,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'Please verify your email address before signing in. Check your inbox for a verification link.',
       briefTitle: 'Verify Email',
       briefMessage: 'Email not verified',
-      exceptionCode: 'supabase_auth_email_not_confirmed',
+      exceptionCode: SupabaseAuthCode.emailNotConfirmed,
     ),
     SupabaseErrorCodes.invalidToken: ArsyncException(
       icon: Icons.token,
@@ -164,7 +164,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message: 'Your authentication token is invalid. Please sign in again.',
       briefTitle: 'Invalid Token',
       briefMessage: 'Authentication token invalid',
-      exceptionCode: 'supabase_auth_invalid_token',
+      exceptionCode: SupabaseAuthCode.invalidToken,
     ),
     SupabaseErrorCodes.tokenExpired: ArsyncException(
       icon: Icons.timelapse,
@@ -172,7 +172,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message: 'Your session has expired. Please sign in again to continue.',
       briefTitle: 'Session Expired',
       briefMessage: 'Please sign in again',
-      exceptionCode: 'supabase_auth_token_expired',
+      exceptionCode: SupabaseAuthCode.tokenExpired,
     ),
     SupabaseErrorCodes.invalidEmail: ArsyncException(
       icon: Icons.alternate_email,
@@ -180,7 +180,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message: 'Please enter a valid email address.',
       briefTitle: 'Invalid Email',
       briefMessage: 'Invalid email format',
-      exceptionCode: 'supabase_auth_invalid_email',
+      exceptionCode: SupabaseAuthCode.invalidEmail,
     ),
     SupabaseErrorCodes.weakPassword: ArsyncException(
       icon: Icons.password,
@@ -189,7 +189,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'Please choose a stronger password. Use at least 8 characters with a mix of letters, numbers, and symbols.',
       briefTitle: 'Weak Password',
       briefMessage: 'Password too weak',
-      exceptionCode: 'supabase_auth_weak_password',
+      exceptionCode: SupabaseAuthCode.weakPassword,
     ),
     SupabaseErrorCodes.userAlreadyExists: ArsyncException(
       icon: Icons.person_add_disabled,
@@ -198,7 +198,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'An account with this email already exists. Please try signing in instead.',
       briefTitle: 'Account Exists',
       briefMessage: 'User already exists',
-      exceptionCode: 'supabase_auth_user_already_exists',
+      exceptionCode: SupabaseAuthCode.userAlreadyExists,
     ),
     SupabaseErrorCodes.emailTaken: ArsyncException(
       icon: Icons.email,
@@ -207,7 +207,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'This email address is already registered. Please use a different email or try signing in.',
       briefTitle: 'Email Taken',
       briefMessage: 'Email already registered',
-      exceptionCode: 'supabase_auth_email_taken',
+      exceptionCode: SupabaseAuthCode.emailTaken,
     ),
     SupabaseErrorCodes.invalidMfaType: ArsyncException(
       icon: Icons.security,
@@ -216,7 +216,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'The multi-factor authentication type you selected is not supported.',
       briefTitle: 'Invalid MFA',
       briefMessage: 'Unsupported MFA type',
-      exceptionCode: 'supabase_auth_invalid_mfa_type',
+      exceptionCode: SupabaseAuthCode.invalidMfaType,
     ),
     SupabaseErrorCodes.mfaNotEnabled: ArsyncException(
       icon: Icons.security,
@@ -224,7 +224,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message: 'Multi-factor authentication is not enabled for your account.',
       briefTitle: 'MFA Not Enabled',
       briefMessage: 'MFA not enabled',
-      exceptionCode: 'supabase_auth_mfa_not_enabled',
+      exceptionCode: SupabaseAuthCode.mfaNotEnabled,
     ),
     SupabaseErrorCodes.invalidMfaCode: ArsyncException(
       icon: Icons.pin,
@@ -233,7 +233,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'The multi-factor authentication code you entered is incorrect. Please try again.',
       briefTitle: 'Invalid Code',
       briefMessage: 'Incorrect MFA code',
-      exceptionCode: 'supabase_auth_invalid_mfa_code',
+      exceptionCode: SupabaseAuthCode.invalidMfaCode,
     ),
     SupabaseErrorCodes.phoneAlreadyConfirmed: ArsyncException(
       icon: Icons.phone_android,
@@ -242,7 +242,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'This phone number has already been confirmed for another account.',
       briefTitle: 'Phone In Use',
       briefMessage: 'Phone number already confirmed',
-      exceptionCode: 'supabase_auth_phone_already_confirmed',
+      exceptionCode: SupabaseAuthCode.phoneAlreadyConfirmed,
     ),
     SupabaseErrorCodes.networkError: ArsyncException(
       icon: Icons.wifi_off,
@@ -251,7 +251,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'Unable to connect to the authentication service. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'supabase_auth_network_error',
+      exceptionCode: SupabaseAuthCode.networkError,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -260,7 +260,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'The authentication request timed out. Please check your connection and try again.',
       briefTitle: 'Timeout',
       briefMessage: 'Request timed out',
-      exceptionCode: 'supabase_auth_timeout_error',
+      exceptionCode: SupabaseAuthCode.timeoutError,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -269,7 +269,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'You\'ve made too many authentication attempts. Please wait a few moments and try again.',
       briefTitle: 'Rate Limited',
       briefMessage: 'Too many attempts',
-      exceptionCode: 'supabase_auth_rate_limited',
+      exceptionCode: SupabaseAuthCode.rateLimited,
     ),
     SupabaseErrorCodes.serverError: ArsyncException(
       icon: Icons.cloud_off,
@@ -278,7 +278,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'The authentication server encountered an error. Please try again later.',
       briefTitle: 'Server Error',
       briefMessage: 'Authentication server error',
-      exceptionCode: 'supabase_auth_server_error',
+      exceptionCode: SupabaseAuthCode.serverError,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -287,7 +287,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
           'An unexpected authentication error occurred. Please try again or contact support.',
       briefTitle: 'Auth Error',
       briefMessage: 'Authentication failed',
-      exceptionCode: 'supabase_auth_unknown_error',
+      exceptionCode: SupabaseAuthCode.unknownError,
     ),
   };
 }

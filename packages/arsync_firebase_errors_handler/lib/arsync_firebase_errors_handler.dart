@@ -4,6 +4,12 @@
 /// that integrate with the Arsync Exception Toolkit.
 library;
 
+// Typed error codes
+export 'src/codes/firebase_auth_code.dart';
+export 'src/codes/firebase_core_code.dart';
+export 'src/codes/firebase_functions_code.dart';
+export 'src/codes/firebase_storage_code.dart';
+export 'src/codes/firestore_code.dart';
 // Core handlers for Firebase services
 export 'src/firebase_auth_handler.dart';
 export 'src/firebase_core_handler.dart';

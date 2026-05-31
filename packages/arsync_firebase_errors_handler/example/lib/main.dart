@@ -171,7 +171,7 @@ class _FirebaseErrorsScreenState extends State<FirebaseErrorsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Exception Code: ${exception.exceptionCode ?? 'Unknown'}',
+                  'Exception Code: ${exception.exceptionCode.id}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],

@@ -1,8 +1,9 @@
+import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart'
     show FirebaseException;
 import 'package:flutter/material.dart';
-import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 
+import 'codes/firebase_storage_code.dart';
 import 'firebase_error_codes.dart';
 
 /// Handler specifically for Firebase Storage exceptions
@@ -70,7 +71,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           storageException.message ?? 'An unexpected storage error occurred',
       briefTitle: 'Storage Error',
       briefMessage: 'Storage operation failed',
-      exceptionCode: 'firebase_storage_$code',
+      exceptionCode: RawArsyncExceptionCode('firebase_storage_$code'),
       originalException: exception,
       technicalDetails: 'Firebase Storage: $code - ${storageException.message}',
     );
@@ -104,7 +105,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'The file you\'re trying to access cannot be found. It may have been moved or deleted.',
       briefTitle: 'File Not Found',
       briefMessage: 'File not found',
-      exceptionCode: 'firebase_storage_object_not_found',
+      exceptionCode: FirebaseStorageCode.objectNotFound,
     ),
     FirebaseErrorCodes.unauthorized: ArsyncException(
       icon: Icons.no_accounts,
@@ -113,7 +114,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'You don\'t have permission to access this file. Please request access if needed.',
       briefTitle: 'No Access',
       briefMessage: 'No access',
-      exceptionCode: 'firebase_storage_unauthorized',
+      exceptionCode: FirebaseStorageCode.unauthorized,
     ),
     FirebaseErrorCodes.quotaExceeded: ArsyncException(
       icon: Icons.storage,
@@ -122,7 +123,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'Your storage quota has been exceeded. Please upgrade your plan or delete some files to free up space.',
       briefTitle: 'Storage Full',
       briefMessage: 'Storage quota exceeded',
-      exceptionCode: 'firebase_storage_quota_exceeded',
+      exceptionCode: FirebaseStorageCode.quotaExceeded,
     ),
     FirebaseErrorCodes.retryLimitExceeded: ArsyncException(
       icon: Icons.replay_circle_filled,
@@ -131,7 +132,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'The operation has been attempted too many times. Please try again later.',
       briefTitle: 'Retry Limit',
       briefMessage: 'Too many retries',
-      exceptionCode: 'firebase_storage_retry_limit_exceeded',
+      exceptionCode: FirebaseStorageCode.retryLimitExceeded,
     ),
     FirebaseErrorCodes.nonMatchingChecksum: ArsyncException(
       icon: Icons.error_outline,
@@ -140,7 +141,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'The file\'s checksum doesn\'t match. The uploaded file might be corrupted.',
       briefTitle: 'Integrity Error',
       briefMessage: 'File integrity error',
-      exceptionCode: 'firebase_storage_non_matching_checksum',
+      exceptionCode: FirebaseStorageCode.nonMatchingChecksum,
     ),
     FirebaseErrorCodes.downloadSizeExceeded: ArsyncException(
       icon: Icons.file_download_off,
@@ -148,7 +149,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       message: 'The file is too large to download. Please try a smaller file.',
       briefTitle: 'File Too Large',
       briefMessage: 'Download size exceeded',
-      exceptionCode: 'firebase_storage_download_size_exceeded',
+      exceptionCode: FirebaseStorageCode.downloadSizeExceeded,
     ),
     FirebaseErrorCodes.cancelled: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -156,7 +157,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       message: 'The storage operation was cancelled.',
       briefTitle: 'Cancelled',
       briefMessage: 'Operation cancelled',
-      exceptionCode: 'firebase_storage_cancelled',
+      exceptionCode: FirebaseStorageCode.cancelled,
     ),
     FirebaseErrorCodes.invalidUrl: ArsyncException(
       icon: Icons.link_off,
@@ -164,7 +165,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       message: 'The provided URL is invalid or malformed.',
       briefTitle: 'Invalid URL',
       briefMessage: 'Invalid URL',
-      exceptionCode: 'firebase_storage_invalid_url',
+      exceptionCode: FirebaseStorageCode.invalidUrl,
     ),
     FirebaseErrorCodes.invalidChecksum: ArsyncException(
       icon: Icons.error_outline,
@@ -173,7 +174,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'The file has an invalid checksum. Please try uploading it again.',
       briefTitle: 'Checksum Error',
       briefMessage: 'Invalid checksum',
-      exceptionCode: 'firebase_storage_invalid_checksum',
+      exceptionCode: FirebaseStorageCode.invalidChecksum,
     ),
     FirebaseErrorCodes.bucketNotFound: ArsyncException(
       icon: Icons.folder_off,
@@ -182,7 +183,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'The storage bucket does not exist. Please check your configuration.',
       briefTitle: 'Bucket Not Found',
       briefMessage: 'Storage bucket not found',
-      exceptionCode: 'firebase_storage_bucket_not_found',
+      exceptionCode: FirebaseStorageCode.bucketNotFound,
     ),
     FirebaseErrorCodes.projectNotFound: ArsyncException(
       icon: Icons.folder_off,
@@ -191,7 +192,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'The Firebase project could not be found. Please check your configuration.',
       briefTitle: 'Project Not Found',
       briefMessage: 'Project not found',
-      exceptionCode: 'firebase_storage_project_not_found',
+      exceptionCode: FirebaseStorageCode.projectNotFound,
     ),
     FirebaseErrorCodes.unauthenticated: ArsyncException(
       icon: Icons.lock_outline,
@@ -199,7 +200,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       message: 'You need to be signed in to perform this action.',
       briefTitle: 'Sign In Required',
       briefMessage: 'Authentication required',
-      exceptionCode: 'firebase_storage_unauthenticated',
+      exceptionCode: FirebaseStorageCode.unauthenticated,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -208,7 +209,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'Unable to connect to our servers. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'firebase_storage_network_request_failed',
+      exceptionCode: FirebaseStorageCode.networkRequestFailed,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -217,7 +218,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
           'An unexpected error occurred with file storage. Please try again or contact support if the problem persists.',
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
-      exceptionCode: 'firebase_storage_unknown',
+      exceptionCode: FirebaseStorageCode.unknown,
     ),
   };
 }

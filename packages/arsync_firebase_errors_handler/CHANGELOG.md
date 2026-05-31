@@ -1,3 +1,7 @@
+## 0.0.6
+
+* Replace hardcoded exception codes with typed enums
+
 ## 0.0.5
 
 * Upgraded Firebase platform interface dependencies to latest versions:

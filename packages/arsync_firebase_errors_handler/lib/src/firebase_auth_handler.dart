@@ -3,6 +3,7 @@ import 'package:firebase_auth_platform_interface/firebase_auth_platform_interfac
     show FirebaseAuthException;
 import 'package:flutter/material.dart';
 
+import 'codes/firebase_auth_code.dart';
 import 'firebase_error_codes.dart';
 
 /// Handler specifically for Firebase Authentication exceptions
@@ -66,7 +67,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'An unexpected authentication error occurred',
       briefTitle: 'Auth Error',
       briefMessage: 'Authentication failed',
-      exceptionCode: 'firebase_auth_$code',
+      exceptionCode: RawArsyncExceptionCode('firebase_auth_$code'),
       originalException: exception,
       technicalDetails: 'Firebase Auth: $code - ${authException.message}',
     );
@@ -101,7 +102,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'We couldn\'t find an account with these credentials. Please check your email or create a new account.',
       briefTitle: 'Not Found',
       briefMessage: 'Account not found',
-      exceptionCode: 'firebase_auth_user_not_found',
+      exceptionCode: FirebaseAuthCode.userNotFound,
     ),
     FirebaseErrorCodes.wrongPassword: ArsyncException(
       icon: Icons.lock_outline,
@@ -110,7 +111,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'The password you entered is incorrect. You can reset your password if you\'ve forgotten it.',
       briefTitle: 'Wrong Password',
       briefMessage: 'Wrong password',
-      exceptionCode: 'firebase_auth_wrong_password',
+      exceptionCode: FirebaseAuthCode.wrongPassword,
     ),
     FirebaseErrorCodes.emailAlreadyInUse: ArsyncException(
       icon: Icons.email,
@@ -119,7 +120,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'An account with this email already exists. Please try signing in or use a different email address.',
       briefTitle: 'Email Taken',
       briefMessage: 'Email already registered',
-      exceptionCode: 'firebase_auth_email_already_in_use',
+      exceptionCode: FirebaseAuthCode.emailAlreadyInUse,
     ),
     FirebaseErrorCodes.invalidEmail: ArsyncException(
       icon: Icons.alternate_email,
@@ -127,7 +128,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       message: 'Please enter a valid email address.',
       briefTitle: 'Invalid Email',
       briefMessage: 'Invalid email format',
-      exceptionCode: 'firebase_auth_invalid_email',
+      exceptionCode: FirebaseAuthCode.invalidEmail,
     ),
     FirebaseErrorCodes.weakPassword: ArsyncException(
       icon: Icons.security,
@@ -136,7 +137,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'Please choose a stronger password. Use at least 8 characters with a mix of letters, numbers, and symbols.',
       briefTitle: 'Weak Password',
       briefMessage: 'Password too weak',
-      exceptionCode: 'firebase_auth_weak_password',
+      exceptionCode: FirebaseAuthCode.weakPassword,
     ),
     FirebaseErrorCodes.invalidVerificationCode: ArsyncException(
       icon: Icons.qr_code,
@@ -145,7 +146,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'The verification code you entered is incorrect. Please check and try again.',
       briefTitle: 'Invalid Code',
       briefMessage: 'Wrong verification code',
-      exceptionCode: 'firebase_auth_invalid_verification_code',
+      exceptionCode: FirebaseAuthCode.invalidVerificationCode,
     ),
     FirebaseErrorCodes.invalidVerificationId: ArsyncException(
       icon: Icons.qr_code_2,
@@ -154,7 +155,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'Your verification session has expired. Please request a new verification code.',
       briefTitle: 'Expired',
       briefMessage: 'Verification expired',
-      exceptionCode: 'firebase_auth_invalid_verification_id',
+      exceptionCode: FirebaseAuthCode.invalidVerificationId,
     ),
     FirebaseErrorCodes.operationNotAllowed: ArsyncException(
       icon: Icons.block,
@@ -163,7 +164,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'This sign-in method is not enabled. Please contact support if you think this is a mistake.',
       briefTitle: 'Not Allowed',
       briefMessage: 'Operation not permitted',
-      exceptionCode: 'firebase_auth_operation_not_allowed',
+      exceptionCode: FirebaseAuthCode.operationNotAllowed,
     ),
     FirebaseErrorCodes.userDisabled: ArsyncException(
       icon: Icons.person_off,
@@ -172,7 +173,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'Your account has been suspended. Please contact support for assistance.',
       briefTitle: 'Account Suspended',
       briefMessage: 'Account suspended',
-      exceptionCode: 'firebase_auth_user_disabled',
+      exceptionCode: FirebaseAuthCode.userDisabled,
     ),
     FirebaseErrorCodes.providerAlreadyLinked: ArsyncException(
       icon: Icons.link,
@@ -181,7 +182,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'This authentication method is already connected to your account.',
       briefTitle: 'Already Linked',
       briefMessage: 'Already linked',
-      exceptionCode: 'firebase_auth_provider_already_linked',
+      exceptionCode: FirebaseAuthCode.providerAlreadyLinked,
     ),
     FirebaseErrorCodes.invalidCredential: ArsyncException(
       icon: Icons.lock_open,
@@ -190,7 +191,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'The login details you provided are incorrect. Please try again.',
       briefTitle: 'Invalid Credentials',
       briefMessage: 'Invalid credentials',
-      exceptionCode: 'firebase_auth_invalid_credential',
+      exceptionCode: FirebaseAuthCode.invalidCredential,
     ),
     FirebaseErrorCodes.credentialAlreadyInUse: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -198,7 +199,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       message: 'These login credentials are already linked to another account.',
       briefTitle: 'Credentials Taken',
       briefMessage: 'Credentials already in use',
-      exceptionCode: 'firebase_auth_credential_already_in_use',
+      exceptionCode: FirebaseAuthCode.credentialAlreadyInUse,
     ),
     FirebaseErrorCodes.accountExistsWithDifferentCredential: ArsyncException(
       icon: Icons.account_circle,
@@ -207,7 +208,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'An account already exists with this email. Try signing in with a different method.',
       briefTitle: 'Try Different Sign-in',
       briefMessage: 'Account exists with different credential',
-      exceptionCode: 'firebase_auth_account_exists_with_different_credential',
+      exceptionCode: FirebaseAuthCode.accountExistsWithDifferentCredential,
     ),
     FirebaseErrorCodes.tooManyRequests: ArsyncException(
       icon: Icons.schedule,
@@ -216,7 +217,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'Access temporarily blocked due to many failed attempts. Please try again later.',
       briefTitle: 'Too Many Attempts',
       briefMessage: 'Access temporarily blocked',
-      exceptionCode: 'firebase_auth_too_many_requests',
+      exceptionCode: FirebaseAuthCode.tooManyRequests,
     ),
     FirebaseErrorCodes.requiresRecentLogin: ArsyncException(
       icon: Icons.login,
@@ -225,7 +226,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'For security reasons, please sign in again to continue with this sensitive operation.',
       briefTitle: 'Sign In Again',
       briefMessage: 'Please sign in again',
-      exceptionCode: 'firebase_auth_requires_recent_login',
+      exceptionCode: FirebaseAuthCode.requiresRecentLogin,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -234,7 +235,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'Unable to connect to our servers. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'firebase_auth_network_request_failed',
+      exceptionCode: FirebaseAuthCode.networkRequestFailed,
     ),
     FirebaseErrorCodes.timeout: ArsyncException(
       icon: Icons.timer_off,
@@ -243,7 +244,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'The request took too long to complete. Please check your connection and try again.',
       briefTitle: 'Request Timeout',
       briefMessage: 'Request timeout',
-      exceptionCode: 'firebase_auth_timeout',
+      exceptionCode: FirebaseAuthCode.timeout,
     ),
     FirebaseErrorCodes.internalError: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -252,7 +253,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'Something went wrong on our end. We\'re working to fix it. Please try again later.',
       briefTitle: 'System Error',
       briefMessage: 'System error',
-      exceptionCode: 'firebase_auth_internal_error',
+      exceptionCode: FirebaseAuthCode.internalError,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -261,7 +262,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
           'An unexpected error occurred. Please try again or contact support if the problem persists.',
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
-      exceptionCode: 'firebase_auth_unknown',
+      exceptionCode: FirebaseAuthCode.unknown,
     ),
   };
 }

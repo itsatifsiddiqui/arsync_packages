@@ -2,6 +2,7 @@ import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import 'codes/dio_error_code.dart';
 import 'dio_error_codes.dart';
 import 'error_extractor.dart';
 
@@ -86,7 +87,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     return defaultError.copyWith(
       originalException: exception,
       technicalDetails: technicalDetails,
-      exceptionCode: 'dio_response_$code',
+      exceptionCode: RawArsyncExceptionCode('dio_response_$code'),
     );
   }
 
@@ -116,7 +117,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'There seems to be an issue with this request. Let\'s try again.',
             briefTitle: 'Try Again',
             briefMessage: 'Something\'s not right',
-            exceptionCode: 'dio_bad_request',
+            exceptionCode: DioErrorCode.badRequest,
           );
         case 401:
           return ArsyncException(
@@ -126,7 +127,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'A sign in is needed to continue. The session may have expired.',
             briefTitle: 'Sign In',
             briefMessage: 'Sign in needed',
-            exceptionCode: 'dio_unauthorized',
+            exceptionCode: DioErrorCode.unauthorized,
           );
         case 403:
           return ArsyncException(
@@ -136,7 +137,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'Access to this feature isn\'t currently available.',
             briefTitle: 'No Access',
             briefMessage: 'Access needed',
-            exceptionCode: 'dio_forbidden',
+            exceptionCode: DioErrorCode.forbidden,
           );
         case 404:
           return ArsyncException(
@@ -146,7 +147,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'The requested item isn\'t available right now. It may have been moved or removed.',
             briefTitle: 'Not Found',
             briefMessage: 'Item not available',
-            exceptionCode: 'dio_not_found',
+            exceptionCode: DioErrorCode.notFound,
           );
         case 422:
           return ArsyncException(
@@ -156,7 +157,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'There seems to be an issue with the information provided. A review might help.',
             briefTitle: 'Review Info',
             briefMessage: 'Information issue',
-            exceptionCode: 'dio_unprocessable_entity',
+            exceptionCode: DioErrorCode.unprocessableEntity,
           );
         case 429:
           return ArsyncException(
@@ -166,7 +167,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'Too many requests in a short time. Please wait a moment before trying again.',
             briefTitle: 'Too Fast',
             briefMessage: 'Please wait a moment',
-            exceptionCode: 'dio_too_many_requests',
+            exceptionCode: DioErrorCode.tooManyRequests,
           );
         default:
           return ArsyncException(
@@ -176,7 +177,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
                 'An issue occurred with this request. Please try again or contact support.',
             briefTitle: 'Request Issue',
             briefMessage: 'Request failed',
-            exceptionCode: 'dio_client_error',
+            exceptionCode: DioErrorCode.clientError,
           );
       }
     }
@@ -189,7 +190,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
             'We\'re experiencing a temporary issue. We\'re working on it and should be resolved soon.',
         briefTitle: 'Temporary Issue',
         briefMessage: 'We\'re on it',
-        exceptionCode: 'dio_server_error',
+        exceptionCode: DioErrorCode.serverError,
       );
     }
 
@@ -201,7 +202,7 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           'An unexpected issue occurred. Please try again or contact support.',
       briefTitle: 'Issue',
       briefMessage: 'Unexpected issue',
-      exceptionCode: 'dio_unknown_status',
+      exceptionCode: DioErrorCode.unknownStatus,
     );
   }
 

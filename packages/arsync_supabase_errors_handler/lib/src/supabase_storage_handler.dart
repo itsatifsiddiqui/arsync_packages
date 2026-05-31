@@ -2,6 +2,7 @@ import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase/supabase.dart';
 
+import 'codes/supabase_storage_code.dart';
 import 'supabase_error_codes.dart';
 
 /// Handler specifically for Supabase Storage exceptions
@@ -82,7 +83,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       message: message,
       briefTitle: 'Storage Error',
       briefMessage: 'Storage operation failed',
-      exceptionCode: 'supabase_storage_$code',
+      exceptionCode: RawArsyncExceptionCode('supabase_storage_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Storage: $code - $message',
     );
@@ -156,7 +157,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'The file you\'re looking for cannot be found. It may have been moved or deleted.',
       briefTitle: 'File Missing',
       briefMessage: 'File not found',
-      exceptionCode: 'supabase_storage_object_not_found',
+      exceptionCode: SupabaseStorageCode.objectNotFound,
     ),
     SupabaseErrorCodes.bucketNotFound: ArsyncException(
       icon: Icons.folder_off,
@@ -165,7 +166,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'The storage bucket you\'re trying to access doesn\'t exist. This may be a configuration issue.',
       briefTitle: 'Bucket Missing',
       briefMessage: 'Storage bucket not found',
-      exceptionCode: 'supabase_storage_bucket_not_found',
+      exceptionCode: SupabaseStorageCode.bucketNotFound,
     ),
     SupabaseErrorCodes.unauthorized: ArsyncException(
       icon: Icons.no_accounts,
@@ -174,7 +175,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'You don\'t have permission to access this file or storage location.',
       briefTitle: 'No Access',
       briefMessage: 'Permission denied',
-      exceptionCode: 'supabase_storage_unauthorized',
+      exceptionCode: SupabaseStorageCode.unauthorized,
     ),
     SupabaseErrorCodes.insufficientStorage: ArsyncException(
       icon: Icons.sd_card_alert,
@@ -183,7 +184,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'There isn\'t enough storage space available. Please free up some space or contact the administrator.',
       briefTitle: 'Storage Full',
       briefMessage: 'Not enough storage space',
-      exceptionCode: 'supabase_storage_insufficient_storage',
+      exceptionCode: SupabaseStorageCode.insufficientStorage,
     ),
     SupabaseErrorCodes.quotaExceeded: ArsyncException(
       icon: Icons.storage,
@@ -192,7 +193,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'You\'ve reached your storage quota limit. Please delete some files or upgrade your plan.',
       briefTitle: 'Quota Exceeded',
       briefMessage: 'Storage limit reached',
-      exceptionCode: 'supabase_storage_quota_exceeded',
+      exceptionCode: SupabaseStorageCode.quotaExceeded,
     ),
     SupabaseErrorCodes.fileTooBig: ArsyncException(
       icon: Icons.file_copy,
@@ -201,7 +202,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'The file you\'re trying to upload is too large. Please try a smaller file.',
       briefTitle: 'File Too Large',
       briefMessage: 'File size exceeds limit',
-      exceptionCode: 'supabase_storage_file_too_big',
+      exceptionCode: SupabaseStorageCode.fileTooBig,
     ),
     SupabaseErrorCodes.invalidContentType: ArsyncException(
       icon: Icons.file_present,
@@ -210,7 +211,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'This file type is not supported. Please try a different file format.',
       briefTitle: 'Invalid File Type',
       briefMessage: 'Unsupported file type',
-      exceptionCode: 'supabase_storage_invalid_content_type',
+      exceptionCode: SupabaseStorageCode.invalidContentType,
     ),
     SupabaseErrorCodes.invalidFilename: ArsyncException(
       icon: Icons.text_snippet,
@@ -219,7 +220,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'The filename contains invalid characters or is in an invalid format.',
       briefTitle: 'Invalid Filename',
       briefMessage: 'Invalid filename',
-      exceptionCode: 'supabase_storage_invalid_filename',
+      exceptionCode: SupabaseStorageCode.invalidFilename,
     ),
     SupabaseErrorCodes.bucketAlreadyExists: ArsyncException(
       icon: Icons.folder_copy,
@@ -228,7 +229,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'A storage bucket with this name already exists. Please use a different name.',
       briefTitle: 'Bucket Exists',
       briefMessage: 'Bucket already exists',
-      exceptionCode: 'supabase_storage_bucket_already_exists',
+      exceptionCode: SupabaseStorageCode.bucketAlreadyExists,
     ),
     SupabaseErrorCodes.networkError: ArsyncException(
       icon: Icons.wifi_off,
@@ -237,7 +238,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'Unable to connect to the storage service. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'supabase_storage_network_error',
+      exceptionCode: SupabaseStorageCode.networkError,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -246,7 +247,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'The file upload timed out. Please check your connection and try again, possibly with a smaller file.',
       briefTitle: 'Timeout',
       briefMessage: 'Upload timed out',
-      exceptionCode: 'supabase_storage_timeout_error',
+      exceptionCode: SupabaseStorageCode.timeoutError,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -255,7 +256,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'You\'ve made too many storage requests. Please wait a few moments and try again.',
       briefTitle: 'Rate Limited',
       briefMessage: 'Too many requests',
-      exceptionCode: 'supabase_storage_rate_limited',
+      exceptionCode: SupabaseStorageCode.rateLimited,
     ),
     SupabaseErrorCodes.serverError: ArsyncException(
       icon: Icons.cloud_off,
@@ -264,7 +265,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'The storage server encountered an error. Please try again later.',
       briefTitle: 'Server Error',
       briefMessage: 'Storage server error',
-      exceptionCode: 'supabase_storage_server_error',
+      exceptionCode: SupabaseStorageCode.serverError,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -273,7 +274,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
           'An unexpected storage error occurred. Please try again or contact support.',
       briefTitle: 'Storage Error',
       briefMessage: 'Storage operation failed',
-      exceptionCode: 'supabase_storage_unknown_error',
+      exceptionCode: SupabaseStorageCode.unknownError,
     ),
   };
 }

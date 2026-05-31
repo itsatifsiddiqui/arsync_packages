@@ -2,6 +2,7 @@ import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import 'codes/dio_error_code.dart';
 import 'dio_error_codes.dart';
 
 /// Handler specifically for Dio exceptions
@@ -65,7 +66,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: dioException.message ?? 'An unexpected network error occurred',
       briefTitle: 'Network Error',
       briefMessage: 'Network operation failed',
-      exceptionCode: 'dio_$code',
+      exceptionCode: RawArsyncExceptionCode('dio_$code'),
       originalException: exception,
       technicalDetails: 'Dio: $code - ${dioException.message}',
     );
@@ -162,7 +163,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'We\'re having trouble connecting right now. A network check might help.',
       briefTitle: 'Connection Issue',
       briefMessage: 'Network connection needed',
-      exceptionCode: 'dio_connection_timeout',
+      exceptionCode: DioErrorCode.connectionTimeout,
     ),
 
     DioErrorCodes.sendTimeout: ArsyncException(
@@ -172,7 +173,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'The connection seems a bit slow right now. A stronger signal might help.',
       briefTitle: 'Slow Connection',
       briefMessage: 'Connection is slow',
-      exceptionCode: 'dio_send_timeout',
+      exceptionCode: DioErrorCode.sendTimeout,
     ),
 
     DioErrorCodes.receiveTimeout: ArsyncException(
@@ -182,7 +183,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'We\'re having trouble getting a response. Please try again in a moment.',
       briefTitle: 'No Response',
       briefMessage: 'Taking too long',
-      exceptionCode: 'dio_receive_timeout',
+      exceptionCode: DioErrorCode.receiveTimeout,
     ),
 
     DioErrorCodes.connectionError: ArsyncException(
@@ -192,7 +193,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'It looks like the network is offline. A connection check might help.',
       briefTitle: 'Offline',
       briefMessage: 'Connection needed',
-      exceptionCode: 'dio_connection_error',
+      exceptionCode: DioErrorCode.connectionError,
     ),
 
     DioErrorCodes.badCertificate: ArsyncException(
@@ -202,7 +203,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'We\'ve detected a security issue with the connection. Please contact support.',
       briefTitle: 'Security Issue',
       briefMessage: 'Security check failed',
-      exceptionCode: 'dio_bad_certificate',
+      exceptionCode: DioErrorCode.badCertificate,
     ),
 
     DioErrorCodes.cancel: ArsyncException(
@@ -211,7 +212,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: 'This request was stopped.',
       briefTitle: 'Stopped',
       briefMessage: 'Request stopped',
-      exceptionCode: 'dio_cancel',
+      exceptionCode: DioErrorCode.cancel,
     ),
 
     // HTTP status code errors
@@ -222,7 +223,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'There seems to be an issue with this request. Let\'s try again.',
       briefTitle: 'Try Again',
       briefMessage: 'Something\'s not right',
-      exceptionCode: 'dio_bad_request',
+      exceptionCode: DioErrorCode.badRequest,
     ),
 
     DioErrorCodes.unauthorized: ArsyncException(
@@ -231,7 +232,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: 'A sign in is needed to continue. The session may have expired.',
       briefTitle: 'Sign In',
       briefMessage: 'Sign in needed',
-      exceptionCode: 'dio_unauthorized',
+      exceptionCode: DioErrorCode.unauthorized,
     ),
 
     DioErrorCodes.forbidden: ArsyncException(
@@ -240,7 +241,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: 'Access to this feature isn\'t currently available.',
       briefTitle: 'No Access',
       briefMessage: 'Access needed',
-      exceptionCode: 'dio_forbidden',
+      exceptionCode: DioErrorCode.forbidden,
     ),
 
     DioErrorCodes.notFound: ArsyncException(
@@ -250,7 +251,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'The requested item isn\'t available right now. It may have been moved or removed.',
       briefTitle: 'Not Found',
       briefMessage: 'Item not available',
-      exceptionCode: 'dio_not_found',
+      exceptionCode: DioErrorCode.notFound,
     ),
 
     DioErrorCodes.methodNotAllowed: ArsyncException(
@@ -259,7 +260,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: 'This action isn\'t available right now.',
       briefTitle: 'Unavailable',
       briefMessage: 'Action unavailable',
-      exceptionCode: 'dio_method_not_allowed',
+      exceptionCode: DioErrorCode.methodNotAllowed,
     ),
 
     DioErrorCodes.requestTimeout: ArsyncException(
@@ -268,7 +269,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: 'The request is taking longer than expected. Please try again.',
       briefTitle: 'Timed Out',
       briefMessage: 'Please try again',
-      exceptionCode: 'dio_request_timeout',
+      exceptionCode: DioErrorCode.requestTimeout,
     ),
 
     DioErrorCodes.conflict: ArsyncException(
@@ -277,7 +278,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       message: 'This information may have been updated. A refresh might help.',
       briefTitle: 'Conflict',
       briefMessage: 'Update conflict',
-      exceptionCode: 'dio_conflict',
+      exceptionCode: DioErrorCode.conflict,
     ),
 
     DioErrorCodes.unprocessableEntity: ArsyncException(
@@ -287,7 +288,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'There seems to be an issue with the information provided. A review might help.',
       briefTitle: 'Review Info',
       briefMessage: 'Information issue',
-      exceptionCode: 'dio_unprocessable_entity',
+      exceptionCode: DioErrorCode.unprocessableEntity,
     ),
 
     DioErrorCodes.tooManyRequests: ArsyncException(
@@ -297,7 +298,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'Too many requests in a short time. Please wait a moment before trying again.',
       briefTitle: 'Too Fast',
       briefMessage: 'Please wait a moment',
-      exceptionCode: 'dio_too_many_requests',
+      exceptionCode: DioErrorCode.tooManyRequests,
     ),
 
     DioErrorCodes.internalServerError: ArsyncException(
@@ -307,7 +308,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'We\'re experiencing a temporary issue. We\'re working on it and should be resolved soon.',
       briefTitle: 'Temporary Issue',
       briefMessage: 'We\'re on it',
-      exceptionCode: 'dio_internal_server_error',
+      exceptionCode: DioErrorCode.internalServerError,
     ),
 
     DioErrorCodes.badGateway: ArsyncException(
@@ -317,7 +318,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'We\'re having some trouble with our service. Please try again in a moment.',
       briefTitle: 'Service Issue',
       briefMessage: 'Please try again soon',
-      exceptionCode: 'dio_bad_gateway',
+      exceptionCode: DioErrorCode.badGateway,
     ),
 
     DioErrorCodes.serviceUnavailable: ArsyncException(
@@ -327,7 +328,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'This service is temporarily unavailable. We\'ll be back up shortly.',
       briefTitle: 'Unavailable',
       briefMessage: 'Service unavailable',
-      exceptionCode: 'dio_service_unavailable',
+      exceptionCode: DioErrorCode.serviceUnavailable,
     ),
 
     DioErrorCodes.gatewayTimeout: ArsyncException(
@@ -337,7 +338,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'Our service is taking longer than expected to respond. Please try again in a moment.',
       briefTitle: 'Timeout',
       briefMessage: 'Service timeout',
-      exceptionCode: 'dio_gateway_timeout',
+      exceptionCode: DioErrorCode.gatewayTimeout,
     ),
 
     DioErrorCodes.unknown: ArsyncException(
@@ -347,7 +348,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
           'Something unexpected happened with the connection. Please try again.',
       briefTitle: 'Connection Issue',
       briefMessage: 'Please try again',
-      exceptionCode: 'dio_unknown',
+      exceptionCode: DioErrorCode.unknown,
     ),
   };
 }

@@ -3,6 +3,7 @@ import 'package:firebase_core_platform_interface/firebase_core_platform_interfac
     show FirebaseException;
 import 'package:flutter/material.dart';
 
+import 'codes/firebase_core_code.dart';
 import 'firebase_error_codes.dart';
 
 /// Handler for generic Firebase Core exceptions
@@ -71,7 +72,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           firebaseException.message ?? 'An unexpected Firebase error occurred',
       briefTitle: 'Firebase Error',
       briefMessage: 'Firebase operation failed',
-      exceptionCode: 'firebase_core_$code',
+      exceptionCode: RawArsyncExceptionCode('firebase_core_$code'),
       originalException: exception,
       technicalDetails: 'Firebase Core: $code - ${firebaseException.message}',
     );
@@ -105,7 +106,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'Unable to connect to Firebase services. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'firebase_core_network_request_failed',
+      exceptionCode: FirebaseCoreCode.networkRequestFailed,
     ),
     FirebaseErrorCodes.timeout: ArsyncException(
       icon: Icons.timer_off,
@@ -114,7 +115,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'The Firebase operation took too long to complete. Please check your connection and try again.',
       briefTitle: 'Request Timeout',
       briefMessage: 'Request timeout',
-      exceptionCode: 'firebase_core_timeout',
+      exceptionCode: FirebaseCoreCode.timeout,
     ),
     FirebaseErrorCodes.appNotAuthorized: ArsyncException(
       icon: Icons.gpp_bad,
@@ -123,7 +124,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'This app is not authorized to use Firebase. Please check the configuration.',
       briefTitle: 'Not Authorized',
       briefMessage: 'App not authorized',
-      exceptionCode: 'firebase_core_app_not_authorized',
+      exceptionCode: FirebaseCoreCode.appNotAuthorized,
     ),
     FirebaseErrorCodes.noSuchProvider: ArsyncException(
       icon: Icons.link_off,
@@ -132,7 +133,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'The requested authentication provider is not available or not enabled.',
       briefTitle: 'Provider Unavailable',
       briefMessage: 'Provider not available',
-      exceptionCode: 'firebase_core_no_such_provider',
+      exceptionCode: FirebaseCoreCode.noSuchProvider,
     ),
     FirebaseErrorCodes.operationNotAllowed: ArsyncException(
       icon: Icons.block,
@@ -141,7 +142,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'This operation is not allowed. Please contact support if you think this is a mistake.',
       briefTitle: 'Not Allowed',
       briefMessage: 'Operation not permitted',
-      exceptionCode: 'firebase_core_operation_not_allowed',
+      exceptionCode: FirebaseCoreCode.operationNotAllowed,
     ),
     FirebaseErrorCodes.internalError: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -150,7 +151,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'Something went wrong in Firebase. Our team has been notified. Please try again later.',
       briefTitle: 'System Error',
       briefMessage: 'Firebase system error',
-      exceptionCode: 'firebase_core_internal_error',
+      exceptionCode: FirebaseCoreCode.internalError,
     ),
     FirebaseErrorCodes.invalidApiKey: ArsyncException(
       icon: Icons.vpn_key_off,
@@ -159,7 +160,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'The Firebase API key is invalid. Please check your Firebase configuration.',
       briefTitle: 'Invalid API Key',
       briefMessage: 'Invalid Firebase configuration',
-      exceptionCode: 'firebase_core_invalid_api_key',
+      exceptionCode: FirebaseCoreCode.invalidApiKey,
     ),
     FirebaseErrorCodes.appNotInstalled: ArsyncException(
       icon: Icons.app_shortcut,
@@ -167,7 +168,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       message: 'The requested app is not installed on this device.',
       briefTitle: 'App Not Installed',
       briefMessage: 'Required app not installed',
-      exceptionCode: 'firebase_core_app_not_installed',
+      exceptionCode: FirebaseCoreCode.appNotInstalled,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -176,7 +177,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
           'An unexpected error occurred with Firebase. Please try again or contact support if the problem persists.',
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown Firebase error',
-      exceptionCode: 'firebase_core_unknown',
+      exceptionCode: FirebaseCoreCode.unknown,
     ),
   };
 }

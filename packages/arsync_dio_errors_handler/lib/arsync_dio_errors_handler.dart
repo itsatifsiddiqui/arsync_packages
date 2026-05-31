@@ -4,6 +4,8 @@
 /// that integrate with the Arsync Exception Toolkit.
 library;
 
+// Typed error codes
+export 'src/codes/dio_error_code.dart';
 // Utilities and extensions
 export 'src/dio_error_codes.dart';
 // Core handlers for Dio errors

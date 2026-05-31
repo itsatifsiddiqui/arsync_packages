@@ -1,6 +1,7 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:flutter/material.dart';
 
+import 'codes/supabase_realtime_code.dart';
 import 'supabase_error_codes.dart';
 
 /// Handler specifically for Supabase Realtime exceptions
@@ -71,7 +72,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       message: message,
       briefTitle: 'Realtime Error',
       briefMessage: 'Realtime operation failed',
-      exceptionCode: 'supabase_realtime_$code',
+      exceptionCode: RawArsyncExceptionCode('supabase_realtime_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Realtime: $code - $message',
     );
@@ -111,7 +112,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'Unable to establish a connection to the realtime service. Please check your internet connection and try again.',
       briefTitle: 'Connection Error',
       briefMessage: 'Realtime connection failed',
-      exceptionCode: 'supabase_realtime_connection_error',
+      exceptionCode: SupabaseRealtimeCode.connectionError,
     ),
     SupabaseErrorCodes.subscriptionError: ArsyncException(
       icon: Icons.notifications_off,
@@ -120,7 +121,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'There was an error with your realtime subscription. Please try resubscribing.',
       briefTitle: 'Subscription Error',
       briefMessage: 'Subscription failed',
-      exceptionCode: 'supabase_realtime_subscription_error',
+      exceptionCode: SupabaseRealtimeCode.subscriptionError,
     ),
     SupabaseErrorCodes.channelError: ArsyncException(
       icon: Icons.podcasts_outlined,
@@ -129,7 +130,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'There was an error with the realtime channel. The channel might not exist or you might not have permission.',
       briefTitle: 'Channel Error',
       briefMessage: 'Channel error occurred',
-      exceptionCode: 'supabase_realtime_channel_error',
+      exceptionCode: SupabaseRealtimeCode.channelError,
     ),
     SupabaseErrorCodes.tooManyConnections: ArsyncException(
       icon: Icons.group_off,
@@ -138,7 +139,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'You\'ve reached the maximum number of realtime connections. Please close some connections and try again.',
       briefTitle: 'Too Many Connections',
       briefMessage: 'Connection limit reached',
-      exceptionCode: 'supabase_realtime_too_many_connections',
+      exceptionCode: SupabaseRealtimeCode.tooManyConnections,
     ),
     SupabaseErrorCodes.unauthorized: ArsyncException(
       icon: Icons.no_accounts,
@@ -146,7 +147,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       message: 'You don\'t have permission to access this realtime channel.',
       briefTitle: 'No Access',
       briefMessage: 'Realtime access denied',
-      exceptionCode: 'supabase_realtime_unauthorized',
+      exceptionCode: SupabaseRealtimeCode.unauthorized,
     ),
     SupabaseErrorCodes.networkError: ArsyncException(
       icon: Icons.wifi_off,
@@ -155,7 +156,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'Unable to connect to the realtime service. Please check your internet connection and try again.',
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
-      exceptionCode: 'supabase_realtime_network_error',
+      exceptionCode: SupabaseRealtimeCode.networkError,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -163,7 +164,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       message: 'The realtime connection timed out. Please try again.',
       briefTitle: 'Timeout',
       briefMessage: 'Connection timed out',
-      exceptionCode: 'supabase_realtime_timeout_error',
+      exceptionCode: SupabaseRealtimeCode.timeoutError,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -172,7 +173,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'You\'ve made too many realtime connection attempts. Please wait a few moments and try again.',
       briefTitle: 'Rate Limited',
       briefMessage: 'Too many requests',
-      exceptionCode: 'supabase_realtime_rate_limited',
+      exceptionCode: SupabaseRealtimeCode.rateLimited,
     ),
     SupabaseErrorCodes.serverError: ArsyncException(
       icon: Icons.cloud_off,
@@ -181,7 +182,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'The realtime server encountered an error. Please try again later.',
       briefTitle: 'Server Error',
       briefMessage: 'Realtime server error',
-      exceptionCode: 'supabase_realtime_server_error',
+      exceptionCode: SupabaseRealtimeCode.serverError,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -190,7 +191,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
           'An unexpected realtime error occurred. Please try again or contact support.',
       briefTitle: 'Realtime Error',
       briefMessage: 'Realtime operation failed',
-      exceptionCode: 'supabase_realtime_unknown_error',
+      exceptionCode: SupabaseRealtimeCode.unknownError,
     ),
   };
 }
