@@ -4,18 +4,10 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `async_viewmodel_safety` rule.
-///
-/// Wraps await expression in try-catch:
-/// - Before: `await repository.fetch();`
-/// - After:
-///   ```
-///   try {
-///     await repository.fetch();
-///   } catch (e) {
-///     ref.showExceptionSheet(e);
-///   }
-///   ```
+import 'fix_helpers.dart';
+
+/// Quick fix for `async_viewmodel_safety` — wrap an `await` statement in
+/// `try { ... } catch (e) { ref.showExceptionSheet(e); }`.
 class AsyncViewModelSafetyFix extends ResolvedCorrectionProducer {
   AsyncViewModelSafetyFix({required super.context});
 
@@ -34,55 +26,25 @@ class AsyncViewModelSafetyFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the statement containing the await expression
-    final statement = _findStatement(node);
+    final statement =
+        node.thisOrAncestorMatching((n) => n is Statement && n is! Block)
+            as Statement?;
     if (statement == null) return;
 
-    // Get the indentation of the current statement
-    final lineInfo = unitResult.lineInfo;
-    final statementLine = lineInfo.getLocation(statement.offset).lineNumber - 1;
-    final lineStart = lineInfo.getOffsetOfLine(statementLine);
-    final content = unitResult.content;
+    final indent = FixHelpers.indentOf(unitResult, statement.offset);
 
-    // Calculate indentation
-    var indent = '';
-    for (var i = lineStart; i < statement.offset; i++) {
-      final char = content[i];
-      if (char == ' ' || char == '\t') {
-        indent += char;
-      } else {
-        break;
-      }
-    }
-
-    final statementSource = statement.toSource();
-
-    // Build the try-catch block
     final tryCatch =
         '''try {
-$indent  $statementSource
+$indent  ${statement.toSource()}
 $indent} catch (e) {
 $indent  ref.showExceptionSheet(e);
 $indent}''';
 
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
         SourceRange(statement.offset, statement.length),
         tryCatch,
       );
     });
-  }
-
-  Statement? _findStatement(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is Statement && current is! Block) {
-        return current;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

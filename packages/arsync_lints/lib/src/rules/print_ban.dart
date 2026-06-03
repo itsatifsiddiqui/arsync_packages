@@ -1,16 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule D3: print_ban
-///
-/// Production apps should not spam the console.
-/// Banned: print(), debugPrint()
+/// Rule D3: `print()` and `debugPrint()` are banned — use the `.log()`
+/// extension instead.
 class PrintBan extends AnalysisRule {
-  PrintBan()
-    : super(
-        name: 'print_ban',
-        description:
-            'print() and debugPrint() are banned. Use .log() extension instead.',
-      );
+  PrintBan() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'print_ban',
@@ -21,7 +14,7 @@ class PrintBan extends AnalysisRule {
   @override
   DiagnosticCode get diagnosticCode => code;
 
-  static const _bannedFunctions = ['print', 'debugPrint'];
+  static const _bannedFunctions = {'print', 'debugPrint'};
 
   @override
   void registerNodeProcessors(
@@ -29,40 +22,28 @@ class PrintBan extends AnalysisRule {
     RuleContext context,
   ) {
     if (!context.isInLibDir) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addMethodInvocation(this, visitor);
-    registry.addFunctionExpressionInvocation(this, visitor);
+    final visitor = _Visitor(this);
+    registry
+      ..addMethodInvocation(this, visitor)
+      ..addFunctionExpressionInvocation(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final methodName = node.methodName.name;
-    if (PrintBan._bannedFunctions.contains(methodName) && node.target == null) {
+    if (node.target == null &&
+        PrintBan._bannedFunctions.contains(node.methodName.name)) {
       rule.reportAtNode(node);
     }
   }
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final function = node.function;
-    if (function is SimpleIdentifier &&
-        PrintBan._bannedFunctions.contains(function.name)) {
+    final f = node.function;
+    if (f is SimpleIdentifier && PrintBan._bannedFunctions.contains(f.name)) {
       rule.reportAtNode(node);
     }
   }

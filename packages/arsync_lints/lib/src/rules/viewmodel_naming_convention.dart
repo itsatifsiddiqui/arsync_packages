@@ -1,8 +1,8 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule B2: viewmodel_naming_convention
-///
-/// Enforce naming consistency for state management.
+/// Rule B2: in `lib/providers/`, classes extending `Notifier`/`AsyncNotifier`
+/// must be named `*Notifier`, and top-level provider variables must be named
+/// `*Provider`.
 class ViewModelNamingConvention extends MultiAnalysisRule {
   ViewModelNamingConvention()
     : super(
@@ -30,67 +30,40 @@ class ViewModelNamingConvention extends MultiAnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    var visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
-    registry.addTopLevelVariableDeclaration(this, visitor);
+    if (!PathUtils.isInProviders(context.definingUnit.file.path)) return;
+    final visitor = _Visitor(this);
+    registry
+      ..addClassDeclaration(this, visitor)
+      ..addTopLevelVariableDeclaration(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return;
-
-    final superclassName = extendsClause.superclass.name.lexeme;
-    if (superclassName.contains('Notifier') ||
-        superclassName.contains('AsyncNotifier')) {
-      final className = node.name.lexeme;
-      if (!className.endsWith('Notifier')) {
-        rule.reportAtOffset(
-          node.name.offset,
-          node.name.length,
-          diagnosticCode: ViewModelNamingConvention.classCode,
-        );
-      }
-    }
+    if (!node.extendsNotifierVariant) return;
+    if (node.className.lexeme.endsWith('Notifier')) return;
+    rule.reportAtOffset(
+      node.className.offset,
+      node.className.length,
+      diagnosticCode: ViewModelNamingConvention.classCode,
+    );
   }
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    for (final variable in node.variables.variables) {
-      final initializer = variable.initializer;
-      if (initializer == null) continue;
-
-      final initializerSource = initializer.toSource();
-      if (initializerSource.contains('Provider')) {
-        final name = variable.name.lexeme;
-        if (!name.endsWith('Provider')) {
-          rule.reportAtOffset(
-            variable.name.offset,
-            variable.name.length,
-            diagnosticCode: ViewModelNamingConvention.providerCode,
-          );
-        }
-      }
+    for (final v in node.variables.variables) {
+      final init = v.initializer?.toSource();
+      if (init == null || !init.contains('Provider')) continue;
+      if (v.name.lexeme.endsWith('Provider')) continue;
+      rule.reportAtOffset(
+        v.name.offset,
+        v.name.length,
+        diagnosticCode: ViewModelNamingConvention.providerCode,
+      );
     }
   }
 }

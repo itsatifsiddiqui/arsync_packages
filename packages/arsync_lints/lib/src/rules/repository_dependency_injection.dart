@@ -1,10 +1,8 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule: repository_dependency_injection
-///
-/// Repositories cannot create object instances directly in field declarations.
-/// All dependencies must be injected through the constructor.
-/// Repositories cannot accept Ref as a constructor parameter.
+/// Rule: in `lib/repositories/`, fields must not directly instantiate
+/// dependencies and `Ref` must not be a constructor parameter — repositories
+/// receive dependencies via constructor injection.
 class RepositoryDependencyInjection extends MultiAnalysisRule {
   RepositoryDependencyInjection()
     : super(
@@ -33,81 +31,58 @@ class RepositoryDependencyInjection extends MultiAnalysisRule {
     refNotAllowedCode,
   ];
 
+  static const _factoryMethods = {'create', 'instance', 'getInstance'};
+
   @override
   void registerNodeProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addFieldDeclaration(this, visitor);
+    if (!PathUtils.isInRepositories(context.definingUnit.file.path)) return;
+    registry.addFieldDeclaration(this, _Visitor(this));
   }
 
   static bool isObjectCreation(Expression expr) {
     if (expr is InstanceCreationExpression) return true;
-
-    if (expr is MethodInvocation) {
-      final target = expr.target;
-      if (target is SimpleIdentifier) {
-        final methodName = expr.methodName.name;
-        if (methodName == 'create' ||
-            methodName == 'instance' ||
-            methodName == 'getInstance') {
-          return true;
-        }
-      }
+    if (expr is MethodInvocation && expr.target is SimpleIdentifier) {
+      return _factoryMethods.contains(expr.methodName.name);
     }
-
     return false;
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitFieldDeclaration(FieldDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     final parent = node.parent;
-    if (parent is! ClassDeclaration) return;
-
-    final className = parent.name.lexeme;
-    if (!className.endsWith('Repository')) return;
-
-    final typeAnnotation = node.fields.type;
-    if (typeAnnotation != null) {
-      final typeName = typeAnnotation.toSource();
-      if (typeName == 'Ref' || typeName.startsWith('Ref<')) {
-        for (final variable in node.fields.variables) {
-          rule.reportAtOffset(
-            variable.name.offset,
-            variable.name.length,
-            diagnosticCode: RepositoryDependencyInjection.refNotAllowedCode,
-          );
-        }
-        return;
-      }
+    if (parent is! ClassDeclaration ||
+        !parent.className.lexeme.endsWith('Repository')) {
+      return;
     }
 
-    for (final variable in node.fields.variables) {
-      final initializer = variable.initializer;
-      if (initializer == null) continue;
+    final typeName = node.fields.type?.toSource();
+    if (typeName != null &&
+        (typeName == 'Ref' || typeName.startsWith('Ref<'))) {
+      for (final v in node.fields.variables) {
+        rule.reportAtOffset(
+          v.name.offset,
+          v.name.length,
+          diagnosticCode: RepositoryDependencyInjection.refNotAllowedCode,
+        );
+      }
+      return;
+    }
 
-      if (RepositoryDependencyInjection.isObjectCreation(initializer)) {
+    for (final v in node.fields.variables) {
+      final init = v.initializer;
+      if (init != null && RepositoryDependencyInjection.isObjectCreation(init)) {
         rule.reportAtNode(
-          initializer,
-          diagnosticCode: RepositoryDependencyInjection.directInstantiationCode,
+          init,
+          diagnosticCode:
+              RepositoryDependencyInjection.directInstantiationCode,
         );
       }
     }

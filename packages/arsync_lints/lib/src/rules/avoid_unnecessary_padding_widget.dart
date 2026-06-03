@@ -1,51 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// A lint rule that discourages unnecessary use of the `Padding` widget
-/// when `Container` properties can be used instead.
-///
-/// This rule detects two patterns:
-/// 1. `Padding` wrapping a `Container` - use Container's `margin` instead
-/// 2. `Container` wrapping a `Padding` - use Container's `padding` instead
-///
-/// ### Example
-///
-/// #### BAD: Padding wrapping Container
-/// ```dart
-/// Padding(
-///   padding: EdgeInsets.all(8),
-///   child: Container(
-///     color: Colors.red,
-///   ),
-/// )
-/// ```
-///
-/// #### GOOD: Use Container's margin
-/// ```dart
-/// Container(
-///   margin: EdgeInsets.all(8),
-///   color: Colors.red,
-/// )
-/// ```
-///
-/// #### BAD: Container wrapping Padding
-/// ```dart
-/// Container(
-///   color: Colors.red,
-///   child: Padding(
-///     padding: EdgeInsets.all(8),
-///     child: Text('Hello'),
-///   ),
-/// )
-/// ```
-///
-/// #### GOOD: Use Container's padding
-/// ```dart
-/// Container(
-///   color: Colors.red,
-///   padding: EdgeInsets.all(8),
-///   child: Text('Hello'),
-/// )
-/// ```
+/// Lint rule discouraging unnecessary `Padding` widgets when `Container`
+/// properties suffice:
+/// 1. `Padding` wrapping a `Container` — use `Container.margin` instead.
+/// 2. `Container` wrapping a `Padding` — use `Container.padding` instead.
 class AvoidUnnecessaryPaddingWidget extends MultiAnalysisRule {
   AvoidUnnecessaryPaddingWidget()
     : super(
@@ -78,97 +36,59 @@ class AvoidUnnecessaryPaddingWidget extends MultiAnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addInstanceCreationExpression(this, visitor);
+    registry.addInstanceCreationExpression(
+      this,
+      _Visitor(this),
+    );
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
-
-  final AvoidUnnecessaryPaddingWidget rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AvoidUnnecessaryPaddingWidget> {
+  _Visitor(super.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    final constructorName = node.constructorName.type.name.lexeme;
+    final type = node.constructorName.type.name.lexeme;
+    final child = _namedArg(node, 'child')?.expression;
+    if (child is! InstanceCreationExpression) return;
+    final childType = child.constructorName.type.name.lexeme;
 
-    if (constructorName == 'Padding') {
-      _checkPaddingWrapsContainer(node);
-    } else if (constructorName == 'Container') {
-      _checkContainerWrapsPadding(node);
+    // Padding(child: Container(...)) — flag the Padding unless Container already has margin.
+    if (type == 'Padding' &&
+        childType == 'Container' &&
+        !_hasNamedArg(child, 'margin')) {
+      rule.reportAtOffset(
+        node.offset,
+        node.length,
+        diagnosticCode:
+            AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
+      );
+      return;
+    }
+
+    // Container(child: Padding(...)) — flag the Container unless it already has padding.
+    if (type == 'Container' &&
+        childType == 'Padding' &&
+        !_hasNamedArg(node, 'padding')) {
+      rule.reportAtOffset(
+        node.offset,
+        node.length,
+        diagnosticCode:
+            AvoidUnnecessaryPaddingWidget.containerWrapsPaddingCode,
+      );
     }
   }
 
-  /// Check if Padding wraps a Container (should use Container's margin instead)
-  void _checkPaddingWrapsContainer(InstanceCreationExpression paddingNode) {
-    final childArg = _getChildArgument(paddingNode);
-    if (childArg == null) return;
+  static NamedExpression? _namedArg(
+    InstanceCreationExpression node,
+    String name,
+  ) =>
+      node.argumentList.arguments
+          .whereType<NamedExpression>()
+          .where((a) => a.name.label.name == name)
+          .firstOrNull;
 
-    final childExpression = childArg.expression;
-    if (childExpression is InstanceCreationExpression) {
-      final childConstructorName =
-          childExpression.constructorName.type.name.lexeme;
-
-      if (childConstructorName == 'Container') {
-        // Check if Container already has a margin property
-        final containerHasMargin = _hasNamedArgument(childExpression, 'margin');
-
-        // Only report if Container doesn't already have margin
-        if (!containerHasMargin) {
-          rule.reportAtOffset(
-            paddingNode.offset,
-            paddingNode.length,
-            diagnosticCode:
-                AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
-          );
-        }
-      }
-    }
-  }
-
-  /// Check if Container wraps a Padding (should use Container's padding instead)
-  void _checkContainerWrapsPadding(InstanceCreationExpression containerNode) {
-    // Check if Container already has a padding property
-    final containerHasPadding = _hasNamedArgument(containerNode, 'padding');
-    if (containerHasPadding) return;
-
-    final childArg = _getChildArgument(containerNode);
-    if (childArg == null) return;
-
-    final childExpression = childArg.expression;
-    if (childExpression is InstanceCreationExpression) {
-      final childConstructorName =
-          childExpression.constructorName.type.name.lexeme;
-
-      if (childConstructorName == 'Padding') {
-        rule.reportAtOffset(
-          containerNode.offset,
-          containerNode.length,
-          diagnosticCode:
-              AvoidUnnecessaryPaddingWidget.containerWrapsPaddingCode,
-        );
-      }
-    }
-  }
-
-  NamedExpression? _getChildArgument(InstanceCreationExpression node) {
-    return node.argumentList.arguments
-        .whereType<NamedExpression>()
-        .where((arg) => arg.name.label.name == 'child')
-        .firstOrNull;
-  }
-
-  bool _hasNamedArgument(InstanceCreationExpression node, String argName) {
-    return node.argumentList.arguments.whereType<NamedExpression>().any(
-      (arg) => arg.name.label.name == argName,
-    );
-  }
+  static bool _hasNamedArg(InstanceCreationExpression node, String name) =>
+      _namedArg(node, name) != null;
 }

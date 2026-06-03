@@ -1,9 +1,14 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule A3: model_purity
+/// Rule A3: models in `lib/models/` must be pure (no provider/screen imports),
+/// annotated with `@freezed`, and expose a `fromJson` factory.
 ///
-/// Models are pure data structures. They cannot contain business logic or UI code.
-/// Must be annotated with @freezed and have a fromJson factory.
+/// Path-based exemptions:
+/// - `models/.../converters/` — `JsonConverter` / serializer helpers, fully
+///   exempt (not models).
+/// - `models/.../state/` — freezed state classes. The `@freezed` requirement
+///   still applies, but the `fromJson` factory requirement is skipped since
+///   state classes are typically not (de)serialized.
 class ModelPurity extends MultiAnalysisRule {
   ModelPurity()
     : super(
@@ -52,73 +57,57 @@ class ModelPurity extends MultiAnalysisRule {
   ) {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInModels(path)) return;
+    final normalized = PathUtils.normalizePath(path);
+    // Exempt JsonConverter / serializer helpers living under `converters/`.
+    if (normalized.contains('/converters/')) return;
+    // State classes don't need fromJson; we still enforce @freezed below.
+    final inStateFolder = normalized.contains('/state/');
 
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    var visitor = _Visitor(this, context.allUnits);
-    registry.addImportDirective(this, visitor);
-    registry.addClassDeclaration(this, visitor);
+    registry
+      ..addImportDirective(
+        this,
+        BannedImportVisitor(
+          this,
+          _bannedPatterns,
+          (n) => reportAtNode(n, diagnosticCode: importCode),
+        ),
+      )
+      ..addClassDeclaration(
+        this,
+        _Visitor(this, requireFromJson: !inStateFolder),
+      );
   }
 
-  static bool isBannedImport(String importUri) {
-    for (final pattern in _bannedPatterns) {
-      if (importUri.contains(pattern)) return true;
-    }
-    return false;
-  }
+  static bool isBannedImport(String uri) => _bannedPatterns.any(uri.contains);
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule, {required this.requireFromJson});
 
-  _Visitor(this.rule, this.allUnits);
-
-  @override
-  void visitImportDirective(ImportDirective node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final importUri = node.uri.stringValue;
-    if (importUri == null) return;
-
-    if (ModelPurity.isBannedImport(importUri)) {
-      rule.reportAtNode(node, diagnosticCode: ModelPurity.importCode);
-    }
-  }
+  final bool requireFromJson;
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final hasFreezed = node.metadata.any((annotation) {
-      final name = annotation.name.name;
-      return name == 'freezed' || name == 'Freezed';
-    });
-
-    if (!hasFreezed) {
+    if (!node.hasFreezedAnnotation) {
       rule.reportAtOffset(
-        node.name.offset,
-        node.name.length,
+        node.className.offset,
+        node.className.length,
         diagnosticCode: ModelPurity.freezedCode,
       );
     }
 
-    final hasFromJson = node.members.any((member) {
-      if (member is ConstructorDeclaration) {
-        return member.factoryKeyword != null &&
-            member.name?.lexeme == 'fromJson';
-      }
-      return false;
-    });
+    if (!requireFromJson) return;
 
+    final hasFromJson = node.classMembers.any(
+      (m) =>
+          m is ConstructorDeclaration &&
+          m.factoryKeyword != null &&
+          m.name?.lexeme == 'fromJson',
+    );
     if (!hasFromJson) {
       rule.reportAtOffset(
-        node.name.offset,
-        node.name.length,
+        node.className.offset,
+        node.className.length,
         diagnosticCode: ModelPurity.fromJsonCode,
       );
     }

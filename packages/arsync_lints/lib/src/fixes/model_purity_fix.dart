@@ -2,9 +2,11 @@ import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import "../ast_extensions.dart";
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
 import '../utils.dart';
+import 'fix_helpers.dart';
 
 /// Quick fix for `model_purity` rule - remove banned import.
 class ModelPurityImportFix extends ResolvedCorrectionProducer {
@@ -25,48 +27,13 @@ class ModelPurityImportFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final importDirective = _findImportDirective(node);
-    if (importDirective == null) return;
-
-    final lineInfo = unitResult.lineInfo;
-    final startLine =
-        lineInfo.getLocation(importDirective.offset).lineNumber - 1;
-    final lineStart = lineInfo.getOffsetOfLine(startLine);
-
-    var lineEnd = importDirective.end;
-    final content = unitResult.content;
-    while (lineEnd < content.length && content[lineEnd] != '\n') {
-      lineEnd++;
-    }
-    if (lineEnd < content.length && content[lineEnd] == '\n') {
-      lineEnd++;
-    }
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addDeletion(SourceRange(lineStart, lineEnd - lineStart));
-    });
-  }
-
-  ImportDirective? _findImportDirective(AstNode? node) {
-    if (node == null) return null;
-    if (node is ImportDirective) return node;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ImportDirective) return current;
-      current = current.parent;
-    }
-    return null;
+    final import = node.thisOrAncestorOfType<ImportDirective>();
+    if (import == null) return;
+    await FixHelpers.deleteLine(builder, unitResult, file, import);
   }
 }
 
 /// Quick fix for `model_purity` rule - convert to Freezed class.
-///
-/// Converts a plain class to a full Freezed class with:
-/// - @freezed annotation
-/// - sealed class with _$ClassName mixin
-/// - const factory constructor
-/// - part directives
 class ModelPurityAddFreezedFix extends ResolvedCorrectionProducer {
   ModelPurityAddFreezedFix({required super.context});
 
@@ -85,67 +52,45 @@ class ModelPurityAddFreezedFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final classDecl = _findClassDeclaration(node);
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
     if (classDecl == null) return;
 
-    // Check if already has @freezed
     final hasFreezed = classDecl.metadata.any(
       (a) => a.name.name == 'freezed' || a.name.name == 'Freezed',
     );
     if (hasFreezed) return;
 
-    final className = classDecl.name.lexeme;
+    final className = classDecl.className.lexeme;
     final fileName = PathUtils.getFileName(unitResult.path);
 
-    // Extract fields from the class
-    final fields = <_FieldInfo>[];
-    for (final member in classDecl.members) {
-      if (member is FieldDeclaration) {
-        final type = member.fields.type?.toSource() ?? 'dynamic';
-        for (final variable in member.fields.variables) {
-          final fieldName = variable.name.lexeme;
-          final hasDefault = variable.initializer != null;
-          final defaultValue = variable.initializer?.toSource();
-          final isNullable = type.endsWith('?');
-          fields.add(
-            _FieldInfo(
-              name: fieldName,
-              type: type,
-              isRequired: !isNullable && !hasDefault,
-              hasDefault: hasDefault,
-              defaultValue: defaultValue,
-            ),
-          );
+    final params = <String>[];
+    for (final m in classDecl.classMembers) {
+      if (m is! FieldDeclaration) continue;
+      final type = m.fields.type?.toSource() ?? 'dynamic';
+      for (final v in m.fields.variables) {
+        final name = v.name.lexeme;
+        final init = v.initializer?.toSource();
+        if (init != null) {
+          params.add('@Default($init) $type $name');
+        } else if (type.endsWith('?')) {
+          params.add('$type $name');
+        } else {
+          params.add('required $type $name');
         }
       }
     }
 
-    // Build factory parameters
-    final params = fields
-        .map((f) {
-          if (f.hasDefault && f.defaultValue != null) {
-            return '@Default(${f.defaultValue}) ${f.type} ${f.name}';
-          } else if (f.isRequired) {
-            return 'required ${f.type} ${f.name}';
-          } else {
-            return '${f.type} ${f.name}';
-          }
-        })
-        .join(',\n    ');
-
-    // Build the new Freezed class
     final freezedClass =
         '''@freezed
 sealed class $className with _\$$className {
   const factory $className({
-    $params,
+    ${params.join(',\n    ')},
   }) = _$className;
 
   factory $className.fromJson(Map<String, dynamic> json) =>
       _\$${className}FromJson(json);
 }''';
 
-    // Check if part directives exist
     final unit = unitResult.unit;
     final hasFreezedPart = unit.directives.any(
       (d) =>
@@ -157,72 +102,25 @@ sealed class $className with _\$$className {
           d is PartDirective && d.uri.stringValue?.contains('.g.dart') == true,
     );
 
-    // Find where to insert part directives (after imports)
     var partInsertOffset = 0;
-    for (final directive in unit.directives) {
-      if (directive is ImportDirective) {
-        partInsertOffset = directive.end;
-      }
+    for (final d in unit.directives) {
+      if (d is ImportDirective) partInsertOffset = d.end;
     }
 
-    // Build part directives if needed
-    var partDirectives = '';
-    if (!hasFreezedPart || !hasGPart) {
-      partDirectives = '\n';
-      if (!hasFreezedPart) {
-        partDirectives += "\npart '$fileName.freezed.dart';";
-      }
-      if (!hasGPart) {
-        partDirectives += "\npart '$fileName.g.dart';";
-      }
-    }
+    final parts = StringBuffer();
+    if (!hasFreezedPart) parts.write("\npart '$fileName.freezed.dart';");
+    if (!hasGPart) parts.write("\npart '$fileName.g.dart';");
 
-    await builder.addDartFileEdit(file, (builder) {
-      // Add part directives if needed
-      if (partDirectives.isNotEmpty && partInsertOffset > 0) {
-        builder.addSimpleInsertion(partInsertOffset, partDirectives);
+    await builder.addDartFileEdit(file, (b) {
+      if (parts.isNotEmpty && partInsertOffset > 0) {
+        b.addSimpleInsertion(partInsertOffset, '\n$parts');
       }
-
-      // Replace the class
-      builder.addSimpleReplacement(
+      b.addSimpleReplacement(
         SourceRange(classDecl.offset, classDecl.length),
         freezedClass,
       );
     });
   }
-
-  ClassDeclaration? _findClassDeclaration(AstNode? node) {
-    if (node == null) return null;
-    if (node is ClassDeclaration) return node;
-
-    if (node is SimpleIdentifier) {
-      final parent = node.parent;
-      if (parent is ClassDeclaration) return parent;
-    }
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ClassDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
-  }
-}
-
-class _FieldInfo {
-  final String name;
-  final String type;
-  final bool isRequired;
-  final bool hasDefault;
-  final String? defaultValue;
-
-  _FieldInfo({
-    required this.name,
-    required this.type,
-    required this.isRequired,
-    required this.hasDefault,
-    this.defaultValue,
-  });
 }
 
 /// Quick fix for `model_purity` rule - add fromJson factory.
@@ -244,50 +142,23 @@ class ModelPurityAddFromJsonFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final classDecl = _findClassDeclaration(node);
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
     if (classDecl == null) return;
 
-    final className = classDecl.name.lexeme;
-
-    // Check if already has fromJson
-    final hasFromJson = classDecl.members.any((member) {
-      if (member is ConstructorDeclaration) {
-        return member.factoryKeyword != null &&
-            member.name?.lexeme == 'fromJson';
-      }
-      return false;
-    });
+    final className = classDecl.className.lexeme;
+    final hasFromJson = classDecl.classMembers.any(
+      (m) =>
+          m is ConstructorDeclaration &&
+          m.factoryKeyword != null &&
+          m.name?.lexeme == 'fromJson',
+    );
     if (hasFromJson) return;
 
-    // Find the position to insert (after the last member or at the start of body)
-    final insertOffset = classDecl.rightBracket.offset;
-
-    // Generate fromJson factory
-    final fromJsonCode =
-        '''
-
-  factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);
-''';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleInsertion(insertOffset, fromJsonCode);
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleInsertion(
+        classDecl.bodyRightBracket.offset,
+        '\n  factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);\n',
+      );
     });
-  }
-
-  ClassDeclaration? _findClassDeclaration(AstNode? node) {
-    if (node == null) return null;
-    if (node is ClassDeclaration) return node;
-
-    if (node is SimpleIdentifier) {
-      final parent = node.parent;
-      if (parent is ClassDeclaration) return parent;
-    }
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ClassDeclaration) return current;
-      current = current.parent;
-    }
-    return null;
   }
 }

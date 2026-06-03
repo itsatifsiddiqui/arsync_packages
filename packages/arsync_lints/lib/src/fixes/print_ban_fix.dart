@@ -4,11 +4,7 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `print_ban` rule.
-///
-/// Converts print/debugPrint calls to use .log() extension:
-/// - Before: `print('message')`
-/// - After: `'message'.log()`
+/// Quick fix for `print_ban` — replace `print(x)` / `debugPrint(x)` with `x.log()`.
 class PrintBanFix extends ResolvedCorrectionProducer {
   PrintBanFix({required super.context});
 
@@ -25,57 +21,34 @@ class PrintBanFix extends ResolvedCorrectionProducer {
   CorrectionApplicability get applicability =>
       CorrectionApplicability.singleLocation;
 
-  @override
-  Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = _findPrintInvocation(node);
-    if (targetNode == null) return;
-
-    // Get the argument (the message being printed)
-    ArgumentList? arguments;
-    if (targetNode is MethodInvocation) {
-      arguments = targetNode.argumentList;
-    } else if (targetNode is FunctionExpressionInvocation) {
-      arguments = targetNode.argumentList;
+  static bool _isPrintCall(AstNode n) {
+    if (n is MethodInvocation) {
+      return n.methodName.name == 'print' ||
+          n.methodName.name == 'debugPrint';
     }
-
-    if (arguments == null || arguments.arguments.isEmpty) return;
-
-    // Get the first argument (the message)
-    final firstArg = arguments.arguments.first;
-    final messageSource = firstArg.toSource();
-
-    // Build the replacement: 'message'.log()
-    final replacement = '$messageSource.log()';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(targetNode.offset, targetNode.length),
-        replacement,
-      );
-    });
+    if (n is FunctionExpressionInvocation) {
+      final f = n.function;
+      return f is SimpleIdentifier &&
+          (f.name == 'print' || f.name == 'debugPrint');
+    }
+    return false;
   }
 
-  AstNode? _findPrintInvocation(AstNode? node) {
-    if (node == null) return null;
+  @override
+  Future<void> compute(ChangeBuilder builder) async {
+    final target = node.thisOrAncestorMatching(_isPrintCall);
+    if (target == null) return;
 
-    AstNode? current = node;
-    while (current != null) {
-      if (current is MethodInvocation) {
-        final name = current.methodName.name;
-        if (name == 'print' || name == 'debugPrint') {
-          return current;
-        }
-      }
-      if (current is FunctionExpressionInvocation) {
-        final function = current.function;
-        if (function is SimpleIdentifier) {
-          if (function.name == 'print' || function.name == 'debugPrint') {
-            return current;
-          }
-        }
-      }
-      current = current.parent;
-    }
-    return null;
+    final args = target is MethodInvocation
+        ? target.argumentList
+        : (target as FunctionExpressionInvocation).argumentList;
+    if (args.arguments.isEmpty) return;
+
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(target.offset, target.length),
+        '${args.arguments.first.toSource()}.log()',
+      );
+    });
   }
 }

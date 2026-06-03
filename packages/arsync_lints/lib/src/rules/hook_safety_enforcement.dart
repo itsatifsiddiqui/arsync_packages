@@ -1,11 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule E1: hook_safety_enforcement
-///
-/// Hooks must be used correctly to prevent runtime crashes.
-/// Ban: Instantiating TextEditingController, AnimationController, or
-/// ScrollController directly in build without using a hook.
-/// Ban: Using `GlobalKey<FormState>()` in HookWidget build methods.
+/// Rule E1: controllers must be created via hooks inside `build()`
+/// (`useTextEditingController`, `useAnimationController`, …) — never with
+/// direct constructors. Also bans `GlobalKey<FormState>()` inside HookWidgets
+/// because it resets on rebuild.
 class HookSafetyEnforcement extends MultiAnalysisRule {
   HookSafetyEnforcement()
     : super(
@@ -33,14 +31,14 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
   @override
   List<DiagnosticCode> get diagnosticCodes => [controllerCode, formKeyCode];
 
-  static const bannedControllers = [
+  static const bannedControllers = {
     'TextEditingController',
     'AnimationController',
     'ScrollController',
     'PageController',
     'TabController',
     'FocusNode',
-  ];
+  };
 
   static const hookWidgetClasses = {'HookWidget', 'HookConsumerWidget'};
 
@@ -50,104 +48,48 @@ class HookSafetyEnforcement extends MultiAnalysisRule {
     RuleContext context,
   ) {
     if (!context.isInLibDir) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    var visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
-  }
-}
-
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
-
-  @override
-  void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    final isHookWidget = _isHookWidgetClass(node);
-
-    for (final member in node.members) {
-      if (member is MethodDeclaration && member.name.lexeme == 'build') {
-        final body = member.body;
-
-        final controllerVisitor = _ControllerVisitor(rule, allUnits);
-        body.accept(controllerVisitor);
-
-        if (isHookWidget) {
-          final formKeyVisitor = _FormKeyVisitor(rule, allUnits);
-          body.accept(formKeyVisitor);
-        }
-      }
-    }
-  }
-
-  bool _isHookWidgetClass(ClassDeclaration node) {
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return false;
-    return HookSafetyEnforcement.hookWidgetClasses.contains(
-      extendsClause.superclass.name.lexeme,
+    registry.addInstanceCreationExpression(
+      this,
+      _Visitor(this),
     );
   }
 }
 
-class _ControllerVisitor extends RecursiveAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _ControllerVisitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) {
-      super.visitInstanceCreationExpression(node);
-      return;
-    }
-    final typeName = node.constructorName.type.name.lexeme;
 
+    final method = node.thisOrAncestorOfType<MethodDeclaration>();
+    if (method == null || method.name.lexeme != 'build') return;
+
+    final typeName = node.constructorName.type.name.lexeme;
     if (HookSafetyEnforcement.bannedControllers.contains(typeName)) {
       rule.reportAtNode(
         node,
         diagnosticCode: HookSafetyEnforcement.controllerCode,
       );
-    }
-
-    super.visitInstanceCreationExpression(node);
-  }
-}
-
-class _FormKeyVisitor extends RecursiveAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _FormKeyVisitor(this.rule, this.allUnits);
-
-  @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) {
-      super.visitInstanceCreationExpression(node);
       return;
     }
-    final typeName = node.constructorName.type.name.lexeme;
 
-    if (typeName == 'GlobalKey') {
-      final typeArgs = node.constructorName.type.typeArguments;
-      if (typeArgs != null && typeArgs.arguments.isNotEmpty) {
-        final typeArg = typeArgs.arguments.first;
-        if (typeArg is NamedType && typeArg.name.lexeme == 'FormState') {
-          rule.reportAtNode(
-            node,
-            diagnosticCode: HookSafetyEnforcement.formKeyCode,
-          );
-        }
-      }
+    if (typeName != 'GlobalKey' || !_isInHookWidget(node)) return;
+    final typeArg = node.constructorName.type.typeArguments?.arguments.firstOrNull;
+    if (typeArg is NamedType && typeArg.name.lexeme == 'FormState') {
+      rule.reportAtNode(
+        node,
+        diagnosticCode: HookSafetyEnforcement.formKeyCode,
+      );
     }
-
-    super.visitInstanceCreationExpression(node);
   }
+
+  static bool _isInHookWidget(AstNode node) =>
+      HookSafetyEnforcement.hookWidgetClasses.contains(
+        node
+            .thisOrAncestorOfType<ClassDeclaration>()
+            ?.extendsClause
+            ?.superclass
+            .name
+            .lexeme,
+      );
 }

@@ -147,4 +147,63 @@ Widget myWidget() {
 }
 ''');
   }
+
+  Future<void> test_good_spreadOperator() async {
+    await assertNoDiagnostics(r'''
+// Mock Flutter types
+class Widget {
+  const Widget();
+}
+class Column extends Widget {
+  final List<Widget>? children;
+  const Column({this.children});
+}
+class Text extends Widget {
+  final String data;
+  const Text(this.data);
+}
+
+Widget myWidget() {
+  final steps = [Text('Step 1'), Text('Step 2')];
+  return Column(
+    children: <Widget>[
+      ...steps.map((step) => step),
+    ],
+  );
+}
+''');
+  }
+
+  Future<void> test_good_spreadOperatorWithIterableMap() async {
+    await assertNoDiagnostics(r'''
+// Mock Flutter types
+class Widget {
+  const Widget();
+}
+class Column extends Widget {
+  final List<Widget>? children;
+  const Column({this.children});
+}
+class Text extends Widget {
+  final String data;
+  const Text(this.data);
+}
+class BuildContext {}
+
+Widget myWidget(BuildContext context) {
+  final steps = [1, 2, 3];
+  return Column(
+    children: [
+      ...steps.map(
+        (step) => Column(
+          children: [
+            Text('Step $step'),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+''');
+  }
 }

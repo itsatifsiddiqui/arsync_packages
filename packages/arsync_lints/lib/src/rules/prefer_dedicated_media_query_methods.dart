@@ -23,7 +23,7 @@ import '../arsync_lint_rule.dart';
 /// ```
 class PreferDedicatedMediaQueryMethods extends AnalysisRule {
   PreferDedicatedMediaQueryMethods()
-    : super(name: code.name, description: code.problemMessage);
+    : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const code = LintCode(
     'prefer_dedicated_media_query_methods',
@@ -41,25 +41,17 @@ class PreferDedicatedMediaQueryMethods extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
+    final visitor = _Visitor(this);
     registry.addMethodInvocation(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
-
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     final method = node.methodName.name;
     final target = node.target?.toString();

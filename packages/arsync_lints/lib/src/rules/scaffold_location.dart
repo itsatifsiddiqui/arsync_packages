@@ -1,16 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule E2: scaffold_location
-///
-/// Pages live in screens; Fragments live in widgets.
-/// Ban: Scaffold inside lib/widgets/
+/// Rule E2: `Scaffold` is banned inside `lib/widgets/` — pages belong in
+/// `lib/screens/`.
 class ScaffoldLocation extends AnalysisRule {
-  ScaffoldLocation()
-    : super(
-        name: 'scaffold_location',
-        description:
-            'Scaffold is not allowed in widgets folder. Widgets should be fragments, not pages.',
-      );
+  ScaffoldLocation() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'scaffold_location',
@@ -27,29 +20,19 @@ class ScaffoldLocation extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInWidgets(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addInstanceCreationExpression(this, visitor);
-    registry.addMethodInvocation(this, visitor);
+    if (!PathUtils.isInWidgets(context.definingUnit.file.path)) return;
+    final visitor = _Visitor(this);
+    registry
+      ..addInstanceCreationExpression(this, visitor)
+      ..addMethodInvocation(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
     if (node.constructorName.type.name.lexeme == 'Scaffold') {
       rule.reportAtNode(node);
     }
@@ -57,10 +40,6 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    if (node.methodName.name == 'Scaffold') {
-      rule.reportAtNode(node);
-    }
+    if (node.methodName.name == 'Scaffold') rule.reportAtNode(node);
   }
 }

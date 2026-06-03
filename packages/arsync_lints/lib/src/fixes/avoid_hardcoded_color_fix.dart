@@ -4,9 +4,8 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `avoid_hardcoded_color` rule.
-///
-/// Replaces hardcoded color with a placeholder Theme color.
+/// Quick fix for `avoid_hardcoded_color` — replace hardcoded color with
+/// `Theme.of(context).colorScheme.primary` placeholder.
 class AvoidHardcodedColorFix extends ResolvedCorrectionProducer {
   AvoidHardcodedColorFix({required super.context});
 
@@ -23,49 +22,28 @@ class AvoidHardcodedColorFix extends ResolvedCorrectionProducer {
   CorrectionApplicability get applicability =>
       CorrectionApplicability.singleLocation;
 
+  static const _colorTypes = {'Color', 'MaterialColor', 'MaterialAccentColor'};
+  static const _colorMethods = {'fromARGB', 'fromRGBO', 'alphaBlend', 'lerp'};
+
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final colorNode = _findColorNode(node);
-    if (colorNode == null) return;
+    final target = node.thisOrAncestorMatching((n) {
+      if (n is InstanceCreationExpression) {
+        return _colorTypes.contains(n.staticType?.getDisplayString());
+      }
+      if (n is MethodInvocation) {
+        return _colorMethods.contains(n.methodName.name);
+      }
+      if (n is PrefixedIdentifier) return n.prefix.name == 'Colors';
+      return false;
+    });
+    if (target == null) return;
 
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(colorNode.offset, colorNode.length),
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(target.offset, target.length),
         'Theme.of(context).colorScheme.primary',
       );
     });
-  }
-
-  AstNode? _findColorNode(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is InstanceCreationExpression) {
-        final typeName = current.staticType?.getDisplayString();
-        if (typeName == 'Color' ||
-            typeName == 'MaterialColor' ||
-            typeName == 'MaterialAccentColor') {
-          return current;
-        }
-      }
-      if (current is MethodInvocation) {
-        final methodName = current.methodName.name;
-        if (methodName == 'fromARGB' ||
-            methodName == 'fromRGBO' ||
-            methodName == 'alphaBlend' ||
-            methodName == 'lerp') {
-          return current;
-        }
-      }
-      if (current is PrefixedIdentifier) {
-        final prefix = current.prefix.name;
-        if (prefix == 'Colors') {
-          return current;
-        }
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

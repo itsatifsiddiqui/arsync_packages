@@ -1,10 +1,7 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule: provider_state_class
-///
-/// Enforce state class conventions in provider files:
-/// 1. State classes must be annotated with @freezed for immutability
-/// 2. State classes must be defined in the same file (not imported from elsewhere)
+/// Rule: state classes referenced by `NotifierProvider`-style classes in
+/// `lib/providers/` must be `@freezed` and defined in the same file.
 class ProviderStateClass extends MultiAnalysisRule {
   ProviderStateClass()
     : super(
@@ -30,160 +27,67 @@ class ProviderStateClass extends MultiAnalysisRule {
   @override
   List<DiagnosticCode> get diagnosticCodes => [freezedCode, importedStateCode];
 
-  static bool isPrimitiveOrBuiltinType(String typeName) {
-    const primitives = {
-      'int',
-      'double',
-      'num',
-      'String',
-      'bool',
-      'void',
-      'dynamic',
-      'Object',
-      'Null',
-      'Never',
-      'List',
-      'Map',
-      'Set',
-      'Future',
-      'Stream',
-      'Iterable',
-      'AsyncValue',
-      'Result',
-    };
-    return primitives.contains(typeName);
-  }
+  static const _builtinTypes = {
+    'int', 'double', 'num', 'String', 'bool', 'void', 'dynamic',
+    'Object', 'Null', 'Never',
+    'List', 'Map', 'Set', 'Future', 'Stream', 'Iterable',
+    'AsyncValue', 'Result',
+  };
+
+  static bool isPrimitiveOrBuiltinType(String typeName) =>
+      _builtinTypes.contains(typeName);
 
   @override
   void registerNodeProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addCompilationUnit(this, visitor);
+    if (!PathUtils.isInProviders(context.definingUnit.file.path)) return;
+    registry.addCompilationUnit(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    final definedClasses = <String>{};
-    final stateClassUsages = <_StateClassUsage>[];
-    final classDeclarations = <String, _ClassInfo>{};
 
-    for (final declaration in node.declarations) {
-      if (declaration is ClassDeclaration) {
-        final className = declaration.name.lexeme;
-        definedClasses.add(className);
+    final classes = <String, ClassDeclaration>{};
+    final stateUsages = <(String name, NamedType node)>[];
 
-        final hasFreezed = declaration.metadata.any((annotation) {
-          final name = annotation.name.name;
-          return name == 'freezed' || name == 'Freezed';
-        });
+    for (final decl in node.declarations.whereType<ClassDeclaration>()) {
+      classes[decl.className.lexeme] = decl;
 
-        classDeclarations[className] = _ClassInfo(
-          node: declaration,
-          hasFreezed: hasFreezed,
-        );
-
-        final extendsClause = declaration.extendsClause;
-        if (extendsClause != null) {
-          final superclassName = extendsClause.superclass.name.lexeme;
-          if (superclassName.contains('Notifier')) {
-            final typeArgs = extendsClause.superclass.typeArguments;
-            if (typeArgs != null && typeArgs.arguments.isNotEmpty) {
-              final stateType = typeArgs.arguments.first;
-              if (stateType is NamedType) {
-                final stateTypeName = stateType.name.lexeme;
-                if (!ProviderStateClass.isPrimitiveOrBuiltinType(
-                  stateTypeName,
-                )) {
-                  stateClassUsages.add(
-                    _StateClassUsage(
-                      stateTypeName: stateTypeName,
-                      notifierNode: declaration,
-                      stateTypeNode: stateType,
-                    ),
-                  );
-                }
-              }
-            }
-          }
-        }
-      }
+      if (!decl.extendsNotifierVariant) continue;
+      final stateType =
+          decl.extendsClause!.superclass.typeArguments?.arguments.firstOrNull;
+      if (stateType is! NamedType) continue;
+      final name = stateType.name.lexeme;
+      if (ProviderStateClass.isPrimitiveOrBuiltinType(name)) continue;
+      stateUsages.add((name, stateType));
     }
 
-    for (final usage in stateClassUsages) {
-      final stateTypeName = usage.stateTypeName;
-      final classInfo = classDeclarations[stateTypeName];
+    for (final (name, typeNode) in stateUsages) {
+      final classDecl = classes[name];
+      final isStateClass = name.contains('State');
+      if (!isStateClass) continue;
 
-      // Only check classes with "State" in the name for being defined in the same file
-      final isStateClass = stateTypeName.contains('State');
-
-      if (classInfo == null) {
-        // Only report if it's a State class that should be in the same file
-        if (isStateClass) {
-          if (!NodeContentHelper.shouldSkipNode(
-            usage.stateTypeNode,
-            allUnits,
-            rule.name,
-          )) {
-            rule.reportAtNode(
-              usage.stateTypeNode,
-              diagnosticCode: ProviderStateClass.importedStateCode,
-            );
-          }
-        }
+      if (classDecl == null) {
+        rule.reportAtNode(
+          typeNode,
+          diagnosticCode: ProviderStateClass.importedStateCode,
+        );
         continue;
       }
 
-      // State classes must have @freezed
-      if (isStateClass && !classInfo.hasFreezed) {
-        if (!NodeContentHelper.shouldSkipNode(
-          classInfo.node,
-          allUnits,
-          rule.name,
-        )) {
-          rule.reportAtOffset(
-            classInfo.node.name.offset,
-            classInfo.node.name.length,
-            diagnosticCode: ProviderStateClass.freezedCode,
-          );
-        }
+      if (!classDecl.hasFreezedAnnotation) {
+        rule.reportAtOffset(
+          classDecl.className.offset,
+          classDecl.className.length,
+          diagnosticCode: ProviderStateClass.freezedCode,
+        );
       }
     }
   }
-}
-
-class _StateClassUsage {
-  final String stateTypeName;
-  final ClassDeclaration notifierNode;
-  final NamedType stateTypeNode;
-
-  _StateClassUsage({
-    required this.stateTypeName,
-    required this.notifierNode,
-    required this.stateTypeNode,
-  });
-}
-
-class _ClassInfo {
-  final ClassDeclaration node;
-  final bool hasFreezed;
-
-  _ClassInfo({required this.node, required this.hasFreezed});
 }

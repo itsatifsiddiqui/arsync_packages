@@ -4,19 +4,22 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `provider_declaration_syntax` rule.
-///
-/// Converts bad provider declarations to use .new constructor syntax:
-/// - Before: `NotifierProvider<MyNotifier, State>(() => MyNotifier())`
-/// - After: `NotifierProvider.autoDispose(MyNotifier.new)`
+/// Quick fix for `provider_declaration_syntax` — convert provider declaration
+/// to `.autoDispose(MyNotifier.new)` syntax.
 class ProviderDeclarationSyntaxFix extends ResolvedCorrectionProducer {
   ProviderDeclarationSyntaxFix({required super.context});
 
   static const _fixKind = FixKind(
     'arsync.fix.providerDeclarationSyntax',
-    1000, // Very high priority to appear before ignore options
+    1000,
     'Use .new constructor syntax',
   );
+
+  static const _providerTypes = [
+    'AsyncNotifierProvider',
+    'StreamNotifierProvider',
+    'NotifierProvider',
+  ];
 
   @override
   FixKind? get fixKind => _fixKind;
@@ -27,111 +30,41 @@ class ProviderDeclarationSyntaxFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the expression that was flagged (the provider initializer)
-    final targetNode = _findProviderExpression(node);
-    if (targetNode == null) return;
+    final target = node.thisOrAncestorMatching(
+      (n) =>
+          _providerTypeFor(n.toSource()) != null &&
+          (n is MethodInvocation ||
+              n is InstanceCreationExpression ||
+              n is FunctionExpressionInvocation),
+    );
+    if (target == null) return;
 
-    final source = targetNode.toSource();
+    final source = target.toSource();
+    final providerType = _providerTypeFor(source);
+    final notifier = _extractNotifierClassName(source);
+    if (providerType == null || notifier == null) return;
 
-    // Extract provider type (NotifierProvider, AsyncNotifierProvider, etc.)
-    final providerType = _extractProviderType(source);
-    if (providerType == null) return;
-
-    // Extract the Notifier class name
-    final notifierClassName = _extractNotifierClassName(targetNode, source);
-    if (notifierClassName == null) return;
-
-    // Check if it already has autoDispose
-    final hasAutoDispose = source.contains('.autoDispose');
-
-    // Build the corrected syntax
-    final correctedSyntax = hasAutoDispose
-        ? '$providerType.autoDispose($notifierClassName.new)'
-        : '$providerType.autoDispose($notifierClassName.new)';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(targetNode.offset, targetNode.length),
-        correctedSyntax,
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(target.offset, target.length),
+        '$providerType.autoDispose($notifier.new)',
       );
     });
   }
 
-  /// Find the provider expression from the diagnostic node
-  AstNode? _findProviderExpression(AstNode? node) {
-    if (node == null) return null;
+  static String? _providerTypeFor(String src) =>
+      _providerTypes.cast<String?>().firstWhere(
+        (t) => src.startsWith(t!),
+        orElse: () => null,
+      );
 
-    // The node might be the expression itself or we need to traverse up
-    AstNode? current = node;
-    while (current != null) {
-      if (current is MethodInvocation ||
-          current is InstanceCreationExpression) {
-        final source = current.toSource();
-        if (_isProviderExpression(source)) {
-          return current;
-        }
-      }
-      if (current is FunctionExpressionInvocation) {
-        final source = current.toSource();
-        if (_isProviderExpression(source)) {
-          return current;
-        }
-      }
-      // Check if current node's source starts with a provider type
-      final source = current.toSource();
-      if (_isProviderExpression(source)) {
-        return current;
-      }
-      current = current.parent;
-    }
-    return node;
-  }
+  static final _typeArgRe = RegExp(r'<(\w+),\s*\w+>');
+  static final _closureRe = RegExp(r'\(\)\s*(?:=>|{\s*return)\s*(\w+)\(\)');
+  static final _simpleCtorRe = RegExp(r'(\w+)\(\)(?:\s*;|\s*\})');
 
-  bool _isProviderExpression(String source) {
-    return source.startsWith('NotifierProvider') ||
-        source.startsWith('AsyncNotifierProvider') ||
-        source.startsWith('StreamNotifierProvider');
-  }
-
-  /// Extract the provider type from the source
-  String? _extractProviderType(String source) {
-    if (source.startsWith('AsyncNotifierProvider')) {
-      return 'AsyncNotifierProvider';
-    }
-    if (source.startsWith('StreamNotifierProvider')) {
-      return 'StreamNotifierProvider';
-    }
-    if (source.startsWith('NotifierProvider')) {
-      return 'NotifierProvider';
-    }
-    return null;
-  }
-
-  /// Extract the Notifier class name from the expression
-  String? _extractNotifierClassName(AstNode node, String source) {
-    // Try to extract from type arguments first
-    // Pattern: NotifierProvider<ClassName, StateType>(...)
-    final typeArgMatch = RegExp(r'<(\w+),\s*\w+>').firstMatch(source);
-    if (typeArgMatch != null) {
-      return typeArgMatch.group(1);
-    }
-
-    // Try to extract from closure body
-    // Pattern: () => ClassName() or () { return ClassName(); }
-    final closureMatch = RegExp(
-      r'\(\)\s*(?:=>|{\s*return)\s*(\w+)\(\)',
-    ).firstMatch(source);
-    if (closureMatch != null) {
-      return closureMatch.group(1);
-    }
-
-    // Try to extract from simple instantiation
-    // Pattern: (() => ClassName())
-    final simpleMatch = RegExp(r'(\w+)\(\)(?:\s*;|\s*\})').firstMatch(source);
-    if (simpleMatch != null) {
-      return simpleMatch.group(1);
-    }
-
-    return null;
+  static String? _extractNotifierClassName(String source) {
+    return _typeArgRe.firstMatch(source)?.group(1) ??
+        _closureRe.firstMatch(source)?.group(1) ??
+        _simpleCtorRe.firstMatch(source)?.group(1);
   }
 }

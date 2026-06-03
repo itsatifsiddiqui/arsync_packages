@@ -1,17 +1,10 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule D4: barrel_file_restriction
-///
-/// Explicit imports are preferred to maintain layer visibility.
-/// Banned in: lib/screens/, lib/features/, lib/providers/
-/// Allowed in: lib/utils/, lib/widgets/, lib/models/
+/// Rule D4: `index.dart` and other export-only files are banned inside
+/// `lib/screens/`, `lib/features/`, and `lib/providers/` — they hide the layer
+/// boundaries that explicit imports keep visible.
 class BarrelFileRestriction extends AnalysisRule {
-  BarrelFileRestriction()
-    : super(
-        name: 'barrel_file_restriction',
-        description:
-            'Barrel files (index.dart or export-only files) are not allowed in screens, features, or providers folders.',
-      );
+  BarrelFileRestriction() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'barrel_file_restriction',
@@ -27,57 +20,38 @@ class BarrelFileRestriction extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final filePath = context.definingUnit.file.path;
-    final fileName = PathUtils.getFileNameWithExtension(filePath);
+    final path = context.definingUnit.file.path;
+    final banned =
+        PathUtils.isInScreens(path) ||
+        PathUtils.isInFeatures(path) ||
+        PathUtils.isInProviders(path);
+    if (!banned) return;
 
-    final isInBannedLocation =
-        PathUtils.isInScreens(filePath) ||
-        PathUtils.isInFeatures(filePath) ||
-        PathUtils.isInProviders(filePath);
-
-    if (!isInBannedLocation) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits, fileName);
-    registry.addCompilationUnit(this, visitor);
+    registry.addCompilationUnit(
+      this,
+      _Visitor(this, PathUtils.getFileNameWithExtension(path)),
+    );
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
   final String fileName;
 
-  _Visitor(this.rule, this.allUnits, this.fileName);
+  _Visitor(super.rule, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     if (fileName == 'index.dart') {
       rule.reportAtNode(node);
       return;
     }
 
-    final directives = node.directives;
-    final declarations = node.declarations;
-
-    if (declarations.isEmpty) {
-      final hasOnlyExports = directives.every(
-        (directive) =>
-            directive is ExportDirective || directive is LibraryDirective,
-      );
-      final hasExports = directives.any(
-        (directive) => directive is ExportDirective,
-      );
-
-      if (hasOnlyExports && hasExports) {
-        rule.reportAtNode(node);
-      }
-    }
+    if (node.declarations.isNotEmpty) return;
+    final hasExports = node.directives.any((d) => d is ExportDirective);
+    final onlyExportsOrLib = node.directives.every(
+      (d) => d is ExportDirective || d is LibraryDirective,
+    );
+    if (hasExports && onlyExportsOrLib) rule.reportAtNode(node);
   }
 }

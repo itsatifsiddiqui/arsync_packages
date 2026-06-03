@@ -1,12 +1,7 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule: repository_provider_declaration
-///
-/// Repository files must define a provider at the top level.
-/// The provider name must end with "RepoProvider".
-///
-/// Good: final authRepoProvider = Provider((ref) => AuthRepository());
-/// Bad: No provider defined, or provider named "authProvider"
+/// Rule: a `*_repository.dart` file must declare a top-level provider whose
+/// name ends with `RepoProvider`.
 class RepositoryProviderDeclaration extends MultiAnalysisRule {
   RepositoryProviderDeclaration()
     : super(
@@ -42,66 +37,48 @@ class RepositoryProviderDeclaration extends MultiAnalysisRule {
   ) {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
-
-    final fileName = PathUtils.getFileName(path);
-    if (!fileName.endsWith('_repository')) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addCompilationUnit(this, visitor);
+    if (!PathUtils.getFileName(path).endsWith('_repository')) return;
+    registry.addCompilationUnit(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    final providerDeclarations = <VariableDeclaration>[];
+    final providers = [
+      for (final d in node.declarations.whereType<TopLevelVariableDeclaration>())
+        for (final v in d.variables.variables)
+          if (_isProviderCall(v.initializer)) v,
+    ];
 
-    for (final declaration in node.declarations) {
-      if (declaration is TopLevelVariableDeclaration) {
-        for (final variable in declaration.variables.variables) {
-          final initializer = variable.initializer;
-          if (initializer == null) continue;
-
-          final source = initializer.toSource();
-          if (source.startsWith('Provider')) {
-            providerDeclarations.add(variable);
-          }
-        }
-      }
-    }
-
-    final hasRepoProvider = providerDeclarations.any(
-      (decl) => decl.name.lexeme.endsWith('RepoProvider'),
-    );
-
-    if (providerDeclarations.isEmpty) {
-      final firstDecl = node.declarations.firstOrNull;
-      if (firstDecl != null) {
+    if (providers.isEmpty) {
+      final first = node.declarations.firstOrNull;
+      if (first != null) {
         rule.reportAtNode(
-          firstDecl,
+          first,
           diagnosticCode: RepositoryProviderDeclaration.missingProviderCode,
         );
       }
-    } else if (!hasRepoProvider) {
-      for (final decl in providerDeclarations) {
-        rule.reportAtOffset(
-          decl.name.offset,
-          decl.name.length,
-          diagnosticCode: RepositoryProviderDeclaration.wrongNamingCode,
-        );
-      }
+      return;
     }
+
+    if (providers.any((p) => p.name.lexeme.endsWith('RepoProvider'))) return;
+    for (final p in providers) {
+      rule.reportAtOffset(
+        p.name.offset,
+        p.name.length,
+        diagnosticCode: RepositoryProviderDeclaration.wrongNamingCode,
+      );
+    }
+  }
+
+  /// True if [initializer] is a constructor call whose type name starts with
+  /// `Provider` (matches `Provider`, `ProviderFamily`, etc.).
+  static bool _isProviderCall(Expression? initializer) {
+    if (initializer is! InstanceCreationExpression) return false;
+    return initializer.typeName.startsWith('Provider');
   }
 }

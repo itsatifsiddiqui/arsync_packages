@@ -106,27 +106,24 @@ lib/
 | 17 | `repository_no_try_catch` | Repositories should not catch exceptions; let them propagate |
 | 18 | `repository_async_return` | Repository async methods must return proper types |
 | 19 | `complexity_limits` | Enforces max nesting depth and method length limits |
-| 20 | `global_variable_restriction` | No global variables except k-prefixed constants |
-| 21 | `print_ban` | Bans print() statements; use proper logging |
-| 22 | `barrel_file_restriction` | Discourages barrel files that re-export everything |
-| 23 | `ignore_file_ban` | Bans `// ignore_for_file:` comments |
-| 24 | `hook_safety_enforcement` | Hooks must be called unconditionally in build() |
-| 25 | `scaffold_location` | Scaffold only allowed in screens, not shared widgets |
-| 26 | `asset_safety` | Asset paths must use constants, not hardcoded strings |
-| 27 | `file_class_match` | Public class name must match file name |
-| 28 | `avoid_consecutive_sliver_to_box_adapter` | Merge consecutive SliverToBoxAdapters into one |
-| 29 | `avoid_hardcoded_color` | Use theme colors instead of hardcoded Color values |
-| 30 | `avoid_shrink_wrap_in_list_view` | Avoid shrinkWrap in ListView for performance |
-| 31 | `avoid_single_child` | Avoid Row/Column with single child; use simpler widget |
-| 32 | `prefer_dedicated_media_query_methods` | Use MediaQuery.sizeOf() instead of MediaQuery.of().size |
-| 33 | `prefer_space_between_elements` | Use SizedBox for spacing instead of Padding |
-| 34 | `prefer_to_include_sliver_in_name` | Sliver widgets should have "Sliver" in their name |
-| 35 | `unsafe_null_assertion` | Warns against unsafe `!` null assertions |
-| 36 | `avoid_unnecessary_padding_widget` | Avoid wrapping widgets with zero padding |
-| 37 | `unnecessary_hook_widget` | Use StatelessWidget if no hooks are used |
-| 38 | `remove_listener` | Listeners added in initState must be removed in dispose |
-| 39 | `dispose_notifier` | Notifiers with resources must implement dispose |
-| 40 | `unnecessary_container` | Use simpler widgets instead of Container when possible |
+| 20 | `print_ban` | Bans print() statements; use proper logging |
+| 21 | `barrel_file_restriction` | Discourages barrel files that re-export everything |
+| 22 | `hook_safety_enforcement` | Hooks must be called unconditionally in build() |
+| 23 | `scaffold_location` | Scaffold only allowed in screens, not shared widgets |
+| 24 | `asset_safety` | Asset paths must use constants, not hardcoded strings |
+| 25 | `file_class_match` | Public class name must match file name |
+| 26 | `avoid_consecutive_sliver_to_box_adapter` | Merge consecutive SliverToBoxAdapters into one |
+| 27 | `avoid_hardcoded_color` | Use theme colors instead of hardcoded Color values |
+| 28 | `avoid_shrink_wrap_in_list_view` | Avoid shrinkWrap in ListView for performance |
+| 29 | `avoid_single_child` | Avoid Row/Column with single child; use simpler widget |
+| 30 | `prefer_dedicated_media_query_methods` | Use MediaQuery.sizeOf() instead of MediaQuery.of().size |
+| 31 | `prefer_space_between_elements` | Use SizedBox for spacing instead of Padding |
+| 32 | `prefer_to_include_sliver_in_name` | Sliver widgets should have "Sliver" in their name |
+| 33 | `avoid_unnecessary_padding_widget` | Avoid wrapping widgets with zero padding |
+| 34 | `unnecessary_hook_widget` | Use StatelessWidget if no hooks are used |
+| 35 | `remove_listener` | Listeners added in initState must be removed in dispose |
+| 36 | `dispose_notifier` | Notifiers with resources must implement dispose |
+| 37 | `unnecessary_container` | Use simpler widgets instead of Container when possible |
 
 ---
 
@@ -361,6 +358,21 @@ class UserNotifier extends AsyncNotifier<User> {
     }
   }
 }
+
+// ALLOWED - persist() calls handle offline cache operations
+class UserNotifier extends AsyncNotifier<User> {
+  @override
+  Future<User> build() async {
+    await persist(
+      ref.watch(storageProvider.future),
+      key: 'user_key',
+      encode: (user) => user.toJson(),
+      decode: (json) => User.fromJson(json),
+    ).future; // OK: persist() is exempt from try/catch requirement
+
+    return User.empty();
+  }
+}
 ```
 
 #### Example: viewmodel_naming_convention
@@ -527,11 +539,9 @@ class UserRepository {
 
 | Rule | Description |
 |------|-------------|
-| `complexity_limits` | Max 4 parameters, max 3 nesting levels, max 60 lines per method, max 120 lines in build(), no nested ternary |
-| `global_variable_restriction` | Top-level variables must be private (`_`), constants (`k` prefix), or Providers. Top-level functions must be private, `k`-prefixed (in constants.dart), or `main()` |
+| `complexity_limits` | Max 5 nesting levels (control flow + closures only), max 60 lines per method, max 120 lines in build(), no nested ternary |
 | `print_ban` | `print()` and `debugPrint()` are banned; use custom logging using log() extension method on Object |
 | `barrel_file_restriction` | No `index.dart` barrel files in screens/, features/, widgets/, or providers/ |
-| `ignore_file_ban` | `// ignore_for_file:` comments are banned |
 
 #### Example: complexity_limits
 
@@ -552,17 +562,43 @@ Widget build(BuildContext context) {
   return ContentWidget();
 }
 
-// NOT RECOMMENDED - Too many parameters (max 4)
-void updateUser(
-  String id,
-  String name,
-  String email,
-  String phone,
-  String address, // ERROR: More than 4 parameters
-) {}
+// NOT RECOMMENDED - Too deep nesting (max 5 levels)
+void didChangeMetrics() {
+  if (condition1) {        // Level 1
+    if (condition2) {      // Level 2
+      if (condition3) {    // Level 3
+        if (condition4) {  // Level 4
+          if (condition5) { // Level 5
+            if (condition6) { // ERROR: Level 6 exceeds limit!
+              doSomething();
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-// RECOMMENDED - Use a parameter object
-void updateUser(UpdateUserParams params) {}
+// RECOMMENDED - Use early returns or extract methods
+void didChangeMetrics() {
+  if (!condition1) return;
+  if (!condition2) return;
+  if (!condition3) return;
+
+  _handleConditions();
+}
+
+// NOTE: Nesting counts control flow (if/for/while/try) + closures
+// Method body blocks and statement blocks don't add to nesting
+void example() {
+  if (condition) {           // Level 1: if statement
+    if (anotherCondition) {  // Level 2: nested if
+      list.forEach((item) {  // Level 3: closure
+        print(item);
+      });
+    }
+  }
+}
 
 // NOT RECOMMENDED - Method exceeds 60 lines
 void processData() {
@@ -575,24 +611,6 @@ void processData() {
   _transformData();
   _saveResult();
 }
-```
-
-#### Example: global_variable_restriction
-
-```dart
-// NOT RECOMMENDED - lib/utils/helpers.dart
-String globalApiUrl = 'https://api.example.com'; // ERROR!
-void helperFunction() {} // ERROR: Top-level function
-
-// RECOMMENDED - lib/utils/constants.dart
-const kApiUrl = 'https://api.example.com'; // ALLOWED: k prefix in constants.dart
-void kFormatDate() {} // ALLOWED: k prefix in constants.dart
-
-// RECOMMENDED - lib/providers/config_provider.dart
-final configProvider = Provider((ref) => Config()); // ALLOWED: Provider variable
-
-// RECOMMENDED - Private functions anywhere
-void _internalHelper() {} // ALLOWED: Private function
 ```
 
 #### Example: print_ban
@@ -627,20 +645,6 @@ export 'card.dart';
 // RECOMMENDED - Import directly
 import 'package:my_app/screens/home_screen.dart';
 import 'package:my_app/widgets/button.dart';
-```
-
-#### Example: ignore_file_ban
-
-```dart
-// NOT RECOMMENDED - File-level ignore
-// ignore_for_file: print_ban
-// ERROR: File-level ignores are banned!
-
-print('This would be ignored'); // But we don't allow this
-
-// RECOMMENDED - Line-specific ignore for rare exceptions
-// ignore: print_ban
-print('Debug only - remove before commit');
 ```
 
 ---
@@ -769,7 +773,6 @@ class UserProfileScreen {} // Matches file name
 | `prefer_dedicated_media_query_methods` | Use `MediaQuery.sizeOf()` instead of `MediaQuery.of().size` |
 | `prefer_space_between_elements` | Require blank lines between class members |
 | `prefer_to_include_sliver_in_name` | Widgets returning Slivers should have "Sliver" in name |
-| `unsafe_null_assertion` | Avoid force null assertion (`!`); use `??` or null-aware operators |
 | `avoid_unnecessary_padding_widget` | Don't wrap Container with Padding; use Container's margin/padding |
 | `unnecessary_hook_widget` | Use StatelessWidget instead of HookWidget when no hooks are used |
 | `unnecessary_container` | Remove Container when it doesn't use any Container-specific properties |
@@ -936,19 +939,6 @@ Container(
 )
 ```
 
-#### Example: unsafe_null_assertion
-
-```dart
-// NOT RECOMMENDED - Force null assertion can crash
-String getValue(String? name) => name!;
-
-// RECOMMENDED - Use null coalescing
-String getValue(String? name) => name ?? 'default';
-
-// RECOMMENDED - Use null-aware access
-String? getUserName(User? user) => user?.name;
-```
-
 #### Example: unnecessary_hook_widget
 
 ```dart
@@ -1082,10 +1072,10 @@ class _MyWidgetState extends State<MyWidget> {
 
 ## Suppressing Rules
 
-While `// ignore_for_file:` is banned, you can still use line-specific ignores for rare exceptions:
+While `// ignore_for_file:` is banned, you can still use line-specific ignores for rare exceptions.
 
 ```dart
-// ignore: print_ban
+// ignore: arsync_lints/print_ban
 print('Debug only - remove before commit');
 ```
 

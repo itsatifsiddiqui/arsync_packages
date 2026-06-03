@@ -74,7 +74,6 @@ void updateUserProfile(
 // VIOLATION: file_class_match - Class name doesn't match file name
 class HomeScreenWidget extends StatelessWidget {}
 
-// VIOLATION: global_variable_restriction - Non-private top-level variable
 String screenTitle = 'Bad Screen';
 
 // VIOLATION: hook_safety_enforcement - GlobalKey<FormState> in HookConsumerWidget

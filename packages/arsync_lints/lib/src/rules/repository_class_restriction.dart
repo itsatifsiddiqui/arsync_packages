@@ -1,12 +1,7 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule: repository_class_restriction
-///
-/// Repository files should only contain Repository classes.
-/// Any other class declarations (like models, helpers, etc.)
-/// should be in their appropriate directories (models/, utils/, etc.).
-///
-/// Also enforces that files in repositories/ must end with _repository.dart
+/// Rule: in `lib/repositories/`, public classes must contain "Repository" in
+/// their name and the file must end with `_repository.dart`.
 class RepositoryClassRestriction extends MultiAnalysisRule {
   RepositoryClassRestriction()
     : super(
@@ -39,53 +34,40 @@ class RepositoryClassRestriction extends MultiAnalysisRule {
   ) {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInRepositories(path)) return;
-
-    final fileName = PathUtils.getFileName(path);
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits, fileName);
-    registry.addCompilationUnit(this, visitor);
+    registry.addCompilationUnit(
+      this,
+      _Visitor(this, PathUtils.getFileName(path)),
+    );
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
   final String fileName;
 
-  _Visitor(this.rule, this.allUnits, this.fileName);
+  _Visitor(super.rule, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    bool hasReportedFileNameError = false;
+    var fileNameReported = false;
+    for (final d in node.declarations.whereType<ClassDeclaration>()) {
+      final name = d.className.lexeme;
+      if (name.startsWith('_')) continue;
 
-    for (final declaration in node.declarations) {
-      if (declaration is ClassDeclaration) {
-        final className = declaration.name.lexeme;
-        if (className.startsWith('_')) continue;
-
-        if (!fileName.endsWith('_repository') && !hasReportedFileNameError) {
-          rule.reportAtOffset(
-            declaration.name.offset,
-            declaration.name.length,
-            diagnosticCode: RepositoryClassRestriction.fileNameCode,
-          );
-          hasReportedFileNameError = true;
-        }
-
-        if (!className.contains('Repository')) {
-          rule.reportAtOffset(
-            declaration.name.offset,
-            declaration.name.length,
-            diagnosticCode: RepositoryClassRestriction.classCode,
-          );
-        }
+      if (!fileName.endsWith('_repository') && !fileNameReported) {
+        rule.reportAtOffset(
+          d.className.offset,
+          d.className.length,
+          diagnosticCode: RepositoryClassRestriction.fileNameCode,
+        );
+        fileNameReported = true;
+      }
+      if (!name.contains('Repository')) {
+        rule.reportAtOffset(
+          d.className.offset,
+          d.className.length,
+          diagnosticCode: RepositoryClassRestriction.classCode,
+        );
       }
     }
   }

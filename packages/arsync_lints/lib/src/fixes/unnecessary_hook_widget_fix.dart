@@ -4,9 +4,8 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `unnecessary_hook_widget` rule.
-///
-/// Replaces `HookWidget` with `StatelessWidget`.
+/// Quick fix for `unnecessary_hook_widget` rule — replace `HookWidget` with
+/// `StatelessWidget`.
 class UnnecessaryHookWidgetFix extends ResolvedCorrectionProducer {
   UnnecessaryHookWidgetFix({required super.context});
 
@@ -25,30 +24,17 @@ class UnnecessaryHookWidgetFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final classDeclaration = _findClassDeclaration(node);
-    if (classDeclaration == null) return;
-
-    final superclass = classDeclaration.extendsClause?.superclass;
+    final superclass = node
+        .thisOrAncestorOfType<ClassDeclaration>()
+        ?.extendsClause
+        ?.superclass;
     if (superclass == null) return;
 
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
         SourceRange(superclass.offset, superclass.length),
         'StatelessWidget',
       );
     });
-  }
-
-  ClassDeclaration? _findClassDeclaration(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ClassDeclaration) {
-        return current;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

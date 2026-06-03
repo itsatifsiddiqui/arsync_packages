@@ -4,11 +4,8 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `hook_safety_enforcement` rule - controller replacement.
-///
-/// Replaces direct controller instantiation with hook:
-/// - Before: `TextEditingController()`
-/// - After: `useTextEditingController()`
+/// Quick fix for `hook_safety_enforcement` — replace controller instantiation
+/// with the corresponding `useX` hook.
 class HookSafetyControllerFix extends ResolvedCorrectionProducer {
   HookSafetyControllerFix({required super.context});
 
@@ -36,48 +33,28 @@ class HookSafetyControllerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final creation = _findInstanceCreation(node);
+    final creation = node.thisOrAncestorOfType<InstanceCreationExpression>();
     if (creation == null) return;
 
-    final typeName = creation.constructorName.type.name.lexeme;
-    final hookName = _controllerToHook[typeName];
-    if (hookName == null) return;
+    final hook =
+        _controllerToHook[creation.constructorName.type.name.lexeme];
+    if (hook == null) return;
 
-    // Build the hook call - preserve arguments if any
-    final args = creation.argumentList.arguments;
-    final argsSource = args.isNotEmpty
-        ? '(${args.map((e) => e.toSource()).join(', ')})'
-        : '()';
-    final replacement = '$hookName$argsSource';
+    final args = creation.argumentList.arguments
+        .map((e) => e.toSource())
+        .join(', ');
 
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
         SourceRange(creation.offset, creation.length),
-        replacement,
+        '$hook($args)',
       );
     });
   }
-
-  InstanceCreationExpression? _findInstanceCreation(AstNode? node) {
-    if (node == null) return null;
-    if (node is InstanceCreationExpression) return node;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is InstanceCreationExpression) {
-        return current;
-      }
-      current = current.parent;
-    }
-    return null;
-  }
 }
 
-/// Quick fix for `hook_safety_enforcement` rule - FormState key replacement.
-///
-/// Replaces `GlobalKey<FormState>` with `GlobalObjectKey`:
-/// - Before: `GlobalKey<FormState>()`
-/// - After: `GlobalObjectKey<FormState>(context)`
+/// Quick fix for `hook_safety_enforcement` — replace `GlobalKey<FormState>()`
+/// with `GlobalObjectKey<FormState>(context)`.
 class HookSafetyFormKeyFix extends ResolvedCorrectionProducer {
   HookSafetyFormKeyFix({required super.context});
 
@@ -96,33 +73,17 @@ class HookSafetyFormKeyFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final creation = _findInstanceCreation(node);
-    if (creation == null) return;
+    final creation = node.thisOrAncestorOfType<InstanceCreationExpression>();
+    if (creation == null ||
+        creation.constructorName.type.name.lexeme != 'GlobalKey') {
+      return;
+    }
 
-    final typeName = creation.constructorName.type.name.lexeme;
-    if (typeName != 'GlobalKey') return;
-
-    final replacement = 'GlobalObjectKey<FormState>(context)';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
         SourceRange(creation.offset, creation.length),
-        replacement,
+        'GlobalObjectKey<FormState>(context)',
       );
     });
-  }
-
-  InstanceCreationExpression? _findInstanceCreation(AstNode? node) {
-    if (node == null) return null;
-    if (node is InstanceCreationExpression) return node;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is InstanceCreationExpression) {
-        return current;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

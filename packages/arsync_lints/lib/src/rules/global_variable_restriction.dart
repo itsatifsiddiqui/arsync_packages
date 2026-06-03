@@ -1,16 +1,8 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule D2: global_variable_restriction
-///
-/// No global state pollution.
-/// Variables allowed:
-/// - Variables starting with _ (file-private)
-/// - Variables starting with k (constants in constants.dart)
-/// - Riverpod Providers (variables ending in Provider in lib/providers/ or lib/repositories/)
-///
-/// Functions allowed:
-/// - Functions starting with _ (file-private)
-/// - Functions starting with k (utility functions in constants.dart)
+/// Rule D2: top-level variables and functions must be private (`_`), `k`-prefixed
+/// constants inside `constants.dart`, Riverpod providers in `lib/providers/` or
+/// `lib/repositories/`, or `main()`.
 class GlobalVariableRestriction extends MultiAnalysisRule {
   GlobalVariableRestriction()
     : super(
@@ -42,59 +34,45 @@ class GlobalVariableRestriction extends MultiAnalysisRule {
     RuleContext context,
   ) {
     if (!context.isInLibDir) return;
-
     final path = context.definingUnit.file.path;
-    final isConstantsFile = PathUtils.isConstantsFile(path);
-    final isProvidersFile = PathUtils.isInProviders(path);
-    final isRepositoriesFile = PathUtils.isInRepositories(path);
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
     final visitor = _Visitor(
       this,
-      context.allUnits,
-      isConstantsFile,
-      isProvidersFile,
-      isRepositoriesFile,
+      isConstantsFile: PathUtils.isConstantsFile(path),
+      isProvidersFile: PathUtils.isInProviders(path),
+      isRepositoriesFile: PathUtils.isInRepositories(path),
     );
-    registry.addTopLevelVariableDeclaration(this, visitor);
-    registry.addFunctionDeclaration(this, visitor);
+    registry
+      ..addTopLevelVariableDeclaration(this, visitor)
+      ..addFunctionDeclaration(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
   final bool isConstantsFile;
   final bool isProvidersFile;
   final bool isRepositoriesFile;
 
   _Visitor(
-    this.rule,
-    this.allUnits,
-    this.isConstantsFile,
-    this.isProvidersFile,
-    this.isRepositoriesFile,
-  );
+    super.rule, {
+    required this.isConstantsFile,
+    required this.isProvidersFile,
+    required this.isRepositoriesFile,
+  });
+
+  bool get _providerNameAllowed => isProvidersFile || isRepositoriesFile;
 
   @override
   void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    for (final variable in node.variables.variables) {
-      final name = variable.name.lexeme;
-
+    for (final v in node.variables.variables) {
+      final name = v.name.lexeme;
       if (name.startsWith('_')) continue;
       if (isConstantsFile && name.startsWith('k')) continue;
-      if (isProvidersFile && name.endsWith('Provider')) continue;
-      if (isRepositoriesFile && name.endsWith('Provider')) continue;
+      if (_providerNameAllowed && name.endsWith('Provider')) continue;
 
       rule.reportAtOffset(
-        variable.name.offset,
-        variable.name.length,
+        v.name.offset,
+        v.name.length,
         diagnosticCode: GlobalVariableRestriction.variableCode,
       );
     }
@@ -102,16 +80,11 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
     if (node.parent is! CompilationUnit) return;
 
     final name = node.name.lexeme;
-
-    if (name.startsWith('_')) return;
+    if (name.startsWith('_') || name == 'main') return;
     if (isConstantsFile && name.startsWith('k')) return;
-    if (name == 'main') return;
 
     rule.reportAtOffset(
       node.name.offset,

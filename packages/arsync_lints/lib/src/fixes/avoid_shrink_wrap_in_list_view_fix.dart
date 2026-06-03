@@ -4,9 +4,7 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `avoid_shrink_wrap_in_list_view` rule.
-///
-/// Removes the shrinkWrap: true argument from ListView.
+/// Quick fix for `avoid_shrink_wrap_in_list_view` — remove `shrinkWrap` arg.
 class AvoidShrinkWrapInListViewFix extends ResolvedCorrectionProducer {
   AvoidShrinkWrapInListViewFix({required super.context});
 
@@ -25,66 +23,41 @@ class AvoidShrinkWrapInListViewFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final listView = _findListView(node);
+    final listView = node.thisOrAncestorMatching(
+          (n) =>
+              n is InstanceCreationExpression &&
+              n.staticType?.getDisplayString() == 'ListView',
+        )
+        as InstanceCreationExpression?;
     if (listView == null) return;
 
-    final shrinkWrapArg = _findShrinkWrapArg(listView);
-    if (shrinkWrapArg == null) return;
+    final arg = listView.argumentList.arguments
+        .whereType<NamedExpression>()
+        .where((e) => e.name.label.name == 'shrinkWrap')
+        .firstOrNull;
+    if (arg == null) return;
 
-    // Calculate the range to delete including trailing comma/whitespace
+    // Extend deletion through trailing comma + whitespace.
     final content = unitResult.content;
-    var endOffset = shrinkWrapArg.end;
-
-    // Skip any trailing comma and whitespace
-    while (endOffset < content.length) {
-      final char = content[endOffset];
-      if (char == ',') {
-        endOffset++;
-        // Skip whitespace after comma
-        while (endOffset < content.length &&
-            (content[endOffset] == ' ' ||
-                content[endOffset] == '\n' ||
-                content[endOffset] == '\r' ||
-                content[endOffset] == '\t')) {
-          endOffset++;
+    var end = arg.end;
+    while (end < content.length) {
+      final c = content[end];
+      if (c == ',') {
+        end++;
+        while (end < content.length && _isWhitespace(content[end])) {
+          end++;
         }
         break;
-      } else if (char == ' ' || char == '\n' || char == '\r' || char == '\t') {
-        endOffset++;
-      } else {
-        break;
       }
+      if (!_isWhitespace(c)) break;
+      end++;
     }
 
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addDeletion(
-        SourceRange(shrinkWrapArg.offset, endOffset - shrinkWrapArg.offset),
-      );
+    await builder.addDartFileEdit(file, (b) {
+      b.addDeletion(SourceRange(arg.offset, end - arg.offset));
     });
   }
 
-  InstanceCreationExpression? _findListView(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is InstanceCreationExpression) {
-        final typeName = current.staticType?.getDisplayString();
-        if (typeName == 'ListView') {
-          return current;
-        }
-      }
-      current = current.parent;
-    }
-    return null;
-  }
-
-  NamedExpression? _findShrinkWrapArg(InstanceCreationExpression node) {
-    for (final arg in node.argumentList.arguments) {
-      if (arg is NamedExpression && arg.name.label.name == 'shrinkWrap') {
-        return arg;
-      }
-    }
-    return null;
-  }
+  static bool _isWhitespace(String c) =>
+      c == ' ' || c == '\n' || c == '\r' || c == '\t';
 }

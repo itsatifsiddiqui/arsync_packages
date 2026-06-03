@@ -1,198 +1,124 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+`arsync_lints` is a `analysis_server_plugin`-based lint package enforcing the
+Arsync 4-Layer Architecture (presentation, viewmodel/providers, repositories,
+models) plus Riverpod and Flutter best practices.
 
-## Project Overview
-
-`arsync_lints` is a custom Dart lint package built on the native `analysis_server_plugin` system (Dart 3.10+) that enforces the Arsync 4-Layer Architecture. It treats architectural violations as **build errors**, not warnings.
-
-## Requirements
-
-- **Dart SDK**: 3.10.0 or higher
-- **Flutter SDK**: 3.38.0 or higher
-
-## Commands
-
-```bash
-# Run all tests
-dart test
-
-# Run a single test file
-dart test test/lint_rules_test.dart
-
-# Run a specific test by name
-dart test --name "ComplexityLimits"
-
-# Analyze the package
-dart analyze
-
-# Test lints in the example project
-cd example && dart analyze
-```
-
-## Architecture
-
-### How analysis_server_plugin Works
-
-1. Entry point: `lib/main.dart` exports a top-level `plugin` variable
-2. Plugin class `ArsyncPlugin` extends `ServerPlugin` and registers all rules
-3. Each rule extends `AnalysisRule` or `MultiAnalysisRule` and implements `registerNodeProcessors()`
-4. Rules use `registry.add*()` to listen for specific AST node types
-5. Violations are reported via `rule.reportAtNode()` or `rule.reportAtOffset()`
-
-### Rule Structure
+## Layout
 
 ```
 lib/
-├── main.dart              # Plugin entry point, exports `plugin` variable
-├── arsync_plugin.dart     # ArsyncPlugin class, registers all rules
-├── arsync_lints.dart      # Library exports for programmatic access
+├── main.dart                  # Plugin entry point; exports `plugin`.
 └── src/
-    ├── arsync_lint_rule.dart  # Base rule classes and helpers
-    ├── utils.dart             # PathUtils, ImportUtils helpers
-    └── rules/                 # 27 lint rules organized by category
-        ├── presentation_layer_isolation.dart   # Category A
-        ├── provider_autodispose_enforcement.dart  # Category B
-        ├── repository_no_try_catch.dart        # Category C
-        ├── complexity_limits.dart              # Category D
-        └── hook_safety_enforcement.dart        # Category E
+    ├── arsync_lint_rule.dart  # Single import for rules (re-exports analyzer + helpers).
+    ├── ast_extensions.dart    # ClassDeclarationX, InstanceCreationX, AstNodeX.
+    ├── banned_import_visitor.dart  # Shared visitor for import-banning rules.
+    ├── rule_visitor_base.dart # `ArsyncRuleVisitor<R>` — the visitor base class.
+    ├── utils.dart             # PathUtils, ImportUtils.
+    ├── rules/                 # One file per rule.
+    └── fixes/                 # One file per quick-fix (+ fix_helpers.dart).
 ```
 
-### Rule Categories
+## Conventions
 
-- **Category A (4 rules)**: Architectural Layer Isolation - prevents cross-layer imports
-- **Category B (9 rules)**: Riverpod & State Management - enforces provider patterns
-- **Category C (5 rules)**: Repository & Data Integrity - repository conventions
-- **Category D (5 rules)**: Code Quality & Complexity - clean code standards
-- **Category E (4 rules)**: UI Safety & Consistency - widget/hook patterns
+- **One `_Visitor` per rule, instantiated once** in `registerNodeProcessors`
+  and registered for every node type the rule cares about.
+- **Visitor extends `ArsyncRuleVisitor<R>`** (where `R` is `AnalysisRule` or
+  `MultiAnalysisRule`). Don't extend `SimpleAstVisitor` directly.
+- **`RuleContext.isInLibDir` / `isInTestDirectory` / `currentUnit`** —
+  use these directly. Don't reimplement.
+- **AST extensions over inline walks**: `node.hasFreezedAnnotation`,
+  `node.extendsNotifierVariant`, `node.extendsWidgetBase`, `node.typeName`,
+  `node.namedArg('child')`, `node.ancestorWidget('Padding')`. Plus the
+  analyzer-12-compat shims: `classDecl.className` (the class-name `Token`,
+  unwraps `namePart`), `classDecl.classMembers` (unwraps `body`),
+  `classDecl.bodyRightBracket`.
+- **Syntactic over semantic**: `node.constructorName.type.name.lexeme` (i.e.
+  `typeName` extension) — not `staticType?.getDisplayString()` — for widget
+  identity checks. The semantic path triggers type resolution.
+- **Static `const Set`s** for membership checks. Inline `RegExp` literals
+  belong in `static final` fields so they compile once.
+- **Generated files are excluded by the user's `analysis_options.yaml`** —
+  rules do NOT filter generated files in code.
 
-### Path-Based Rule Targeting
+## Adding a new lint rule (warning + quick fix)
 
-Rules use `PathUtils` to determine file location:
-- `isInScreens()` - `lib/screens/`
-- `isInWidgets()` - `lib/widgets/`
-- `isInProviders()` - `lib/providers/`
-- `isInRepositories()` - `lib/repositories/`
-- `isInModels()` - `lib/models/`
-- `isConstantsFile()` - `**/constants.dart`
+1. **Rule file** `lib/src/rules/<name>.dart`:
+   ```dart
+   import '../arsync_lint_rule.dart';
 
-### Post-Run Callbacks
+   class MyRule extends AnalysisRule {
+     MyRule() : super(name: code.name, description: code.problemMessage);
 
-For rules that need to collect data across the entire file before validating (e.g., checking for single provider per file), use:
-```dart
-context.addPostRunCallback(() {
-  // Validation logic after all AST nodes processed
-});
-```
+     static const LintCode code = LintCode(
+       'my_rule',
+       'What is wrong.',
+       correctionMessage: 'How to fix it.',
+     );
 
-## Key Patterns
+     @override
+     DiagnosticCode get diagnosticCode => code;
 
-### Creating a New Rule
+     @override
+     void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context) {
+       if (!PathUtils.isInWidgets(context.definingUnit.file.path)) return; // path gate
+       registry.addInstanceCreationExpression(this, _Visitor(this));
+     }
+   }
 
-1. Create `lib/src/rules/rule_name.dart`
-2. Extend `AnalysisRule` (single diagnostic) or `MultiAnalysisRule` (multiple diagnostics)
-3. Define `LintCode` constants for error messages
-4. Implement `registerNodeProcessors()` using `registry.add*()` callbacks
-5. Register in `lib/arsync_plugin.dart` `getLintRules()` method
-6. Add tests to `test/rules/` directory
-7. Add example violations to `example/lib/`
+   class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+     _Visitor(super.rule);
+     @override
+     void visitInstanceCreationExpression(InstanceCreationExpression node) {
+       if (node.typeName != 'Bad') return;
+       rule.reportAtNode(node);
+     }
+   }
+   ```
+   For rules with multiple diagnostics, extend `MultiAnalysisRule` and pass a
+   `diagnosticCode:` arg to `reportAtNode` / `reportAtOffset`.
 
-### LintCode Definition
+2. **Fix file** `lib/src/fixes/<name>_fix.dart`:
+   ```dart
+   class MyRuleFix extends ResolvedCorrectionProducer {
+     MyRuleFix({required super.context});
+     static const _fixKind = FixKind('arsync.fix.myRule', 100, 'Fix it');
+     @override FixKind? get fixKind => _fixKind;
+     @override CorrectionApplicability get applicability => CorrectionApplicability.singleLocation;
+     @override Future<void> compute(ChangeBuilder b) async {
+       final widget = node.ancestorWidget('Bad');
+       if (widget == null) return;
+       await b.addDartFileEdit(file, (e) => e.addDeletion(SourceRange(widget.offset, widget.length)));
+     }
+   }
+   ```
+   Use `FixHelpers.deleteLine` / `FixHelpers.indentOf` for line/indent ops.
 
-```dart
-static const LintCode code = LintCode(
-  'rule_name',  // Must be snake_case
-  'What is wrong.',
-  correctionMessage: 'How to fix it.',
-);
-```
+3. **Register both** in `lib/main.dart`: add `MyRule()` to the rules list and
+   `registry.registerFixForRule(MyRule.code, MyRuleFix.new)`.
 
-### AST Visitors
+4. **Tests** `test/rules/<name>_test.dart` (see existing tests for shape).
 
-For complex traversal within a node (e.g., finding all method calls in a build method):
-```dart
-final visitor = _MyVisitor(rule);
-body.accept(visitor);
+## Notes on analyzer version
 
-class _MyVisitor extends RecursiveAstVisitor<void> {
-  @override
-  void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Check node
-    super.visitInstanceCreationExpression(node);
-  }
-}
-```
+We track `analyzer ^12.0.0` (rolled back from 13 because the wider ecosystem —
+`freezed`, `json_serializable` — hadn't caught up). Things to know about 12:
 
-### Quick Fixes
+- `ClassDeclaration.members` / `.name` / `.rightBracket` were moved into `.body`
+  (`ClassBody`) and `.namePart` (`ClassNamePart`). The `ClassDeclarationX`
+  extensions expose `className`, `classMembers`, `bodyRightBracket` so callers
+  don't deal with the unwrap.
+- Named arguments are still `NamedExpression` (not `NamedArgument` — that's an
+  analyzer 13 rename). Use `namedExpr.name.label.name` to read the label and
+  `namedExpr.expression` for the inner value.
+- `argumentList.arguments` still returns `List<Expression>` (sealed `Argument`
+  is analyzer 13). For positional arguments treat the element directly as
+  `Expression`.
+- `SimpleFormalParameter` and `DefaultFormalParameter` still apply — the
+  `RegularFormalParameter` consolidation is analyzer 13.
+- `LintCode.name` is deprecated → use `lowerCaseName` (our codes are already
+  lowercase snake_case).
 
-To add a quick fix for a rule:
-1. Create `lib/src/fixes/rule_name_fix.dart`
-2. Extend `ResolvedCorrectionProducer`
-3. Define `FixKind` with priority
-4. Implement `compute()` to build the fix
-5. Register in `ArsyncPlugin.register()` using `registry.registerFixForRule()`
-
-Example:
-```dart
-class MyRuleFix extends ResolvedCorrectionProducer {
-  static const _fixKind = FixKind(
-    'arsync.fix.myRule',
-    100, // Priority
-    'Fix description',
-  );
-
-  @override
-  Future<void> compute(ChangeBuilder builder) async {
-    // Build the fix
-  }
-}
-```
-
-## Testing
-
-Tests use the `analyzer_testing` package with `test_reflective_loader`:
-
-```dart
-@reflectiveTest
-class MyRuleTest extends AnalysisRuleTest {
-  @override
-  void setUp() {
-    rule = MyRule();
-    super.setUp();
-  }
-
-  Future<void> test_good_case() async {
-    await assertNoDiagnostics(r'''
-void main() {}
-''');
-  }
-
-  Future<void> test_bad_case() async {
-    await assertDiagnostics(r'''
-void badCode() {}
-''', [lint(0, 17)]);
-  }
-}
-```
-
-## Example Project
-
-The `example/` directory contains:
-- `lib/screens/bad_screen.dart` - Demonstrates rule violations
-- `lib/screens/good_screen.dart` - Demonstrates compliant code
-- `lib/providers/`, `lib/repositories/`, `lib/models/` - Pattern examples
-
-## Complexity Limits
-
-- Max 4 method parameters
-- Max 5 nesting levels
-- Max 60 lines per method
-- Max 120 lines for `build()` methods
-- Nested ternary operators banned
-
-## Special Cases
-
-- `providers/core/` is exempt from autodispose enforcement (infrastructure providers)
-- `constants.dart` allows `k`-prefixed global variables and functions
-- `main()` function is always allowed
-- Private (`_`) prefixed items are generally exempt from naming rules
+`analyzer_plugin` is imported transitively (via `analysis_server_plugin`) for
+`FixKind` and `ChangeBuilder`. We don't declare it directly; the
+`depend_on_referenced_packages` lint is suppressed in `analysis_options.yaml`.

@@ -1,41 +1,12 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import "../ast_extensions.dart";
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// A quick fix that creates a new `dispose()` method with notifier disposal.
-///
-/// This fix is triggered by the `dispose_notifier` lint rule when a
-/// `ChangeNotifier` field is used but the `State` class has no `dispose()`
-/// method.
-///
-/// ## Example
-///
-/// Before fix:
-/// ```dart
-/// class _MyState extends State<MyWidget> {
-///   final _controller = TextEditingController();
-///
-///   @override
-///   Widget build(BuildContext context) => TextField(controller: _controller);
-/// }
-/// ```
-///
-/// After fix:
-/// ```dart
-/// class _MyState extends State<MyWidget> {
-///   final _controller = TextEditingController();
-///
-///   @override
-///   Widget build(BuildContext context) => TextField(controller: _controller);
-///
-///   @override
-///   void dispose() {
-///     _controller.dispose();
-///     super.dispose();
-///   }
-/// }
-/// ```
+import 'fix_helpers.dart';
+
+/// Add a new `dispose()` method that calls `<field>.dispose(); super.dispose();`.
 class AddDisposeMethodFix extends ResolvedCorrectionProducer {
   AddDisposeMethodFix({required super.context});
 
@@ -54,65 +25,36 @@ class AddDisposeMethodFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the variable declaration
     final node = this.node;
     if (node is! VariableDeclaration) return;
 
-    final fieldName = node.name.lexeme;
-
-    // Find the containing class
-    final classDeclaration = node.thisOrAncestorOfType<ClassDeclaration>();
-    if (classDeclaration == null) return;
-
-    // Check if dispose method already exists
-    final hasDispose = classDeclaration.members.any(
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null) return;
+    final hasDispose = classDecl.classMembers.any(
       (m) => m is MethodDeclaration && m.name.lexeme == 'dispose',
     );
+    if (hasDispose) return;
 
-    if (hasDispose) return; // Use AddDisposeCallFix instead
+    final last = classDecl.classMembers.lastOrNull;
+    if (last == null) return;
 
-    // Find the last member to insert after
-    final lastMember = classDeclaration.members.lastOrNull;
-    if (lastMember == null) return;
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addInsertion(lastMember.end, (builder) {
-        builder.writeln();
-        builder.writeln();
-        builder.writeln('  @override');
-        builder.writeln('  void dispose() {');
-        builder.writeln('    $fieldName.dispose();');
-        builder.writeln('    super.dispose();');
-        builder.write('  }');
+    final fieldName = node.name.lexeme;
+    await builder.addDartFileEdit(file, (b) {
+      b.addInsertion(last.end, (w) {
+        w
+          ..writeln()
+          ..writeln()
+          ..writeln('  @override')
+          ..writeln('  void dispose() {')
+          ..writeln('    $fieldName.dispose();')
+          ..writeln('    super.dispose();')
+          ..write('  }');
       });
     });
   }
 }
 
-/// A quick fix that adds a dispose call to an existing `dispose()` method.
-///
-/// This fix is triggered by the `dispose_notifier` lint rule when a
-/// `ChangeNotifier` field is used but not disposed, and a `dispose()` method
-/// already exists.
-///
-/// ## Example
-///
-/// Before fix:
-/// ```dart
-/// @override
-/// void dispose() {
-///   super.dispose();
-/// }
-/// ```
-///
-/// After fix:
-/// ```dart
-/// @override
-/// void dispose() {
-///   _controller.dispose();
-///   super.dispose();
-/// }
-/// ```
+/// Add `<field>.dispose();` to an existing `dispose()` method.
 class AddDisposeCallFix extends ResolvedCorrectionProducer {
   AddDisposeCallFix({required super.context});
 
@@ -136,95 +78,56 @@ class AddDisposeCallFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the variable declaration
     final node = this.node;
     if (node is! VariableDeclaration) return;
-
     _fieldName = node.name.lexeme;
 
-    // Find the containing class
-    final classDeclaration = node.thisOrAncestorOfType<ClassDeclaration>();
-    if (classDeclaration == null) return;
-
-    // Find the dispose method
-    MethodDeclaration? disposeMethod;
-    for (final member in classDeclaration.members) {
-      if (member is MethodDeclaration && member.name.lexeme == 'dispose') {
-        disposeMethod = member;
-        break;
-      }
-    }
-
-    if (disposeMethod == null) return; // Use AddDisposeMethodFix instead
-
-    final body = disposeMethod.body;
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null) return;
+    final dispose = classDecl.classMembers
+        .whereType<MethodDeclaration>()
+        .where((m) => m.name.lexeme == 'dispose')
+        .firstOrNull;
+    final body = dispose?.body;
     if (body is! BlockFunctionBody) return;
 
     final block = body.block;
+    final superDispose = block.statements
+        .whereType<ExpressionStatement>()
+        .where((s) {
+          final e = s.expression;
+          return e is MethodInvocation &&
+              e.methodName.name == 'dispose' &&
+              e.target is SuperExpression;
+        })
+        .firstOrNull;
 
-    // Find super.dispose() call to insert before it
-    ExpressionStatement? superDisposeStatement;
-    for (final statement in block.statements) {
-      if (statement is ExpressionStatement) {
-        final expr = statement.expression;
-        if (expr is MethodInvocation &&
-            expr.methodName.name == 'dispose' &&
-            expr.target is SuperExpression) {
-          superDisposeStatement = statement;
-          break;
-        }
-      }
-    }
-
-    await builder.addDartFileEdit(file, (builder) {
-      if (superDisposeStatement != null) {
-        // Insert before super.dispose() - get indent from that line
-        final lineStart = _getLineStart(superDisposeStatement.offset);
-        final indent = unitResult.content.substring(
-          lineStart,
-          superDisposeStatement.offset,
-        );
-        builder.addInsertion(superDisposeStatement.offset, (builder) {
-          builder.write('$_fieldName.dispose();');
-          builder.writeln();
-          builder.write(indent);
+    await builder.addDartFileEdit(file, (b) {
+      if (superDispose != null) {
+        final indent = FixHelpers.indentOf(unitResult,superDispose.offset);
+        b.addInsertion(superDispose.offset, (w) {
+          w
+            ..write('$_fieldName.dispose();')
+            ..writeln()
+            ..write(indent);
         });
       } else if (block.statements.isNotEmpty) {
-        // No super.dispose(), insert after last statement
-        final lastStatement = block.statements.last;
-        final lineStart = _getLineStart(lastStatement.offset);
-        final indent = unitResult.content.substring(
-          lineStart,
-          lastStatement.offset,
-        );
-        builder.addInsertion(lastStatement.end, (builder) {
-          builder.writeln();
-          builder.write('$indent$_fieldName.dispose();');
+        final last = block.statements.last;
+        final indent = FixHelpers.indentOf(unitResult,last.offset);
+        b.addInsertion(last.end, (w) {
+          w
+            ..writeln()
+            ..write('$indent$_fieldName.dispose();');
         });
       } else {
-        // Empty dispose method, insert before closing brace
-        final lineStart = _getLineStart(block.rightBracket.offset);
-        final braceIndent = unitResult.content.substring(
-          lineStart,
-          block.rightBracket.offset,
-        );
-        // Statement indent is typically brace indent + 2 spaces
-        final stmtIndent = '$braceIndent  ';
-        builder.addInsertion(block.rightBracket.offset, (builder) {
-          builder.write('$stmtIndent$_fieldName.dispose();');
-          builder.writeln();
+        final braceIndent = FixHelpers.indentOf(unitResult,block.rightBracket.offset);
+        b.addInsertion(block.rightBracket.offset, (w) {
+          w
+            ..write('$braceIndent  $_fieldName.dispose();')
+            ..writeln();
         });
       }
     });
   }
 
-  /// Gets the offset of the start of the line containing [offset].
-  int _getLineStart(int offset) {
-    final content = unitResult.content;
-    int lineStart = offset;
-    while (lineStart > 0 && content[lineStart - 1] != '\n') {
-      lineStart--;
-    }
-    return lineStart;
-  }
 }

@@ -1,9 +1,7 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule A2: shared_widget_purity
-///
-/// Shared Widgets must be dumb and pure. They cannot know about business logic.
-/// Each widget file should contain only ONE public widget.
+/// Rule A2: shared widgets in `lib/widgets/` must be pure (no Riverpod/provider
+/// imports) and each file must contain at most one public widget class.
 class SharedWidgetPurity extends MultiAnalysisRule {
   SharedWidgetPurity()
     : super(
@@ -36,98 +34,45 @@ class SharedWidgetPurity extends MultiAnalysisRule {
     'package:hooks_riverpod',
   ];
 
-  static const _widgetBaseClasses = {
-    'StatelessWidget',
-    'StatefulWidget',
-    'HookWidget',
-    'HookConsumerWidget',
-    'ConsumerWidget',
-    'ConsumerStatefulWidget',
-  };
-
   @override
   void registerNodeProcessors(
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInWidgets(path)) return;
+    if (!PathUtils.isInWidgets(context.definingUnit.file.path)) return;
 
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    var visitor = _Visitor(this, context.allUnits);
-    registry.addImportDirective(this, visitor);
-    registry.addCompilationUnit(this, visitor);
+    registry
+      ..addImportDirective(
+        this,
+        BannedImportVisitor(
+          this,
+          _bannedPatterns,
+          (n) => reportAtNode(n, diagnosticCode: importCode),
+        ),
+      )
+      ..addCompilationUnit(this, _Visitor(this));
   }
 
-  static bool isBannedImport(String importUri) {
-    for (final pattern in _bannedPatterns) {
-      if (importUri.contains(pattern)) return true;
-    }
-    return false;
-  }
-
-  static bool isWidgetClass(ClassDeclaration node) {
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return false;
-    return _widgetBaseClasses.contains(extendsClause.superclass.name.lexeme);
-  }
+  static bool isBannedImport(String uri) => _bannedPatterns.any(uri.contains);
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
-
-  @override
-  void visitImportDirective(ImportDirective node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final importUri = node.uri.stringValue;
-    if (importUri == null) return;
-
-    if (SharedWidgetPurity.isBannedImport(importUri)) {
-      rule.reportAtNode(node, diagnosticCode: SharedWidgetPurity.importCode);
-    }
-  }
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    final publicWidgets = <ClassDeclaration>[];
-
-    for (final declaration in node.declarations) {
-      if (declaration is ClassDeclaration) {
-        final className = declaration.name.lexeme;
-        if (className.startsWith('_')) continue;
-
-        if (SharedWidgetPurity.isWidgetClass(declaration)) {
-          publicWidgets.add(declaration);
-        }
-      }
-    }
-
-    if (publicWidgets.length > 1) {
-      for (var i = 1; i < publicWidgets.length; i++) {
-        if (NodeContentHelper.shouldSkipNode(
-          publicWidgets[i],
-          allUnits,
-          rule.name,
-        )) {
-          continue;
-        }
-        rule.reportAtOffset(
-          publicWidgets[i].name.offset,
-          publicWidgets[i].name.length,
-          diagnosticCode: SharedWidgetPurity.singleWidgetCode,
-        );
-      }
+    final publics = [
+      for (final d in node.declarations.whereType<ClassDeclaration>())
+        if (!d.className.lexeme.startsWith('_') && d.extendsWidgetBase)
+          d,
+    ];
+    for (final extra in publics.skip(1)) {
+      rule.reportAtOffset(
+        extra.className.offset,
+        extra.className.length,
+        diagnosticCode: SharedWidgetPurity.singleWidgetCode,
+      );
     }
   }
 }

@@ -1,11 +1,11 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import "../ast_extensions.dart";
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `repository_class_restriction` rule - add Repository suffix.
+/// Quick fix for `repository_class_restriction` — append `Repository` suffix.
 class RepositoryClassRestrictionAddSuffixFix
     extends ResolvedCorrectionProducer {
   RepositoryClassRestrictionAddSuffixFix({required super.context});
@@ -25,48 +25,19 @@ class RepositoryClassRestrictionAddSuffixFix
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final classNameToken = _findClassNameToken(node);
-    if (classNameToken == null) return;
+    final name = node.thisOrAncestorOfType<ClassDeclaration>()?.className;
+    if (name == null || name.lexeme.contains('Repository')) return;
 
-    final currentName = classNameToken.lexeme;
-    if (currentName.contains('Repository')) return;
-
-    final newName = '${currentName}Repository';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(classNameToken.offset, classNameToken.length),
-        newName,
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(name.offset, name.length),
+        '${name.lexeme}Repository',
       );
     });
   }
-
-  Token? _findClassNameToken(AstNode? node) {
-    if (node == null) return null;
-
-    if (node is ClassDeclaration) {
-      return node.name;
-    }
-
-    if (node is SimpleIdentifier) {
-      final parent = node.parent;
-      if (parent is ClassDeclaration) {
-        return parent.name;
-      }
-    }
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ClassDeclaration) {
-        return current.name;
-      }
-      current = current.parent;
-    }
-    return null;
-  }
 }
 
-/// Quick fix for `repository_class_restriction` rule - make class private.
+/// Quick fix for `repository_class_restriction` — prefix class name with `_`.
 class RepositoryClassRestrictionMakePrivateFix
     extends ResolvedCorrectionProducer {
   RepositoryClassRestrictionMakePrivateFix({required super.context});
@@ -86,43 +57,14 @@ class RepositoryClassRestrictionMakePrivateFix
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final classNameToken = _findClassNameToken(node);
-    if (classNameToken == null) return;
+    final name = node.thisOrAncestorOfType<ClassDeclaration>()?.className;
+    if (name == null || name.lexeme.startsWith('_')) return;
 
-    final currentName = classNameToken.lexeme;
-    if (currentName.startsWith('_')) return;
-
-    final newName = '_$currentName';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(classNameToken.offset, classNameToken.length),
-        newName,
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(name.offset, name.length),
+        '_${name.lexeme}',
       );
     });
-  }
-
-  Token? _findClassNameToken(AstNode? node) {
-    if (node == null) return null;
-
-    if (node is ClassDeclaration) {
-      return node.name;
-    }
-
-    if (node is SimpleIdentifier) {
-      final parent = node.parent;
-      if (parent is ClassDeclaration) {
-        return parent.name;
-      }
-    }
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ClassDeclaration) {
-        return current.name;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

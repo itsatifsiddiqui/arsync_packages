@@ -1,20 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule: provider_class_restriction
-///
-/// Provider files should only contain:
-/// 1. Notifier classes (extending Notifier, AsyncNotifier, etc.)
-/// 2. Freezed state classes (annotated with @freezed)
-///
-/// Any other class declarations (like plain models, helpers, etc.)
-/// should be in their appropriate directories (models/, utils/, etc.)
+/// Rule: in `lib/providers/`, public classes must extend a `Notifier` variant
+/// or be `@freezed` state classes.
 class ProviderClassRestriction extends AnalysisRule {
-  ProviderClassRestriction()
-    : super(
-        name: 'provider_class_restriction',
-        description:
-            'Provider files should only contain Notifier classes and @freezed state classes.',
-      );
+  ProviderClassRestriction() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'provider_class_restriction',
@@ -24,19 +13,6 @@ class ProviderClassRestriction extends AnalysisRule {
         'or add @freezed annotation if this is a state class.',
   );
 
-  static const _notifierPatterns = {
-    'Notifier',
-    'AsyncNotifier',
-    'StreamNotifier',
-    'AutoDisposeNotifier',
-    'AutoDisposeAsyncNotifier',
-    'AutoDisposeStreamNotifier',
-    'FamilyNotifier',
-    'FamilyAsyncNotifier',
-    'AutoDisposeFamilyNotifier',
-    'AutoDisposeFamilyAsyncNotifier',
-  };
-
   @override
   DiagnosticCode get diagnosticCode => code;
 
@@ -45,49 +21,20 @@ class ProviderClassRestriction extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    if (!PathUtils.isInProviders(context.definingUnit.file.path)) return;
+    registry.addClassDeclaration(this, _Visitor(this));
   }
 
-  static bool isNotifierClass(ClassDeclaration node) {
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return false;
-    final superclassName = extendsClause.superclass.name.lexeme;
-    return _notifierPatterns.any((pattern) => superclassName.contains(pattern));
-  }
-
-  static bool hasFreezedAnnotation(ClassDeclaration node) {
-    return node.metadata.any((annotation) {
-      final name = annotation.name.name;
-      return name == 'freezed' || name == 'Freezed';
-    });
-  }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final className = node.name.lexeme;
-    if (className.startsWith('_')) return;
-
-    if (ProviderClassRestriction.isNotifierClass(node)) return;
-    if (ProviderClassRestriction.hasFreezedAnnotation(node)) return;
-
-    rule.reportAtOffset(node.name.offset, node.name.length);
+    if (node.className.lexeme.startsWith('_')) return;
+    if (node.extendsNotifierVariant) return;
+    if (node.hasFreezedAnnotation) return;
+    rule.reportAtOffset(node.className.offset, node.className.length);
   }
 }

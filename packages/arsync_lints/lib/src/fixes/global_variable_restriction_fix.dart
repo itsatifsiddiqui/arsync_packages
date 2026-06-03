@@ -5,11 +5,7 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `global_variable_restriction` rule.
-///
-/// Makes top-level variables and functions private by adding underscore prefix:
-/// - Before: `String globalVar = 'value';`
-/// - After: `String _globalVar = 'value';`
+/// Quick fix for `global_variable_restriction` — prefix top-level name with `_`.
 class GlobalVariableRestrictionFix extends ResolvedCorrectionProducer {
   GlobalVariableRestrictionFix({required super.context});
 
@@ -28,53 +24,28 @@ class GlobalVariableRestrictionFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // Find the token that was flagged
-    final tokenInfo = _findNameToken(node);
-    if (tokenInfo == null) return;
+    final n = node;
+    final Token? name;
+    if (n is SimpleIdentifier) {
+      name = n.token;
+    } else {
+      final decl = n.thisOrAncestorMatching(
+        (a) => a is VariableDeclaration || a is FunctionDeclaration,
+      );
+      name = decl is VariableDeclaration
+          ? decl.name
+          : decl is FunctionDeclaration
+          ? decl.name
+          : null;
+    }
+    final n2 = name;
+    if (n2 == null || n2.lexeme.startsWith('_')) return;
 
-    final name = tokenInfo.lexeme;
-    if (name.startsWith('_')) return; // Already private
-
-    final newName = '_$name';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(tokenInfo.offset, tokenInfo.length),
-        newName,
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(n2.offset, n2.length),
+        '_${n2.lexeme}',
       );
     });
-  }
-
-  Token? _findNameToken(AstNode? node) {
-    if (node == null) return null;
-
-    // Check if we're at a variable declaration
-    if (node is VariableDeclaration) {
-      return node.name;
-    }
-
-    // Check if we're at a function declaration
-    if (node is FunctionDeclaration) {
-      return node.name;
-    }
-
-    // Check if node itself is an identifier
-    if (node is SimpleIdentifier) {
-      return node.token;
-    }
-
-    // Traverse up to find the declaration
-    AstNode? current = node;
-    while (current != null) {
-      if (current is VariableDeclaration) {
-        return current.name;
-      }
-      if (current is FunctionDeclaration) {
-        return current.name;
-      }
-      current = current.parent;
-    }
-
-    return null;
   }
 }

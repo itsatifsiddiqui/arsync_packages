@@ -4,9 +4,9 @@ import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `avoid_unnecessary_padding_widget` rule when Padding wraps Container.
-///
-/// Moves the padding value to Container's margin property and removes the Padding wrapper.
+import '../ast_extensions.dart';
+
+/// Quick fix when `Padding` wraps `Container` — move padding to `Container.margin`.
 class PaddingWrapsContainerFix extends ResolvedCorrectionProducer {
   PaddingWrapsContainerFix({required super.context});
 
@@ -25,86 +25,41 @@ class PaddingWrapsContainerFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final paddingWidget = _findPaddingWidget(node);
-    if (paddingWidget == null) return;
+    final padding = node.ancestorWidget('Padding');
+    if (padding == null) return;
 
-    // Get the padding argument value
-    final paddingArg = _findNamedArgument(paddingWidget, 'padding');
-    if (paddingArg == null) return;
+    final paddingArg = padding.namedArg('padding');
+    final childArg = padding.namedArg('child');
+    if (paddingArg == null || childArg == null) return;
 
-    // Get the child Container
-    final childArg = _findNamedArgument(paddingWidget, 'child');
-    if (childArg == null) return;
+    final container = childArg.expression;
+    if (container is! InstanceCreationExpression) return;
 
-    final containerWidget = childArg.expression;
-    if (containerWidget is! InstanceCreationExpression) return;
+    final newContainer = _addMargin(
+      container.toSource(),
+      paddingArg.expression.toSource(),
+    );
 
-    final paddingValue = paddingArg.expression.toSource();
-    final containerSource = containerWidget.toSource();
-
-    // Build new Container with margin
-    final newContainer = _addMarginToContainer(containerSource, paddingValue);
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(paddingWidget.offset, paddingWidget.length),
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(padding.offset, padding.length),
         newContainer,
       );
     });
   }
 
-  String _addMarginToContainer(String containerSource, String marginValue) {
-    // Find the position after "Container("
-    final openParenIndex = containerSource.indexOf('(');
-    if (openParenIndex == -1) return containerSource;
-
-    final beforeArgs = containerSource.substring(0, openParenIndex + 1);
-    final afterArgs = containerSource.substring(openParenIndex + 1);
-
-    // Check if there are existing arguments
-    final trimmedAfter = afterArgs.trimLeft();
-    if (trimmedAfter.startsWith(')')) {
-      // Empty Container()
-      return '${beforeArgs}margin: $marginValue)';
-    } else {
-      // Has arguments, add margin as first argument
-      return '${beforeArgs}margin: $marginValue, $afterArgs';
+  static String _addMargin(String containerSource, String marginValue) {
+    final open = containerSource.indexOf('(');
+    if (open == -1) return containerSource;
+    final after = containerSource.substring(open + 1);
+    if (after.trimLeft().startsWith(')')) {
+      return '${containerSource.substring(0, open + 1)}margin: $marginValue)';
     }
-  }
-
-  InstanceCreationExpression? _findPaddingWidget(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is InstanceCreationExpression) {
-        final typeName = current.constructorName.type.name.lexeme;
-        if (typeName == 'Padding') {
-          return current;
-        }
-      }
-      current = current.parent;
-    }
-    return null;
-  }
-
-  NamedExpression? _findNamedArgument(
-    InstanceCreationExpression node,
-    String argName,
-  ) {
-    for (final arg in node.argumentList.arguments) {
-      if (arg is NamedExpression && arg.name.label.name == argName) {
-        return arg;
-      }
-    }
-    return null;
+    return '${containerSource.substring(0, open + 1)}margin: $marginValue, $after';
   }
 }
 
-/// Quick fix for `avoid_unnecessary_padding_widget` rule when Container wraps Padding.
-///
-/// Moves the Padding's padding value to Container's padding property and
-/// connects Padding's child directly to Container.
+/// Quick fix when `Container` wraps `Padding` — move padding to `Container.padding`.
 class ContainerWrapsPaddingFix extends ResolvedCorrectionProducer {
   ContainerWrapsPaddingFix({required super.context});
 
@@ -123,112 +78,61 @@ class ContainerWrapsPaddingFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final containerWidget = _findContainerWidget(node);
-    if (containerWidget == null) return;
+    final container = node.ancestorWidget('Container');
+    if (container == null) return;
 
-    // Get the child argument (should be a Padding)
-    final childArg = _findNamedArgument(containerWidget, 'child');
+    final childArg = container.namedArg('child');
     if (childArg == null) return;
 
-    final paddingWidget = childArg.expression;
-    if (paddingWidget is! InstanceCreationExpression) return;
+    final padding = childArg.expression;
+    if (padding is! InstanceCreationExpression) return;
 
-    // Get padding value from Padding widget
-    final paddingArg = _findNamedArgument(paddingWidget, 'padding');
+    final paddingArg = padding.namedArg('padding');
     if (paddingArg == null) return;
 
-    // Get Padding's child
-    final paddingChildArg = _findNamedArgument(paddingWidget, 'child');
-
+    final innerChild = padding.namedArg('child')?.expression.toSource();
     final paddingValue = paddingArg.expression.toSource();
-    final innerChild = paddingChildArg?.expression.toSource();
 
-    // Rebuild the entire Container with the padding property and inner child
-    final containerSource = containerWidget.toSource();
-    final newContainer = _rebuildContainerWithPadding(
-      containerSource,
+    final newContainer = _rebuild(
+      container.toSource(),
       paddingValue,
       innerChild,
     );
 
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(containerWidget.offset, containerWidget.length),
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(container.offset, container.length),
         newContainer,
       );
     });
   }
 
-  String _rebuildContainerWithPadding(
+  static final _childPaddingRe = RegExp(r'child:\s*Padding\s*\([^)]*\)');
+  static final _doubleCommaRe = RegExp(r',\s*,');
+  static final _leadingCommaRe = RegExp(r'^\s*,\s*');
+  static final _trailingCommaRe = RegExp(r'\s*,\s*$');
+
+  static String _rebuild(
     String containerSource,
     String paddingValue,
     String? innerChild,
   ) {
-    // Find the position after "Container("
-    final openParenIndex = containerSource.indexOf('(');
-    if (openParenIndex == -1) return containerSource;
+    final open = containerSource.indexOf('(');
+    final close = containerSource.lastIndexOf(')');
+    if (open == -1 || close <= open) return containerSource;
 
-    // Extract all arguments except child
-    final args = <String>[];
-    args.add('padding: $paddingValue');
-
-    // Parse existing arguments (simplified approach)
-    final argStart = openParenIndex + 1;
-    var argEnd = containerSource.lastIndexOf(')');
-    if (argEnd <= argStart) return containerSource;
-
-    final argsContent = containerSource.substring(argStart, argEnd).trim();
-
-    // Add existing args except child
-    if (argsContent.isNotEmpty) {
-      // Remove the child: Padding(...) part and add other args
-      final childPattern = RegExp(r'child:\s*Padding\s*\([^)]*\)');
-      final cleanedArgs = argsContent.replaceAll(childPattern, '').trim();
-
-      // Clean up any double commas or leading/trailing commas
-      var finalArgs = cleanedArgs
-          .replaceAll(RegExp(r',\s*,'), ',')
-          .replaceAll(RegExp(r'^\s*,\s*'), '')
-          .replaceAll(RegExp(r'\s*,\s*$'), '');
-
-      if (finalArgs.isNotEmpty) {
-        args.add(finalArgs);
-      }
+    final args = <String>['padding: $paddingValue'];
+    final existing = containerSource.substring(open + 1, close).trim();
+    if (existing.isNotEmpty) {
+      final cleaned = existing
+          .replaceAll(_childPaddingRe, '')
+          .replaceAll(_doubleCommaRe, ',')
+          .replaceAll(_leadingCommaRe, '')
+          .replaceAll(_trailingCommaRe, '');
+      if (cleaned.isNotEmpty) args.add(cleaned);
     }
-
-    // Add the inner child if present
-    if (innerChild != null) {
-      args.add('child: $innerChild');
-    }
+    if (innerChild != null) args.add('child: $innerChild');
 
     return 'Container(${args.join(', ')})';
-  }
-
-  InstanceCreationExpression? _findContainerWidget(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is InstanceCreationExpression) {
-        final typeName = current.constructorName.type.name.lexeme;
-        if (typeName == 'Container') {
-          return current;
-        }
-      }
-      current = current.parent;
-    }
-    return null;
-  }
-
-  NamedExpression? _findNamedArgument(
-    InstanceCreationExpression node,
-    String argName,
-  ) {
-    for (final arg in node.argumentList.arguments) {
-      if (arg is NamedExpression && arg.name.label.name == argName) {
-        return arg;
-      }
-    }
-    return null;
   }
 }

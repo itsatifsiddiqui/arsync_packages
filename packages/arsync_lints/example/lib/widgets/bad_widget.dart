@@ -31,7 +31,6 @@ class BadCardWidget extends StatelessWidget {
   }
 }
 
-// VIOLATION: global_variable_restriction - Non-private top-level variable
 String widgetTitle = 'Bad Widget';
 int widgetCounter = 0;
 

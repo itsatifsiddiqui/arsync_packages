@@ -2,11 +2,8 @@ import '../arsync_lint_rule.dart';
 
 /// Rule D1: complexity_limits
 ///
-/// Prevents complex, unreadable code:
-/// - Max Nesting Depth: 5
-/// - Max Method Lines: 60
-/// - Max Build Method Lines: 120
-/// - Nested Ternary: Banned
+/// Max nesting depth 5, max method 60 lines, max build() 120 lines, no nested
+/// ternaries.
 class ComplexityLimits extends MultiAnalysisRule {
   ComplexityLimits()
     : super(
@@ -55,9 +52,7 @@ class ComplexityLimits extends MultiAnalysisRule {
   ) {
     if (!context.isInLibDir) return;
 
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    final visitor = _Visitor(this, context.allUnits);
+    final visitor = _Visitor(this, context);
     registry.addFunctionDeclaration(this, visitor);
     registry.addMethodDeclaration(this, visitor);
     registry.addBlock(this, visitor);
@@ -65,128 +60,45 @@ class ComplexityLimits extends MultiAnalysisRule {
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule, this.context);
 
-  _Visitor(this.rule, this.allUnits);
+  final RuleContext context;
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkFunctionLines(node);
+    _checkLines(
+      node.functionExpression.body,
+      nameOffset: node.name.offset,
+      nameLength: node.name.length,
+      isBuild: false,
+    );
   }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkMethodLines(node);
+    _checkLines(
+      node.body,
+      nameOffset: node.name.offset,
+      nameLength: node.name.length,
+      isBuild: node.name.lexeme == 'build',
+    );
   }
 
   @override
   void visitBlock(Block node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkNestingDepth(node);
-  }
-
-  @override
-  void visitConditionalExpression(ConditionalExpression node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkNestedTernary(node);
-  }
-
-  void _checkMethodLines(MethodDeclaration node) {
-    final body = node.body;
-    if (body is! BlockFunctionBody) return;
-
-    // Get the correct content for this node's file
-    final content = NodeContentHelper.getContentForNode(node, allUnits);
-    if (content == null) return;
-
-    final startLine = _countLines(content, 0, body.offset);
-    final endLine = _countLines(content, 0, body.end);
-    final lineCount = endLine - startLine + 1;
-
-    final isBuildMethod = node.name.lexeme == 'build';
-
-    if (isBuildMethod) {
-      if (lineCount > 120) {
-        rule.reportAtOffset(
-          node.name.offset,
-          node.name.length,
-          diagnosticCode: ComplexityLimits.buildLinesCode,
-        );
-      }
-    } else {
-      if (lineCount > 60) {
-        rule.reportAtOffset(
-          node.name.offset,
-          node.name.length,
-          diagnosticCode: ComplexityLimits.methodLinesCode,
-        );
-      }
+    var depth = 0;
+    for (AstNode? c = node.parent; c != null; c = c.parent) {
+      if (_isNestingNode(c)) depth++;
+      if (c is MethodDeclaration || c is FunctionDeclaration) break;
     }
-  }
-
-  void _checkFunctionLines(FunctionDeclaration node) {
-    final body = node.functionExpression.body;
-    if (body is! BlockFunctionBody) return;
-
-    // Get the correct content for this node's file
-    final content = NodeContentHelper.getContentForNode(node, allUnits);
-    if (content == null) return;
-
-    final startLine = _countLines(content, 0, body.offset);
-    final endLine = _countLines(content, 0, body.end);
-    final lineCount = endLine - startLine + 1;
-
-    if (lineCount > 60) {
-      rule.reportAtOffset(
-        node.name.offset,
-        node.name.length,
-        diagnosticCode: ComplexityLimits.methodLinesCode,
-      );
-    }
-  }
-
-  int _countLines(String content, int start, int end) {
-    int count = 1;
-    for (int i = start; i < end && i < content.length; i++) {
-      if (content[i] == '\n') count++;
-    }
-    return count;
-  }
-
-  void _checkNestingDepth(Block node) {
-    int depth = 0;
-    AstNode? current = node;
-
-    while (current != null) {
-      if (_isNestingNode(current)) depth++;
-      if (current is MethodDeclaration || current is FunctionDeclaration) break;
-      current = current.parent;
-    }
-
     if (depth > 5) {
       rule.reportAtNode(node, diagnosticCode: ComplexityLimits.nestingCode);
     }
   }
 
-  bool _isNestingNode(AstNode node) {
-    return node is Block ||
-        node is IfStatement ||
-        node is ForStatement ||
-        node is WhileStatement ||
-        node is DoStatement ||
-        node is SwitchStatement ||
-        node is TryStatement;
-  }
-
-  void _checkNestedTernary(ConditionalExpression node) {
+  @override
+  void visitConditionalExpression(ConditionalExpression node) {
     if (node.thenExpression is ConditionalExpression ||
         node.elseExpression is ConditionalExpression) {
       rule.reportAtNode(
@@ -194,5 +106,58 @@ class _Visitor extends SimpleAstVisitor<void> {
         diagnosticCode: ComplexityLimits.nestedTernaryCode,
       );
     }
+  }
+
+  void _checkLines(
+    FunctionBody body, {
+    required int nameOffset,
+    required int nameLength,
+    required bool isBuild,
+  }) {
+    if (body is! BlockFunctionBody) return;
+    final content = context.currentUnit?.content;
+    if (content == null) return;
+
+    final lines = _countLines(content, body.offset, body.end);
+    final limit = isBuild ? 120 : 60;
+    if (lines <= limit) return;
+
+    rule.reportAtOffset(
+      nameOffset,
+      nameLength,
+      diagnosticCode: isBuild
+          ? ComplexityLimits.buildLinesCode
+          : ComplexityLimits.methodLinesCode,
+    );
+  }
+
+  static int _countLines(String content, int start, int end) {
+    var count = 1;
+    final limit = end < content.length ? end : content.length;
+    for (var i = start; i < limit; i++) {
+      if (content[i] == '\n') count++;
+    }
+    return count;
+  }
+
+  static bool _isNestingNode(AstNode node) {
+    if (node is IfStatement ||
+        node is ForStatement ||
+        node is WhileStatement ||
+        node is DoStatement ||
+        node is SwitchStatement ||
+        node is TryStatement) {
+      return true;
+    }
+    // Count blocks only if they're closures, not method/function bodies.
+    if (node is Block) {
+      final parent = node.parent;
+      if (parent is FunctionExpression) {
+        final grandparent = parent.parent;
+        return grandparent is! MethodDeclaration &&
+            grandparent is! FunctionDeclaration;
+      }
+    }
+    return false;
   }
 }

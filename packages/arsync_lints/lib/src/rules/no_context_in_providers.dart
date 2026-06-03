@@ -1,15 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule B3: no_context_in_providers
-///
-/// ViewModels must be UI-agnostic. BuildContext cannot be used as a parameter.
+/// Rule B3: in `lib/providers/`, no function, method, or constructor may
+/// accept `BuildContext` — ViewModels must be UI-agnostic.
 class NoContextInProviders extends AnalysisRule {
-  NoContextInProviders()
-    : super(
-        name: 'no_context_in_providers',
-        description:
-            'BuildContext cannot be used in providers. ViewModels must be UI-agnostic.',
-      );
+  NoContextInProviders() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'no_context_in_providers',
@@ -25,67 +19,43 @@ class NoContextInProviders extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    var visitor = _Visitor(this, context.allUnits);
-    registry.addFunctionDeclaration(this, visitor);
-    registry.addMethodDeclaration(this, visitor);
-    registry.addConstructorDeclaration(this, visitor);
+    if (!PathUtils.isInProviders(context.definingUnit.file.path)) return;
+    final visitor = _Visitor(this);
+    registry
+      ..addFunctionDeclaration(this, visitor)
+      ..addMethodDeclaration(this, visitor)
+      ..addConstructorDeclaration(this, visitor);
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkParameters(node.functionExpression.parameters);
+    _check(node, node.functionExpression.parameters);
   }
 
   @override
   void visitMethodDeclaration(MethodDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkParameters(node.parameters);
+    _check(node, node.parameters);
   }
 
   @override
   void visitConstructorDeclaration(ConstructorDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-    _checkParameters(node.parameters);
+    _check(node, node.parameters);
   }
 
-  void _checkParameters(FormalParameterList? parameters) {
-    if (parameters == null) return;
-
-    for (final param in parameters.parameters) {
-      final typeName = _getParameterTypeName(param);
-      if (typeName == 'BuildContext') {
-        rule.reportAtNode(param);
-      }
+  void _check(AstNode parent, FormalParameterList? params) {
+    if (params == null) return;
+    for (final p in params.parameters) {
+      if (_typeName(p) == 'BuildContext') rule.reportAtNode(p);
     }
   }
 
-  String? _getParameterTypeName(FormalParameter param) {
-    if (param is SimpleFormalParameter) {
-      final type = param.type;
-      if (type is NamedType) {
-        return type.name.lexeme;
-      }
-    } else if (param is DefaultFormalParameter) {
-      return _getParameterTypeName(param.parameter);
-    }
-    return null;
+  static String? _typeName(FormalParameter p) {
+    if (p is! SimpleFormalParameter) return null;
+    final t = p.type;
+    return t is NamedType ? t.name.lexeme : null;
   }
 }

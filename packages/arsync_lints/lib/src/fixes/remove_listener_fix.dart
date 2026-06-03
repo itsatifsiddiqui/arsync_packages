@@ -1,44 +1,13 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import "../ast_extensions.dart";
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// A quick fix that adds a `removeListener` call to the `dispose()` method.
-///
-/// This fix is triggered by the `remove_listener` lint rule when an
-/// `addListener` call is detected without a matching `removeListener` in
-/// `dispose()`.
-///
-/// ## Example
-///
-/// Before fix:
-/// ```dart
-/// @override
-/// void initState() {
-///   super.initState();
-///   _controller.addListener(_onChanged);
-/// }
-///
-/// @override
-/// void dispose() {
-///   super.dispose();
-/// }
-/// ```
-///
-/// After fix:
-/// ```dart
-/// @override
-/// void initState() {
-///   super.initState();
-///   _controller.addListener(_onChanged);
-/// }
-///
-/// @override
-/// void dispose() {
-///   _controller.removeListener(_onChanged);
-///   super.dispose();
-/// }
-/// ```
+import 'fix_helpers.dart';
+
+/// Add a matching `removeListener` / `removeStatusListener` call to `dispose()`
+/// (creating the method if it doesn't exist).
 class AddRemoveListenerCallFix extends ResolvedCorrectionProducer {
   AddRemoveListenerCallFix({required super.context});
 
@@ -57,161 +26,106 @@ class AddRemoveListenerCallFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The node should be the MethodInvocation (addListener call)
     final node = this.node;
     if (node is! MethodInvocation) return;
 
-    final methodName = node.methodName.name;
-    if (methodName != 'addListener' && methodName != 'addStatusListener') {
-      return;
-    }
+    final method = node.methodName.name;
+    if (method != 'addListener' && method != 'addStatusListener') return;
 
-    // Get the target and callback
-    final target = node.target;
     final args = node.argumentList.arguments;
     if (args.isEmpty) return;
 
-    final callback = args.first;
-    String? callbackName;
-    if (callback is SimpleIdentifier) {
-      callbackName = callback.name;
-    } else if (callback is PrefixedIdentifier) {
-      callbackName = callback.identifier.name;
-    }
-    if (callbackName == null) return;
+    final callbackName = _identifierName(args.first);
+    final targetStr = _targetString(node.target);
+    if (callbackName == null || targetStr == null) return;
 
-    // Build the target string
-    String? targetStr;
-    if (target is SimpleIdentifier) {
-      targetStr = target.name;
-    } else if (target is PrefixedIdentifier) {
-      targetStr = '${target.prefix.name}.${target.identifier.name}';
-    } else if (target is PropertyAccess) {
-      targetStr = _buildTargetString(target);
-    }
-    if (targetStr == null) return;
+    final removeMethod =
+        method == 'addStatusListener' ? 'removeStatusListener' : 'removeListener';
+    final newStmt = '$targetStr.$removeMethod($callbackName);';
 
-    // Determine the remove method name
-    final removeMethod = methodName == 'addStatusListener'
-        ? 'removeStatusListener'
-        : 'removeListener';
+    final classDecl = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null) return;
+    final dispose = classDecl.classMembers
+        .whereType<MethodDeclaration>()
+        .where((m) => m.name.lexeme == 'dispose')
+        .firstOrNull;
 
-    // Find the containing class
-    final classDeclaration = node.thisOrAncestorOfType<ClassDeclaration>();
-    if (classDeclaration == null) return;
-
-    // Find or create dispose method
-    MethodDeclaration? disposeMethod;
-    for (final member in classDeclaration.members) {
-      if (member is MethodDeclaration && member.name.lexeme == 'dispose') {
-        disposeMethod = member;
-        break;
-      }
-    }
-
-    if (disposeMethod == null) {
-      // Add a new dispose method
-      final lastMember = classDeclaration.members.lastOrNull;
-      if (lastMember == null) return;
-
-      await builder.addDartFileEdit(file, (builder) {
-        builder.addInsertion(lastMember.end, (builder) {
-          builder.writeln();
-          builder.writeln();
-          builder.writeln('  @override');
-          builder.writeln('  void dispose() {');
-          builder.writeln('    $targetStr.$removeMethod($callbackName);');
-          builder.writeln('    super.dispose();');
-          builder.write('  }');
+    if (dispose == null) {
+      final last = classDecl.classMembers.lastOrNull;
+      if (last == null) return;
+      await builder.addDartFileEdit(file, (b) {
+        b.addInsertion(last.end, (w) {
+          w
+            ..writeln()
+            ..writeln()
+            ..writeln('  @override')
+            ..writeln('  void dispose() {')
+            ..writeln('    $newStmt')
+            ..writeln('    super.dispose();')
+            ..write('  }');
         });
       });
-    } else {
-      // Add to existing dispose method
-      final body = disposeMethod.body;
-      if (body is! BlockFunctionBody) return;
+      return;
+    }
 
-      final block = body.block;
+    final body = dispose.body;
+    if (body is! BlockFunctionBody) return;
+    final block = body.block;
 
-      // Find super.dispose() call to insert before it
-      ExpressionStatement? superDisposeStatement;
-      for (final statement in block.statements) {
-        if (statement is ExpressionStatement) {
-          final expr = statement.expression;
-          if (expr is MethodInvocation &&
-              expr.methodName.name == 'dispose' &&
-              expr.target is SuperExpression) {
-            superDisposeStatement = statement;
-            break;
-          }
-        }
+    final superDispose = block.statements
+        .whereType<ExpressionStatement>()
+        .where((s) {
+          final e = s.expression;
+          return e is MethodInvocation &&
+              e.methodName.name == 'dispose' &&
+              e.target is SuperExpression;
+        })
+        .firstOrNull;
+
+    await builder.addDartFileEdit(file, (b) {
+      if (superDispose != null) {
+        final indent = FixHelpers.indentOf(unitResult, superDispose.offset);
+        b.addInsertion(superDispose.offset, (w) {
+          w
+            ..write(newStmt)
+            ..writeln()
+            ..write(indent);
+        });
+      } else if (block.statements.isNotEmpty) {
+        final last = block.statements.last;
+        final indent = FixHelpers.indentOf(unitResult, last.offset);
+        b.addInsertion(last.end, (w) {
+          w
+            ..writeln()
+            ..write('$indent$newStmt');
+        });
+      } else {
+        final braceIndent = FixHelpers.indentOf(unitResult, block.rightBracket.offset);
+        b.addInsertion(block.rightBracket.offset, (w) {
+          w
+            ..write('$braceIndent  $newStmt')
+            ..writeln();
+        });
       }
-
-      await builder.addDartFileEdit(file, (builder) {
-        if (superDisposeStatement != null) {
-          // Insert before super.dispose() - get indent from that line
-          final lineStart = _getLineStart(superDisposeStatement.offset);
-          final indent = unitResult.content.substring(
-            lineStart,
-            superDisposeStatement.offset,
-          );
-          builder.addInsertion(superDisposeStatement.offset, (builder) {
-            builder.write('$targetStr.$removeMethod($callbackName);');
-            builder.writeln();
-            builder.write(indent);
-          });
-        } else if (block.statements.isNotEmpty) {
-          // No super.dispose(), insert after last statement
-          final lastStatement = block.statements.last;
-          final lineStart = _getLineStart(lastStatement.offset);
-          final indent = unitResult.content.substring(
-            lineStart,
-            lastStatement.offset,
-          );
-          builder.addInsertion(lastStatement.end, (builder) {
-            builder.writeln();
-            builder.write('$indent$targetStr.$removeMethod($callbackName);');
-          });
-        } else {
-          // Empty dispose method, insert before closing brace
-          final lineStart = _getLineStart(block.rightBracket.offset);
-          final braceIndent = unitResult.content.substring(
-            lineStart,
-            block.rightBracket.offset,
-          );
-          // Statement indent is typically brace indent + 2 spaces
-          final stmtIndent = '$braceIndent  ';
-          builder.addInsertion(block.rightBracket.offset, (builder) {
-            builder.write(
-              '$stmtIndent$targetStr.$removeMethod($callbackName);',
-            );
-            builder.writeln();
-          });
-        }
-      });
-    }
+    });
   }
 
-  /// Gets the offset of the start of the line containing [offset].
-  int _getLineStart(int offset) {
-    final content = unitResult.content;
-    int lineStart = offset;
-    while (lineStart > 0 && content[lineStart - 1] != '\n') {
-      lineStart--;
-    }
-    return lineStart;
+  String? _identifierName(Expression e) {
+    if (e is SimpleIdentifier) return e.name;
+    if (e is PrefixedIdentifier) return e.identifier.name;
+    return null;
   }
 
-  String? _buildTargetString(PropertyAccess access) {
-    final target = access.target;
-    String? prefix;
-    if (target is SimpleIdentifier) {
-      prefix = target.name;
-    } else if (target is PropertyAccess) {
-      prefix = _buildTargetString(target);
-    } else if (target is PrefixedIdentifier) {
-      prefix = '${target.prefix.name}.${target.identifier.name}';
+  String? _targetString(Expression? target) {
+    if (target == null) return null;
+    if (target is SimpleIdentifier) return target.name;
+    if (target is PrefixedIdentifier) {
+      return '${target.prefix.name}.${target.identifier.name}';
     }
-    if (prefix == null) return null;
-    return '$prefix.${access.propertyName.name}';
+    if (target is PropertyAccess) {
+      final prefix = _targetString(target.target);
+      return prefix == null ? null : '$prefix.${target.propertyName.name}';
+    }
+    return null;
   }
 }

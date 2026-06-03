@@ -1,16 +1,9 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule C2: repository_async_return
-///
-/// Repositories must not block the main thread.
-/// Public methods must return `Future<T>` or `Stream<T>`.
+/// Rule C2: in `lib/repositories/`, public methods must return `Future<T>` or
+/// `Stream<T>` — repositories can't block the main thread.
 class RepositoryAsyncReturn extends AnalysisRule {
-  RepositoryAsyncReturn()
-    : super(
-        name: 'repository_async_return',
-        description:
-            'Repository public methods must return Future<T> or Stream<T>.',
-      );
+  RepositoryAsyncReturn() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'repository_async_return',
@@ -26,55 +19,27 @@ class RepositoryAsyncReturn extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInRepositories(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    if (!PathUtils.isInRepositories(context.definingUnit.file.path)) return;
+    registry.addClassDeclaration(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    for (final member in node.members) {
-      if (member is MethodDeclaration) {
-        _checkMethod(member);
-      }
-    }
-  }
-
-  void _checkMethod(MethodDeclaration method) {
-    final methodName = method.name.lexeme;
-
-    if (methodName.startsWith('_')) return;
-    if (method.isGetter || method.isSetter) return;
-
-    final returnType = method.returnType;
-    if (returnType == null) return;
-
-    final returnTypeName = returnType.toSource();
-
-    final isValidReturn =
-        returnTypeName.startsWith('Future<') ||
-        returnTypeName.startsWith('Stream<') ||
-        returnTypeName == 'Future' ||
-        returnTypeName == 'Stream';
-
-    if (!isValidReturn) {
-      rule.reportAtNode(returnType);
+    for (final m in node.classMembers.whereType<MethodDeclaration>()) {
+      if (m.name.lexeme.startsWith('_') || m.isGetter || m.isSetter) continue;
+      final returnType = m.returnType;
+      if (returnType == null) continue;
+      final src = returnType.toSource();
+      final valid = src == 'Future' ||
+          src == 'Stream' ||
+          src.startsWith('Future<') ||
+          src.startsWith('Stream<');
+      if (!valid) rule.reportAtNode(returnType);
     }
   }
 }

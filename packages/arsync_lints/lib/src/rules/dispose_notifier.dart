@@ -3,66 +3,12 @@ import 'package:analyzer/dart/element/type.dart';
 
 import '../arsync_lint_rule.dart';
 
-/// A lint rule that ensures ChangeNotifier subclasses created in StatefulWidget
-/// State classes are properly disposed when they are actually used.
-///
-/// This rule only warns when:
-/// 1. A ChangeNotifier is created as a field in a State class
-/// 2. The notifier is actually referenced/used in the class
-/// 3. The notifier is NOT disposed in the dispose() method
-///
-/// If a notifier is created but never used, no warning is shown since unused
-/// objects will be garbage collected anyway.
-///
-/// This rule detects any class that extends `ChangeNotifier`, including:
-/// - `TextEditingController`
-/// - `ScrollController`
-/// - `AnimationController`
-/// - `TabController`
-/// - `PageController`
-/// - `FocusNode`
-/// - `ValueNotifier`
-/// - Any custom `ChangeNotifier` subclass
-///
-/// ### Example
-///
-/// #### BAD:
-/// ```dart
-/// class _MyWidgetState extends State<MyWidget> {
-///   final _controller = TextEditingController(); // LINT: used but not disposed
-///
-///   @override
-///   Widget build(BuildContext context) => TextField(controller: _controller);
-/// }
-/// ```
-///
-/// #### GOOD:
-/// ```dart
-/// class _MyWidgetState extends State<MyWidget> {
-///   final _controller = TextEditingController();
-///
-///   @override
-///   void dispose() {
-///     _controller.dispose();
-///     super.dispose();
-///   }
-///
-///   @override
-///   Widget build(BuildContext context) => TextField(controller: _controller);
-/// }
-/// ```
-///
-/// #### OK (unused, no warning):
-/// ```dart
-/// class _MyWidgetState extends State<MyWidget> {
-///   final _controller = TextEditingController(); // OK: unused, will be GC'd
-///
-///   @override
-///   Widget build(BuildContext context) => const Text('Hello');
-/// }
-/// ```
+/// Lint rule: a `ChangeNotifier` (or any subtype — `TextEditingController`,
+/// `ScrollController`, `ValueNotifier`, etc.) created as a field in a
+/// `State` subclass must be disposed in `dispose()` *if it is actually used*.
+/// Unused notifiers are not reported (they get GC'd).
 class DisposeNotifier extends AnalysisRule {
-  DisposeNotifier() : super(name: code.name, description: code.problemMessage);
+  DisposeNotifier() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const code = LintCode(
     'dispose_notifier',
@@ -78,226 +24,113 @@ class DisposeNotifier extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    registry.addClassDeclaration(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
-
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    // Check if this class extends State<T>
-    if (!_isStateClass(node)) return;
-
-    // Find all notifier fields created in this class
-    final notifierFields = <FieldDeclaration, List<VariableDeclaration>>{};
-
-    for (final member in node.members) {
-      if (member is FieldDeclaration) {
-        final notifiers = <VariableDeclaration>[];
-        for (final variable in member.fields.variables) {
-          if (_isNotifierCreation(variable)) {
-            notifiers.add(variable);
-          }
-        }
-        if (notifiers.isNotEmpty) {
-          notifierFields[member] = notifiers;
-        }
-      }
+    if (!_extendsByName(node.extendsClause?.superclass.element, 'State')) {
+      return;
     }
 
-    if (notifierFields.isEmpty) return;
+    final notifierVars = [
+      for (final m in node.classMembers.whereType<FieldDeclaration>())
+        for (final v in m.fields.variables)
+          if (_isNotifierCreation(v)) v,
+    ];
+    if (notifierVars.isEmpty) return;
 
-    // Find the dispose method and check what's disposed
-    final disposedNames = _getDisposedNames(node);
-
-    // Find all referenced field names (excluding in dispose method)
-    final referencedNames = _getReferencedNames(node);
-
-    // Report any notifiers that are referenced but not disposed
-    for (final entry in notifierFields.entries) {
-      for (final variable in entry.value) {
-        final name = variable.name.lexeme;
-        // Only warn if the notifier is actually used somewhere
-        if (referencedNames.contains(name) && !disposedNames.contains(name)) {
-          // Check if this specific node is ignored
-          if (!NodeContentHelper.shouldSkipNode(variable, allUnits, rule.name)) {
-            rule.reportAtNode(variable, arguments: [name]);
-          }
-        }
-      }
-    }
-  }
-
-  /// Returns true if this class extends `State<T>`.
-  bool _isStateClass(ClassDeclaration node) {
-    final extendsClause = node.extendsClause;
-    final superclass = extendsClause?.superclass;
-    final element = superclass?.element;
-    // Check if it's State or extends State
-    return element != null && _extendsState(element);
-  }
-
-  /// Recursively checks if the element extends Flutter's State class.
-  bool _extendsState(Element element) {
-    if (element is! InterfaceElement) return false;
-
-    // Check by name - State is a unique enough name
-    if (element.name == 'State') {
-      return true;
-    }
-
-    // Check superclass
-    final supertype = element.supertype;
-    if (supertype != null) {
-      final superElement = supertype.element;
-      if (_extendsState(superElement)) return true;
-    }
-
-    return false;
-  }
-
-  /// Checks if the variable is initialized with a ChangeNotifier creation.
-  bool _isNotifierCreation(VariableDeclaration variable) {
-    final initializer = variable.initializer;
-    if (initializer == null) return false;
-
-    // Check for constructor invocation
-    DartType? type;
-    if (initializer is InstanceCreationExpression) {
-      type = initializer.staticType;
-    } else if (initializer is MethodInvocation) {
-      // Handle factory methods
-      type = initializer.staticType;
-    }
-    return type != null && _isChangeNotifierType(type);
-  }
-
-  /// Checks if the type extends ChangeNotifier.
-  ///
-  /// This covers all Flutter controllers and notifiers since they all
-  /// extend ChangeNotifier (TextEditingController, ValueNotifier, etc.).
-  bool _isChangeNotifierType(DartType type) {
-    if (type is! InterfaceType) return false;
-    return _extendsChangeNotifier(type.element);
-  }
-
-  /// Recursively checks if the element extends ChangeNotifier.
-  bool _extendsChangeNotifier(InterfaceElement element) {
-    final name = element.name;
-
-    // Check if this is ChangeNotifier itself (by name)
-    if (name == 'ChangeNotifier') {
-      return true;
-    }
-
-    // Check superclass
-    final supertype = element.supertype;
-    if (supertype != null) {
-      if (_extendsChangeNotifier(supertype.element)) return true;
-    }
-
-    // Check mixins (ChangeNotifier is often used as a mixin)
-    for (final mixin in element.mixins) {
-      if (_extendsChangeNotifier(mixin.element)) return true;
-    }
-
-    // Check interfaces
-    for (final interface in element.interfaces) {
-      if (_extendsChangeNotifier(interface.element)) return true;
-    }
-
-    return false;
-  }
-
-  /// Gets the names of notifiers that are disposed in the dispose method.
-  Set<String> _getDisposedNames(ClassDeclaration node) {
     final disposed = <String>{};
-
-    for (final member in node.members) {
-      if (member is MethodDeclaration && member.name.lexeme == 'dispose') {
-        final body = member.body;
-        if (body is BlockFunctionBody) {
-          body.block.accept(_DisposeVisitor(disposed));
+    final referenced = <String>{};
+    for (final member in node.classMembers) {
+      if (member is MethodDeclaration) {
+        if (member.name.lexeme == 'dispose') {
+          if (member.body is BlockFunctionBody) {
+            member.body.accept(_DisposeVisitor(disposed));
+          }
+        } else {
+          member.body.accept(_ReferenceVisitor(referenced));
         }
+      } else if (member is ConstructorDeclaration) {
+        for (final i in member.initializers) {
+          i.accept(_ReferenceVisitor(referenced));
+        }
+        member.body.accept(_ReferenceVisitor(referenced));
       }
     }
 
-    return disposed;
+    for (final v in notifierVars) {
+      final name = v.name.lexeme;
+      if (!referenced.contains(name) || disposed.contains(name)) continue;
+      rule.reportAtNode(v, arguments: [name]);
+    }
   }
 
-  /// Gets names of fields that are referenced in methods (excluding dispose).
-  Set<String> _getReferencedNames(ClassDeclaration node) {
-    final referenced = <String>{};
-
-    for (final member in node.members) {
-      // Skip the dispose method - we handle that separately
-      if (member is MethodDeclaration && member.name.lexeme == 'dispose') {
-        continue;
-      }
-
-      // Check method bodies
-      if (member is MethodDeclaration) {
-        member.body.accept(_ReferenceVisitor(referenced));
-      }
-
-      // Check constructor initializers
-      if (member is ConstructorDeclaration) {
-        for (final initializer in member.initializers) {
-          initializer.accept(_ReferenceVisitor(referenced));
-        }
-        member.body.accept(_ReferenceVisitor(referenced));
-      }
+  static bool _isNotifierCreation(VariableDeclaration v) {
+    final init = v.initializer;
+    final DartType? type;
+    if (init is InstanceCreationExpression) {
+      type = init.staticType;
+    } else if (init is MethodInvocation) {
+      type = init.staticType;
+    } else {
+      return false;
     }
+    return type is InterfaceType && _isChangeNotifierType(type.element);
+  }
 
-    return referenced;
+  static bool _isChangeNotifierType(InterfaceElement e) {
+    if (e.name == 'ChangeNotifier') return true;
+    if (e.supertype != null && _isChangeNotifierType(e.supertype!.element)) {
+      return true;
+    }
+    for (final m in e.mixins) {
+      if (_isChangeNotifierType(m.element)) return true;
+    }
+    for (final i in e.interfaces) {
+      if (_isChangeNotifierType(i.element)) return true;
+    }
+    return false;
+  }
+
+  static bool _extendsByName(Element? e, String name) {
+    if (e is! InterfaceElement) return false;
+    if (e.name == name) return true;
+    return _extendsByName(e.supertype?.element, name);
   }
 }
 
-/// Visitor to find dispose() calls in a method body.
 class _DisposeVisitor extends RecursiveAstVisitor<void> {
-  final Set<String> disposedNames;
-
-  _DisposeVisitor(this.disposedNames);
+  final Set<String> sink;
+  _DisposeVisitor(this.sink);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
     if (node.methodName.name == 'dispose') {
-      final target = node.target;
-      if (target is SimpleIdentifier) {
-        disposedNames.add(target.name);
-      } else if (target is PrefixedIdentifier) {
-        disposedNames.add(target.identifier.name);
-      } else if (target is PropertyAccess) {
-        // Handle this._controller.dispose()
-        disposedNames.add(target.propertyName.name);
+      final t = node.target;
+      if (t is SimpleIdentifier) {
+        sink.add(t.name);
+      } else if (t is PrefixedIdentifier) {
+        sink.add(t.identifier.name);
+      } else if (t is PropertyAccess) {
+        sink.add(t.propertyName.name);
       }
     }
     super.visitMethodInvocation(node);
   }
 }
 
-/// Visitor to find identifier references in a method body.
 class _ReferenceVisitor extends RecursiveAstVisitor<void> {
-  final Set<String> referencedNames;
-
-  _ReferenceVisitor(this.referencedNames);
+  final Set<String> sink;
+  _ReferenceVisitor(this.sink);
 
   @override
   void visitSimpleIdentifier(SimpleIdentifier node) {
-    referencedNames.add(node.name);
+    sink.add(node.name);
     super.visitSimpleIdentifier(node);
   }
 }

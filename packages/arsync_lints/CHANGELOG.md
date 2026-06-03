@@ -1,3 +1,11 @@
+## 0.1.4
+
+- Add `converter_location` and `state_class_location` rules; exempt `models/converters/` and `models/state/` paths from `model_purity`.
+
+## 0.1.3
+
+- Bump versions
+
 ## 0.1.2
 
 - Fix analyzer exclusion, e.g. for generated files

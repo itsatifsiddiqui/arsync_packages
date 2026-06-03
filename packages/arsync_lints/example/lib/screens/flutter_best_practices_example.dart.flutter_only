@@ -13,7 +13,7 @@ class BadConsecutiveSliverExample extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
-      // ignore: avoid_consecutive_sliver_to_box_adapter
+      // ignore: arsync_lints/avoid_consecutive_sliver_to_box_adapter
       slivers: <Widget>[
         // These consecutive SliverToBoxAdapter widgets trigger the lint
         const SliverToBoxAdapter(child: Text('Item 1')),
@@ -57,11 +57,11 @@ class BadHardcodedColorExample extends StatelessWidget {
     return Column(
       children: [
         Container(
-          // ignore: avoid_hardcoded_color
+          // ignore: arsync_lints/avoid_hardcoded_color
           color: const Color(0xFF00FF00), // LINT: Hardcoded color
         ),
         Container(
-          // ignore: avoid_hardcoded_color
+          // ignore: arsync_lints/avoid_hardcoded_color
           color: Colors.red, // LINT: Hardcoded color from Colors class
         ),
       ],
@@ -104,7 +104,7 @@ class BadShrinkWrapExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        // ignore: avoid_shrink_wrap_in_list_view
+        // ignore: arsync_lints/avoid_shrink_wrap_in_list_view
         ListView(
           shrinkWrap: true, // LINT: shrinkWrap causes performance issues
           children: const <Widget>[
@@ -146,7 +146,7 @@ class BadSingleChildExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: avoid_single_child
+    // ignore: arsync_lints/avoid_single_child
     return Column(
       children: const <Widget>[
         Text('Only child'), // LINT: Single child in multi-child widget
@@ -192,9 +192,9 @@ class BadMediaQueryExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: prefer_dedicated_media_query_methods
+    // ignore: arsync_lints/prefer_dedicated_media_query_methods
     final size = MediaQuery.of(context).size; // LINT
-    // ignore: prefer_dedicated_media_query_methods
+    // ignore: arsync_lints/prefer_dedicated_media_query_methods
     final width = MediaQuery.sizeOf(context).width; // LINT: use widthOf
 
     return Container(
@@ -226,12 +226,12 @@ class GoodMediaQueryExample extends StatelessWidget {
 // ============================================================================
 
 /// BAD: Missing blank lines between elements
-// ignore: prefer_space_between_elements
+// ignore: arsync_lints/prefer_space_between_elements
 class BadSpacingExample extends StatelessWidget {
   final String title;
-  // ignore: prefer_space_between_elements
+  // ignore: arsync_lints/prefer_space_between_elements
   const BadSpacingExample(this.title, {super.key}); // Missing blank line
-  // ignore: prefer_space_between_elements
+  // ignore: arsync_lints/prefer_space_between_elements
   @override
   Widget build(BuildContext context) {
     // Missing blank line
@@ -256,7 +256,7 @@ class GoodSpacingExample extends StatelessWidget {
 // ============================================================================
 
 /// BAD: Widget returning Sliver without "Sliver" in name
-// ignore: prefer_to_include_sliver_in_name
+// ignore: arsync_lints/prefer_to_include_sliver_in_name
 class MyCustomList extends StatelessWidget {
   const MyCustomList({super.key});
 
@@ -294,57 +294,6 @@ class MyOtherList extends StatelessWidget {
 }
 
 // ============================================================================
-// unsafe_null_assertion
-// ============================================================================
-
-/// BAD: Using force null assertion operator (!)
-class BadNullAssertionExample {
-  String getValue(String? name) {
-    // ignore: unsafe_null_assertion
-    return name!; // LINT: Force null assertion is unsafe
-  }
-
-  String getUserName(User? user) {
-    // ignore: unsafe_null_assertion
-    return user!.name; // LINT: Force null assertion on member access
-  }
-}
-
-/// GOOD: Using null-aware operators and if-null
-class GoodNullHandlingExample {
-  String getValue(String? name) {
-    return name ?? 'default'; // Safe: provides default value
-  }
-
-  String? getUserName(User? user) {
-    return user?.name; // Safe: null-aware access
-  }
-
-  String getUserNameOrDefault(User? user) {
-    return user?.name ?? 'Unknown'; // Safe: combined null handling
-  }
-}
-
-/// GOOD: Using pattern matching for null handling
-class PatternMatchingExample {
-  String processUser(User? user) {
-    if (user case User(:final name)) {
-      // Safe: pattern matching verifies non-null
-      return 'User name: $name';
-    }
-    return 'No user';
-  }
-
-  String processValue(String? value) {
-    return switch (value) {
-      final v? when v.isNotEmpty => 'Value: $v',
-      null => 'No value',
-      _ => 'Empty value',
-    };
-  }
-}
-
-// ============================================================================
 // avoid_unnecessary_padding_widget
 // ============================================================================
 
@@ -354,7 +303,7 @@ class BadPaddingWrapsContainerExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: avoid_unnecessary_padding_widget
+    // ignore: arsync_lints/avoid_unnecessary_padding_widget
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
@@ -385,7 +334,7 @@ class BadContainerWrapsPaddingExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: avoid_unnecessary_padding_widget
+    // ignore: arsync_lints/avoid_unnecessary_padding_widget
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: const Padding(
@@ -411,7 +360,7 @@ class GoodContainerPaddingExample extends StatelessWidget {
 }
 
 /// Helper class for examples
-// ignore: presentation_layer_isolation
+// ignore: arsync_lints/presentation_layer_isolation
 class User {
   final String name;
 

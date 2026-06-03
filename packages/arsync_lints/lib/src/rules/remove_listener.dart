@@ -3,13 +3,8 @@ import 'package:analyzer/dart/element/element.dart';
 import '../arsync_lint_rule.dart';
 
 /// Extracts the target name from an expression for listener matching.
-///
-/// Returns the string representation of the target expression, handling:
-/// - [SimpleIdentifier]: `_controller` → `"_controller"`
-/// - [PrefixedIdentifier]: `widget.controller` → `"widget.controller"`
-/// - [PropertyAccess]: `a.b.c` → `"a.b.c"`
-///
-/// Returns `null` if the target cannot be converted to a string.
+/// `widget.controller` → `"widget.controller"`, etc. Returns `null` if not
+/// representable as a dotted-identifier path.
 String? _getTargetName(Expression? target) {
   if (target == null) return null;
   if (target is SimpleIdentifier) return target.name;
@@ -17,57 +12,15 @@ String? _getTargetName(Expression? target) {
     return '${target.prefix.name}.${target.identifier.name}';
   }
   if (target is PropertyAccess) {
-    final targetStr = _getTargetName(target.target);
-    if (targetStr != null) {
-      return '$targetStr.${target.propertyName.name}';
-    }
-    return target.propertyName.name;
+    final inner = _getTargetName(target.target);
+    return inner == null ? target.propertyName.name : '$inner.${target.propertyName.name}';
   }
   return null;
 }
 
-/// A lint rule that ensures listeners added to Listenables are properly removed.
-///
-/// This rule detects `addListener` and `addStatusListener` calls on any
-/// `Listenable` implementation (ChangeNotifier, Animation, ValueNotifier, etc.)
-/// and verifies they have matching `removeListener`/`removeStatusListener`
-/// calls in the dispose method.
-///
-/// ### Example
-///
-/// #### BAD:
-/// ```dart
-/// class _MyWidgetState extends State<MyWidget> {
-///   @override
-///   void initState() {
-///     super.initState();
-///     widget.controller.addListener(_onChanged); // LINT: never removed
-///   }
-///
-///   void _onChanged() {}
-/// }
-/// ```
-///
-/// #### GOOD:
-/// ```dart
-/// class _MyWidgetState extends State<MyWidget> {
-///   @override
-///   void initState() {
-///     super.initState();
-///     widget.controller.addListener(_onChanged);
-///   }
-///
-///   @override
-///   void dispose() {
-///     widget.controller.removeListener(_onChanged);
-///     super.dispose();
-///   }
-///
-///   void _onChanged() {}
-/// }
-/// ```
+/// Lint rule: listeners added to a `Listenable` must be removed in `dispose()`.
 class RemoveListener extends AnalysisRule {
-  RemoveListener() : super(name: code.name, description: code.problemMessage);
+  RemoveListener() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const code = LintCode(
     'remove_listener',
@@ -85,202 +38,88 @@ class RemoveListener extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    registry.addClassDeclaration(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+  static const _addNames = {'addListener', 'addStatusListener'};
+  static const _removeNames = {'removeListener', 'removeStatusListener'};
+  static const _setupMethods = {
+    'initState',
+    'didChangeDependencies',
+    'didUpdateWidget',
+  };
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+    if (!_extendsState(node.extendsClause?.superclass.element)) return;
 
-    // Check if this class extends State<T>
-    if (!_isStateClass(node)) return;
+    final added = <_ListenerInfo>[];
+    final removed = <_ListenerInfo>[];
 
-    // Find all addListener calls
-    final addedListeners = <_ListenerInfo>[];
-    final removedListeners = <_ListenerInfo>[];
-
-    for (final member in node.members) {
-      if (member is MethodDeclaration) {
-        final methodName = member.name.lexeme;
-
-        if (methodName == 'initState' ||
-            methodName == 'didChangeDependencies' ||
-            methodName == 'didUpdateWidget') {
-          // Look for addListener calls
-          member.accept(_AddListenerVisitor(addedListeners));
-        } else if (methodName == 'dispose') {
-          // Look for removeListener calls
-          member.accept(_RemoveListenerVisitor(removedListeners));
-        }
+    for (final m in node.classMembers.whereType<MethodDeclaration>()) {
+      if (_setupMethods.contains(m.name.lexeme)) {
+        m.accept(_ListenerCallVisitor(added, _addNames));
+      } else if (m.name.lexeme == 'dispose') {
+        m.accept(_ListenerCallVisitor(removed, _removeNames));
       }
     }
 
-    // Report listeners that are added but not removed
-    for (final added in addedListeners) {
-      final isRemoved = removedListeners.any(
-        (removed) =>
-            removed.callbackName == added.callbackName &&
-            _targetMatches(added.targetName, removed.targetName),
+    for (final a in added) {
+      final isRemoved = removed.any(
+        (r) =>
+            r.callbackName == a.callbackName &&
+            _targetMatches(a.targetName, r.targetName),
       );
-
-      if (!isRemoved) {
-        // Check if this specific node is ignored
-        if (!NodeContentHelper.shouldSkipNode(added.node, allUnits, rule.name)) {
-          rule.reportAtNode(added.node, arguments: [added.callbackName]);
-        }
-      }
+      if (isRemoved) continue;
+      rule.reportAtNode(a.node, arguments: [a.callbackName]);
     }
   }
 
-  /// Checks if two target names match (accounting for widget.x vs x patterns).
-  bool _targetMatches(String? added, String? removed) {
-    // Both null means both are calling on self - matches
-    if (added == null && removed == null) {
-      return true;
-    }
-    // One null, one not - doesn't match
-    if (added == null || removed == null) {
-      return false;
-    }
-    // Exact match
-    if (added == removed) {
-      return true;
-    }
-    // Handle widget.controller vs controller patterns
-    final addedParts = added.split('.');
-    final removedParts = removed.split('.');
-
-    // Compare the last meaningful part (the actual controller name)
-    return addedParts.last == removedParts.last;
+  bool _targetMatches(String? a, String? r) {
+    if (a == null && r == null) return true;
+    if (a == null || r == null) return false;
+    if (a == r) return true;
+    return a.split('.').last == r.split('.').last;
   }
 
-  /// Returns true if this class extends `State<T>`.
-  bool _isStateClass(ClassDeclaration node) {
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return false;
-
-    final superclass = extendsClause.superclass;
-    final element = superclass.element;
-    return element != null && _extendsState(element);
-  }
-
-  /// Recursively checks if the element extends Flutter's State class.
-  bool _extendsState(Element element) {
+  static bool _extendsState(Element? element) {
     if (element is! InterfaceElement) return false;
-
-    // Check by name - State is a unique enough name
-    if (element.name == 'State') {
-      return true;
-    }
-
-    final supertype = element.supertype;
-    if (supertype != null) {
-      if (_extendsState(supertype.element)) return true;
-    }
-
-    return false;
+    if (element.name == 'State') return true;
+    return _extendsState(element.supertype?.element);
   }
 }
 
-/// Information about a listener call.
 class _ListenerInfo {
   final String? targetName;
   final String callbackName;
   final AstNode node;
 
-  _ListenerInfo({
-    required this.targetName,
-    required this.callbackName,
-    required this.node,
-  });
+  _ListenerInfo(this.targetName, this.callbackName, this.node);
 }
 
-/// Visitor to find addListener calls.
-class _AddListenerVisitor extends RecursiveAstVisitor<void> {
-  final List<_ListenerInfo> listeners;
+class _ListenerCallVisitor extends RecursiveAstVisitor<void> {
+  final List<_ListenerInfo> sink;
+  final Set<String> methodNames;
 
-  _AddListenerVisitor(this.listeners);
+  _ListenerCallVisitor(this.sink, this.methodNames);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    final methodName = node.methodName.name;
-
-    if (methodName == 'addListener' || methodName == 'addStatusListener') {
-      final args = node.argumentList.arguments;
-      if (args.isNotEmpty) {
-        final callback = args.first;
-        String? callbackName;
-
-        if (callback is SimpleIdentifier) {
-          callbackName = callback.name;
-        } else if (callback is PrefixedIdentifier) {
-          callbackName = callback.identifier.name;
-        }
-
-        if (callbackName != null) {
-          listeners.add(
-            _ListenerInfo(
-              targetName: _getTargetName(node.target),
-              callbackName: callbackName,
-              node: node,
-            ),
-          );
-        }
+    if (methodNames.contains(node.methodName.name)) {
+      final callback = node.argumentList.arguments.firstOrNull;
+      final name = callback is SimpleIdentifier
+          ? callback.name
+          : callback is PrefixedIdentifier
+          ? callback.identifier.name
+          : null;
+      if (name != null) {
+        sink.add(_ListenerInfo(_getTargetName(node.target), name, node));
       }
     }
-
-    super.visitMethodInvocation(node);
-  }
-}
-
-/// Visitor to find removeListener calls.
-class _RemoveListenerVisitor extends RecursiveAstVisitor<void> {
-  final List<_ListenerInfo> listeners;
-
-  _RemoveListenerVisitor(this.listeners);
-
-  @override
-  void visitMethodInvocation(MethodInvocation node) {
-    final methodName = node.methodName.name;
-
-    if (methodName == 'removeListener' ||
-        methodName == 'removeStatusListener') {
-      final args = node.argumentList.arguments;
-      if (args.isNotEmpty) {
-        final callback = args.first;
-        String? callbackName;
-
-        if (callback is SimpleIdentifier) {
-          callbackName = callback.name;
-        } else if (callback is PrefixedIdentifier) {
-          callbackName = callback.identifier.name;
-        }
-
-        if (callbackName != null) {
-          listeners.add(
-            _ListenerInfo(
-              targetName: _getTargetName(node.target),
-              callbackName: callbackName,
-              node: node,
-            ),
-          );
-        }
-      }
-    }
-
     super.visitMethodInvocation(node);
   }
 }

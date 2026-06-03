@@ -1,10 +1,7 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule A1: presentation_layer_isolation
-///
-/// Files in lib/screens/ and lib/widgets/ cannot import Infrastructure,
-/// Repositories, or Data Sources.
-/// Also enforces: use Dart records instead of plain parameter classes.
+/// Rule A1: `lib/screens/` and `lib/widgets/` cannot import repositories or
+/// data-source SDKs. Also enforces using records over plain parameter classes.
 class PresentationLayerIsolation extends MultiAnalysisRule {
   PresentationLayerIsolation()
     : super(
@@ -40,16 +37,6 @@ class PresentationLayerIsolation extends MultiAnalysisRule {
     'package:dio',
   ];
 
-  static const _allowedBaseClasses = {
-    'StatelessWidget',
-    'StatefulWidget',
-    'HookWidget',
-    'HookConsumerWidget',
-    'ConsumerWidget',
-    'ConsumerStatefulWidget',
-    'State',
-  };
-
   @override
   void registerNodeProcessors(
     RuleVisitorRegistry registry,
@@ -58,81 +45,43 @@ class PresentationLayerIsolation extends MultiAnalysisRule {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInScreens(path) && !PathUtils.isInWidgets(path)) return;
 
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    var visitor = _Visitor(this, context.allUnits);
-    registry.addImportDirective(this, visitor);
-    registry.addClassDeclaration(this, visitor);
+    registry
+      ..addImportDirective(
+        this,
+        BannedImportVisitor(
+          this,
+          _bannedPatterns,
+          (n) => reportAtNode(n, diagnosticCode: importCode),
+        ),
+      )
+      ..addClassDeclaration(this, _Visitor(this));
   }
 
-  static bool isBannedImport(String importUri) {
-    for (final pattern in _bannedPatterns) {
-      if (importUri.contains(pattern)) return true;
-    }
-    return false;
-  }
-
-  static bool isWidgetClass(ClassDeclaration node) {
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return false;
-    return _allowedBaseClasses.contains(extendsClause.superclass.name.lexeme);
-  }
+  static bool isBannedImport(String importUri) =>
+      _bannedPatterns.any(importUri.contains);
 
   static bool isParameterClass(ClassDeclaration node) {
-    bool hasOnlyFinalFields = true;
-    bool hasConstructor = false;
-    bool hasMethods = false;
-
-    for (final member in node.members) {
-      if (member is FieldDeclaration) {
-        if (!member.fields.isFinal) hasOnlyFinalFields = false;
-      } else if (member is ConstructorDeclaration) {
-        hasConstructor = true;
-      } else if (member is MethodDeclaration) {
-        hasMethods = true;
-      }
+    var hasConstructor = false;
+    for (final member in node.classMembers) {
+      if (member is FieldDeclaration && !member.fields.isFinal) return false;
+      if (member is MethodDeclaration) return false;
+      if (member is ConstructorDeclaration) hasConstructor = true;
     }
-    return hasConstructor && hasOnlyFinalFields && !hasMethods;
+    return hasConstructor;
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
-
-  @override
-  void visitImportDirective(ImportDirective node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final importUri = node.uri.stringValue;
-    if (importUri == null) return;
-
-    if (PresentationLayerIsolation.isBannedImport(importUri)) {
-      rule.reportAtNode(
-        node,
-        diagnosticCode: PresentationLayerIsolation.importCode,
-      );
-    }
-  }
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final className = node.name.lexeme;
-    if (className.startsWith('_')) return;
-    if (PresentationLayerIsolation.isWidgetClass(node)) return;
-
+    if (node.className.lexeme.startsWith('_')) return;
+    if (node.extendsWidgetBase) return;
     if (PresentationLayerIsolation.isParameterClass(node)) {
       rule.reportAtOffset(
-        node.name.offset,
-        node.name.length,
+        node.className.offset,
+        node.className.length,
         diagnosticCode: PresentationLayerIsolation.useRecordCode,
       );
     }

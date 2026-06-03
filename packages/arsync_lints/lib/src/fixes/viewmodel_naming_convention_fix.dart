@@ -1,15 +1,12 @@
 import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/source/source_range.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
+import "../ast_extensions.dart";
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `viewmodel_naming_convention` rule - class naming.
-///
-/// Adds "Notifier" suffix to classes extending Notifier:
-/// - Before: `class AuthViewModel extends Notifier`
-/// - After: `class AuthNotifier extends Notifier`
+/// Quick fix for `viewmodel_naming_convention` — ensure the Notifier class
+/// name ends with "Notifier".
 class ViewModelClassNamingFix extends ResolvedCorrectionProducer {
   ViewModelClassNamingFix({required super.context});
 
@@ -28,85 +25,33 @@ class ViewModelClassNamingFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final classNameToken = _findClassNameToken(node);
-    if (classNameToken == null) return;
+    final name = node.thisOrAncestorOfType<ClassDeclaration>()?.className;
+    if (name == null || name.lexeme.endsWith('Notifier')) return;
 
-    final currentName = classNameToken.lexeme;
-    if (currentName.endsWith('Notifier')) return;
+    final completion = _completePartial(name.lexeme, 'Notifier');
+    final newName = completion ?? '${name.lexeme}Notifier';
 
-    // Complete partial suffix or append "Notifier"
-    final completion = _findPartialNotifierSuffix(currentName, 'Notifier');
-    final newName = completion != null
-        ? '$currentName$completion'
-        : '${currentName}Notifier';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(classNameToken.offset, classNameToken.length),
-        newName,
-      );
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(SourceRange(name.offset, name.length), newName);
     });
   }
 
-  /// Checks if [name] ends with a partial prefix of [suffix].
-  /// Returns the remaining characters needed to complete [suffix], or null if no partial match.
-  /// E.g., "ThemeModeNotifie" with suffix "Notifier" returns "r"
-  /// E.g., "AuthNotif" with suffix "Notifier" returns "ier"
-  String? _findPartialNotifierSuffix(String name, String suffix) {
-    if (name.isEmpty || suffix.isEmpty) return null;
-
-    // Find the longest matching prefix of suffix at the end of name
-    // by comparing characters directly (O(n) without substring allocations)
-    final maxMatchLen = name.length < suffix.length - 1
+  /// If [name] ends with a prefix of [suffix] (e.g. "AuthNotif" of "Notifier"),
+  /// returns the completed name (e.g. "AuthNotifier"); otherwise `null`.
+  static String? _completePartial(String name, String suffix) {
+    final max = name.length < suffix.length - 1
         ? name.length
         : suffix.length - 1;
-
-    for (var matchLen = maxMatchLen; matchLen >= 1; matchLen--) {
-      var matches = true;
-      final nameStart = name.length - matchLen;
-      for (var i = 0; i < matchLen; i++) {
-        if (name.codeUnitAt(nameStart + i) != suffix.codeUnitAt(i)) {
-          matches = false;
-          break;
-        }
+    for (var len = max; len >= 1; len--) {
+      if (name.endsWith(suffix.substring(0, len))) {
+        return name + suffix.substring(len);
       }
-      if (matches) {
-        return suffix.substring(matchLen);
-      }
-    }
-    return null;
-  }
-
-  Token? _findClassNameToken(AstNode? node) {
-    if (node == null) return null;
-
-    if (node is ClassDeclaration) {
-      return node.name;
-    }
-
-    if (node is SimpleIdentifier) {
-      final parent = node.parent;
-      if (parent is ClassDeclaration) {
-        return parent.name;
-      }
-    }
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ClassDeclaration) {
-        return current.name;
-      }
-      current = current.parent;
     }
     return null;
   }
 }
 
-/// Quick fix for `viewmodel_naming_convention` rule - provider naming.
-///
-/// Adds "Provider" suffix to provider variables:
-/// - Before: `final auth = NotifierProvider.autoDispose(...)`
-/// - After: `final authProvider = NotifierProvider.autoDispose(...)`
+/// Quick fix for `viewmodel_naming_convention` — append `Provider` suffix.
 class ViewModelProviderNamingFix extends ResolvedCorrectionProducer {
   ViewModelProviderNamingFix({required super.context});
 
@@ -125,43 +70,14 @@ class ViewModelProviderNamingFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final variableToken = _findVariableToken(node);
-    if (variableToken == null) return;
+    final name = node.thisOrAncestorOfType<VariableDeclaration>()?.name;
+    if (name == null || name.lexeme.endsWith('Provider')) return;
 
-    final currentName = variableToken.lexeme;
-    if (currentName.endsWith('Provider')) return;
-
-    final newName = '${currentName}Provider';
-
-    await builder.addDartFileEdit(file, (builder) {
-      builder.addSimpleReplacement(
-        SourceRange(variableToken.offset, variableToken.length),
-        newName,
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleReplacement(
+        SourceRange(name.offset, name.length),
+        '${name.lexeme}Provider',
       );
     });
-  }
-
-  Token? _findVariableToken(AstNode? node) {
-    if (node == null) return null;
-
-    if (node is VariableDeclaration) {
-      return node.name;
-    }
-
-    if (node is SimpleIdentifier) {
-      final parent = node.parent;
-      if (parent is VariableDeclaration) {
-        return parent.name;
-      }
-    }
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is VariableDeclaration) {
-        return current.name;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

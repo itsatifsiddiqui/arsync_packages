@@ -3,9 +3,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer_plugin/utilities/change_builder/change_builder_core.dart';
 import 'package:analyzer_plugin/utilities/fixes/fixes.dart';
 
-/// Quick fix for `prefer_space_between_elements` rule.
-///
-/// Adds a blank line before the reported element.
+/// Quick fix for `prefer_space_between_elements` — add blank line before element.
 class PreferSpaceBetweenElementsFix extends ResolvedCorrectionProducer {
   PreferSpaceBetweenElementsFix({required super.context});
 
@@ -24,31 +22,19 @@ class PreferSpaceBetweenElementsFix extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    final targetNode = _findTargetNode(node);
-    if (targetNode == null) return;
+    final target = node.thisOrAncestorMatching(
+      (n) =>
+          n is ConstructorDeclaration ||
+          n is MethodDeclaration ||
+          n is FieldDeclaration,
+    );
+    if (target == null) return;
 
     final lineInfo = unitResult.lineInfo;
-    final startLine = lineInfo.getLocation(targetNode.offset).lineNumber - 1;
-    final lineStart = lineInfo.getOffsetOfLine(startLine);
+    final line = lineInfo.getLocation(target.offset).lineNumber - 1;
 
-    await builder.addDartFileEdit(file, (builder) {
-      // Insert a blank line before the element
-      builder.addSimpleInsertion(lineStart, '\n');
+    await builder.addDartFileEdit(file, (b) {
+      b.addSimpleInsertion(lineInfo.getOffsetOfLine(line), '\n');
     });
-  }
-
-  AstNode? _findTargetNode(AstNode? node) {
-    if (node == null) return null;
-
-    AstNode? current = node;
-    while (current != null) {
-      if (current is ConstructorDeclaration ||
-          current is MethodDeclaration ||
-          current is FieldDeclaration) {
-        return current;
-      }
-      current = current.parent;
-    }
-    return null;
   }
 }

@@ -1,15 +1,11 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule B4: async_viewmodel_safety
-///
-/// Async operations in ViewModels must handle errors explicitly.
+/// Rule B4: an `await` inside a `Notifier`/`AsyncNotifier` method in
+/// `lib/providers/` must be wrapped in `try`/`catch`. `await persist(...)`
+/// (and `await persist(...).future`) are exempt — they are offline-cache
+/// helpers that handle their own errors.
 class AsyncViewModelSafety extends AnalysisRule {
-  AsyncViewModelSafety()
-    : super(
-        name: 'async_viewmodel_safety',
-        description:
-            'Async operations in ViewModels must be wrapped in try/catch.',
-      );
+  AsyncViewModelSafety() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'async_viewmodel_safety',
@@ -25,79 +21,42 @@ class AsyncViewModelSafety extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    final path = context.definingUnit.file.path;
-    if (!PathUtils.isInProviders(path)) return;
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    if (!PathUtils.isInProviders(context.definingUnit.file.path)) return;
+    registry.addAwaitExpression(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  _Visitor(this.rule, this.allUnits);
-
-  @override
-  void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
-    final extendsClause = node.extendsClause;
-    if (extendsClause == null) return;
-
-    final superclassName = extendsClause.superclass.name.lexeme;
-    if (!superclassName.contains('Notifier') &&
-        !superclassName.contains('AsyncNotifier')) {
-      return;
-    }
-
-    for (final member in node.members) {
-      if (member is MethodDeclaration) {
-        _checkMethod(member);
-      }
-    }
-  }
-
-  void _checkMethod(MethodDeclaration method) {
-    final body = method.body;
-    if (body is! BlockFunctionBody) return;
-
-    final awaitVisitor = _AwaitExpressionVisitor();
-    body.accept(awaitVisitor);
-
-    for (final awaitExpr in awaitVisitor.awaitExpressions) {
-      if (NodeContentHelper.shouldSkipNode(awaitExpr, allUnits, rule.name)) {
-        continue;
-      }
-      if (!_isInsideTryBlock(awaitExpr)) {
-        rule.reportAtNode(awaitExpr);
-      }
-    }
-  }
-
-  bool _isInsideTryBlock(AstNode node) {
-    AstNode? current = node.parent;
-    while (current != null) {
-      if (current is TryStatement) return true;
-      if (current is MethodDeclaration || current is FunctionDeclaration) break;
-      current = current.parent;
-    }
-    return false;
-  }
-}
-
-class _AwaitExpressionVisitor extends RecursiveAstVisitor<void> {
-  final List<AwaitExpression> awaitExpressions = [];
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitAwaitExpression(AwaitExpression node) {
-    awaitExpressions.add(node);
-    super.visitAwaitExpression(node);
+
+    final method = node.thisOrAncestorOfType<MethodDeclaration>();
+    if (method == null || method.body is! BlockFunctionBody) return;
+
+    final classDecl = method.thisOrAncestorOfType<ClassDeclaration>();
+    if (classDecl == null || !classDecl.extendsNotifierVariant) return;
+
+    if (_isPersistCall(node.expression)) return;
+    if (_isInsideTryBlock(node)) return;
+    rule.reportAtNode(node);
+  }
+
+  static bool _isPersistCall(Expression e) {
+    if (e is MethodInvocation) return e.methodName.name == 'persist';
+    if (e is PropertyAccess) {
+      final t = e.target;
+      return t is MethodInvocation && t.methodName.name == 'persist';
+    }
+    return false;
+  }
+
+  static bool _isInsideTryBlock(AstNode node) {
+    for (AstNode? c = node.parent; c != null; c = c.parent) {
+      if (c is TryStatement) return true;
+      if (c is MethodDeclaration || c is FunctionDeclaration) return false;
+    }
+    return false;
   }
 }

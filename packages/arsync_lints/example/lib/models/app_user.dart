@@ -5,7 +5,6 @@ part 'app_user.g.dart';
 
 enum UserType { user, admin }
 
-// ignore: global_variable_restriction
 dynamic readUserId(Map map, String key) =>
     map['userid'] ?? map['uid'] ?? map['userId'];
 

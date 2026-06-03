@@ -1,10 +1,8 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule: provider_file_naming
-///
-/// Enforce naming conventions in providers directory:
-/// - File names must end with _provider.dart (e.g., auth_provider.dart)
-/// - File must contain a Notifier class with matching prefix (e.g., AuthNotifier)
+/// Rule: files in `lib/providers/` must end with `_provider.dart` and contain
+/// a `Notifier` class with a matching prefix (e.g. `auth_provider.dart` →
+/// `AuthNotifier`).
 class ProviderFileNaming extends MultiAnalysisRule {
   ProviderFileNaming()
     : super(
@@ -37,83 +35,59 @@ class ProviderFileNaming extends MultiAnalysisRule {
   ) {
     final path = context.definingUnit.file.path;
     if (!PathUtils.isInProviders(path)) return;
-
     final fileName = PathUtils.getFileName(path);
     if (fileName == 'index' || fileName.startsWith('_')) return;
 
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits, fileName);
-    registry.addCompilationUnit(this, visitor);
+    registry.addCompilationUnit(
+      this,
+      _Visitor(this, fileName),
+    );
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final MultiAnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<MultiAnalysisRule> {
   final String fileName;
 
-  _Visitor(this.rule, this.allUnits, this.fileName);
+  _Visitor(super.rule, this.fileName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+
+    final publics = node.declarations
+        .whereType<ClassDeclaration>()
+        .where((d) => !d.className.lexeme.startsWith('_'))
+        .toList();
 
     if (!fileName.endsWith('_provider')) {
-      for (final declaration in node.declarations) {
-        if (declaration is ClassDeclaration &&
-            !declaration.name.lexeme.startsWith('_')) {
-          rule.reportAtOffset(
-            declaration.name.offset,
-            declaration.name.length,
-            diagnosticCode: ProviderFileNaming.fileCode,
-          );
-          break;
-        }
+      if (publics.isNotEmpty) {
+        rule.reportAtOffset(
+          publics.first.className.offset,
+          publics.first.className.length,
+          diagnosticCode: ProviderFileNaming.fileCode,
+        );
       }
       return;
     }
 
-    final prefix = fileName.replaceAll('_provider', '');
-    final expectedNotifierPrefix = PathUtils.snakeToPascal(prefix);
+    final expectedPrefix = PathUtils.snakeToPascal(
+      fileName.replaceAll('_provider', ''),
+    );
 
-    final notifierClasses = <String>[];
-    ClassDeclaration? firstPublicClass;
+    final notifiers = [
+      for (final d in publics)
+        if (d.extendsNotifierVariant) d.className.lexeme,
+    ];
+    if (notifiers.isEmpty || publics.isEmpty) return;
 
-    for (final declaration in node.declarations) {
-      if (declaration is ClassDeclaration) {
-        final className = declaration.name.lexeme;
-        if (className.startsWith('_')) continue;
-
-        firstPublicClass ??= declaration;
-
-        final extendsClause = declaration.extendsClause;
-        if (extendsClause != null) {
-          final superclassName = extendsClause.superclass.name.lexeme;
-          if (superclassName.contains('Notifier')) {
-            notifierClasses.add(className);
-          }
-        }
-      }
-    }
-
-    if (notifierClasses.isNotEmpty) {
-      final hasMatchingNotifier = notifierClasses.any(
-        (name) =>
-            name.startsWith(expectedNotifierPrefix) &&
-            name.endsWith('Notifier'),
+    final hasMatch = notifiers.any(
+      (n) => n.startsWith(expectedPrefix) && n.endsWith('Notifier'),
+    );
+    if (!hasMatch) {
+      rule.reportAtOffset(
+        publics.first.className.offset,
+        publics.first.className.length,
+        diagnosticCode: ProviderFileNaming.notifierMissingCode,
       );
-
-      if (!hasMatchingNotifier && firstPublicClass != null) {
-        rule.reportAtOffset(
-          firstPublicClass.name.offset,
-          firstPublicClass.name.length,
-          diagnosticCode: ProviderFileNaming.notifierMissingCode,
-        );
-      }
     }
   }
 }

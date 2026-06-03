@@ -1,33 +1,13 @@
 import '../arsync_lint_rule.dart';
 
-/// A lint rule that warns against using layout widgets intended for multiple
-/// children with only one child.
+/// Lint rule discouraging multi-child layout widgets (`Column`, `Row`, `Stack`,
+/// `Flex`, `Wrap`, `ListView`, `SliverList`, `SliverMainAxisGroup`,
+/// `SliverCrossAxisGroup`) when they only contain a single static child.
 ///
-/// This includes widgets like `Column`, `Row`, `Stack`, `Flex`, `Wrap`,
-/// `ListView`, `SliverList`, `SliverMainAxisGroup`, and `SliverCrossAxisGroup`.
-///
-/// Using these widgets with a single child can lead to unnecessary overhead
-/// and less efficient layouts.
-///
-/// ### Example
-///
-/// #### BAD:
-/// ```dart
-/// Column(
-///   children: <Widget>[YourWidget()], // LINT
-/// );
-/// ```
-///
-/// #### GOOD:
-/// ```dart
-/// Center(child: YourWidget());
-/// // or
-/// Column(
-///   children: <Widget>[YourWidget1(), YourWidget2()],
-/// );
-/// ```
+/// `for`-elements and spreads are allowed since they may produce multiple
+/// children at runtime.
 class AvoidSingleChild extends AnalysisRule {
-  AvoidSingleChild() : super(name: code.name, description: code.problemMessage);
+  AvoidSingleChild() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const code = LintCode(
     'avoid_single_child',
@@ -44,20 +24,17 @@ class AvoidSingleChild extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addInstanceCreationExpression(this, visitor);
+    registry.addInstanceCreationExpression(
+      this,
+      _Visitor(this),
+    );
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
-
-  static const _multiChildWidgets = [
+  static const _multiChildWidgets = {
     'Column',
     'Row',
     'Flex',
@@ -67,73 +44,37 @@ class _Visitor extends SimpleAstVisitor<void> {
     'SliverList',
     'SliverMainAxisGroup',
     'SliverCrossAxisGroup',
-  ];
+  };
+
+  static const _childrenArgNames = {'children', 'slivers'};
 
   @override
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
+    if (!_multiChildWidgets.contains(node.typeName)) return;
 
-    final className = node.staticType?.getDisplayString();
-    if (!_multiChildWidgets.contains(className)) {
-      return;
-    }
+    final arg = node.argumentList.arguments
+        .whereType<NamedExpression>()
+        .where((a) => _childrenArgNames.contains(a.name.label.name))
+        .firstOrNull;
+    final list = arg?.expression;
+    if (list is! ListLiteral || list.elements.length != 1) return;
 
-    final childrenArg = _findChildrenArgument(node);
-    if (childrenArg == null) {
-      return;
-    }
-
-    final ListLiteral childrenList;
-    if (childrenArg is NamedExpression &&
-        childrenArg.expression is ListLiteral) {
-      childrenList = childrenArg.expression as ListLiteral;
-    } else {
-      return;
-    }
-
-    if (childrenList.elements.length != 1) {
-      return;
-    }
-
-    // Check for edge cases where single child is acceptable
-    for (final element in childrenList.elements) {
-      if (element is IfElement) {
-        if (_hasMultipleChildren(element.thenElement)) {
-          return;
-        }
-
-        final elseElement = element.elseElement;
-        if (elseElement != null && _hasMultipleChildren(elseElement)) {
-          return;
-        }
-      }
-    }
-
-    final element = childrenList.elements.first;
-    // ForElement generates multiple children at runtime
-    if (element is ForElement) {
-      return;
+    // Allow `if` branches with multi-children, `for`, and spreads — any of
+    // these can produce more than one child at runtime.
+    final first = list.elements.first;
+    if (first is ForElement || first is SpreadElement) return;
+    if (first is IfElement) {
+      if (_hasMultipleChildren(first.thenElement)) return;
+      final e = first.elseElement;
+      if (e != null && _hasMultipleChildren(e)) return;
     }
 
     rule.reportAtNode(node);
   }
 
-  Expression? _findChildrenArgument(InstanceCreationExpression node) {
-    for (final arg in node.argumentList.arguments) {
-      if (arg is NamedExpression &&
-          (arg.name.label.name == 'children' ||
-              arg.name.label.name == 'slivers')) {
-        return arg;
-      }
-    }
-    return null;
-  }
-
-  bool _hasMultipleChildren(CollectionElement element) {
-    if (element is SpreadElement && element.expression is ListLiteral) {
-      final spreadElement = element.expression as ListLiteral;
-      return spreadElement.elements.length > 1;
+  static bool _hasMultipleChildren(CollectionElement e) {
+    if (e is SpreadElement && e.expression is ListLiteral) {
+      return (e.expression as ListLiteral).elements.length > 1;
     }
     return false;
   }

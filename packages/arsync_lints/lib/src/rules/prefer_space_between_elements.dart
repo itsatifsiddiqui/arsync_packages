@@ -2,42 +2,11 @@ import 'package:analyzer/source/line_info.dart';
 
 import '../arsync_lint_rule.dart';
 
-/// A lint rule that enforces spacing conventions within class definitions
-/// by requiring a blank line between the constructor and fields, and between
-/// the constructor and the build method.
-///
-/// Proper spacing enhances code readability and organization.
-///
-/// ### Example
-///
-/// #### BAD:
-/// ```dart
-/// class MyWidget extends StatelessWidget {
-///   final String title;
-///   MyWidget(this.title);
-///   @override
-///   Widget build(BuildContext context) {
-///     return Text(title);
-///   }
-/// }
-/// ```
-///
-/// #### GOOD:
-/// ```dart
-/// class MyWidget extends StatelessWidget {
-///   final String title;
-///
-///   MyWidget(this.title);
-///
-///   @override
-///   Widget build(BuildContext context) {
-///     return Text(title);
-///   }
-/// }
-/// ```
+/// Lint rule: require a blank line between fields, constructors, and `build()`
+/// inside a class — improves readability.
 class PreferSpaceBetweenElements extends AnalysisRule {
   PreferSpaceBetweenElements()
-    : super(name: code.name, description: code.problemMessage);
+    : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const code = LintCode(
     'prefer_space_between_elements',
@@ -54,78 +23,41 @@ class PreferSpaceBetweenElements extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    registry.addClassDeclaration(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
-
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
-
     final lineInfo = node.thisOrAncestorOfType<CompilationUnit>()?.lineInfo;
-    if (lineInfo == null) {
-      return;
-    }
+    if (lineInfo == null) return;
 
-    final members = node.members;
+    final members = node.classMembers;
     for (var i = 0; i < members.length - 1; i++) {
-      final currentMember = members[i];
-      final nextMember = members[i + 1];
-
-      // No blank line between constructor and build method
-      if (currentMember is ConstructorDeclaration &&
-          nextMember is MethodDeclaration &&
-          nextMember.name.lexeme == 'build') {
-        if (!_hasBlankLineBetween(currentMember, nextMember, lineInfo)) {
-          rule.reportAtNode(nextMember);
-        }
-      }
-
-      // No blank line between fields and constructor
-      if (currentMember is FieldDeclaration &&
-          nextMember is ConstructorDeclaration) {
-        if (!_hasBlankLineBetween(currentMember, nextMember, lineInfo)) {
-          rule.reportAtNode(nextMember);
-        }
-      }
-
-      // No blank line between constructor and fields
-      if (currentMember is ConstructorDeclaration &&
-          nextMember is FieldDeclaration) {
-        if (!_hasBlankLineBetween(currentMember, nextMember, lineInfo)) {
-          rule.reportAtNode(nextMember);
-        }
-      }
-
-      // No blank line between fields and build method
-      if (currentMember is FieldDeclaration &&
-          nextMember is MethodDeclaration &&
-          nextMember.name.lexeme == 'build') {
-        if (!_hasBlankLineBetween(currentMember, nextMember, lineInfo)) {
-          rule.reportAtNode(nextMember);
-        }
-      }
+      final a = members[i];
+      final b = members[i + 1];
+      if (!_pairNeedsBlankLine(a, b)) continue;
+      if (_hasBlankLineBetween(a, b, lineInfo)) continue;
+      rule.reportAtNode(b);
     }
   }
 
-  /// Returns `true` if there is a blank line between [first] and [second].
-  bool _hasBlankLineBetween(AstNode first, AstNode second, LineInfo lineInfo) {
-    final firstEndLine = lineInfo.getLocation(first.endToken.end).lineNumber;
-    final secondStartLine = lineInfo
-        .getLocation(second.beginToken.offset)
-        .lineNumber;
-    return (secondStartLine - firstEndLine) > 1;
+  static bool _pairNeedsBlankLine(ClassMember a, ClassMember b) {
+    bool isBuild(ClassMember m) =>
+        m is MethodDeclaration && m.name.lexeme == 'build';
+    if (a is ConstructorDeclaration && isBuild(b)) return true;
+    if (a is FieldDeclaration && b is ConstructorDeclaration) return true;
+    if (a is ConstructorDeclaration && b is FieldDeclaration) return true;
+    if (a is FieldDeclaration && isBuild(b)) return true;
+    return false;
+  }
+
+  static bool _hasBlankLineBetween(AstNode first, AstNode second, LineInfo li) {
+    final endLine = li.getLocation(first.endToken.end).lineNumber;
+    final startLine = li.getLocation(second.beginToken.offset).lineNumber;
+    return startLine - endLine > 1;
   }
 }

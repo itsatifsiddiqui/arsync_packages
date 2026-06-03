@@ -1,56 +1,17 @@
 import '../arsync_lint_rule.dart';
 
-const _hookWidgetName = 'HookWidget';
-const _hookNameRegex = r'^_?use[A-Z].*';
-const _statelessWidgetName = 'StatelessWidget';
+final _hookNameRegex = RegExp(r'^_?use[A-Z].*');
 
-/// A lint rule that detects `HookWidget` usage without any hooks.
-///
-/// When a widget extends `HookWidget` but doesn't use any hooks,
-/// it should be replaced with `StatelessWidget` for clarity and performance.
-///
-/// ### Example
-///
-/// #### BAD:
-/// ```dart
-/// class NoHooksWidget extends HookWidget {
-///   const NoHooksWidget({super.key});
-///
-///   @override
-///   Widget build(BuildContext context) => const Text('Hello World!');
-/// }
-/// ```
-///
-/// #### GOOD:
-/// ```dart
-/// class NoHooksWidget extends StatelessWidget {
-///   const NoHooksWidget({super.key});
-///
-///   @override
-///   Widget build(BuildContext context) => const Text('Hello World!');
-/// }
-/// ```
-///
-/// #### GOOD (using hooks):
-/// ```dart
-/// class MyHookWidget extends HookWidget {
-///   const MyHookWidget({super.key});
-///
-///   @override
-///   Widget build(BuildContext context) {
-///     final controller = useTextEditingController();
-///     return TextField(controller: controller);
-///   }
-/// }
-/// ```
+/// Lint rule: a class extending `HookWidget` that uses no hooks should be a
+/// `StatelessWidget` instead.
 class UnnecessaryHookWidget extends AnalysisRule {
   UnnecessaryHookWidget()
-    : super(name: code.name, description: code.problemMessage);
+    : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const code = LintCode(
     'unnecessary_hook_widget',
     'Consider using StatelessWidget instead of HookWidget when no hooks are used.',
-    correctionMessage: 'Replace with $_statelessWidgetName.',
+    correctionMessage: 'Replace with StatelessWidget.',
   );
 
   @override
@@ -61,75 +22,47 @@ class UnnecessaryHookWidget extends AnalysisRule {
     RuleVisitorRegistry registry,
     RuleContext context,
   ) {
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits);
-    registry.addClassDeclaration(this, visitor);
+    registry.addClassDeclaration(this, _Visitor(this));
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  _Visitor(this.rule, this.allUnits);
-
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
+  _Visitor(super.rule);
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
     final superclass = node.extendsClause?.superclass;
-    if (superclass == null) return;
+    if (superclass == null || superclass.name.lexeme != 'HookWidget') return;
 
-    // Check if the superclass is HookWidget
-    if (superclass.name.lexeme != _hookWidgetName) return;
-
-    // Check if any hooks are used within the class
-    var hasHooks = false;
-    node.visitChildren(
-      _HookDetectorVisitor(() {
-        hasHooks = true;
-      }),
-    );
-
-    if (!hasHooks) {
-      rule.reportAtNode(superclass);
-    }
+    final detector = _HookDetectorVisitor();
+    node.visitChildren(detector);
+    if (!detector.found) rule.reportAtNode(superclass);
   }
 }
 
 class _HookDetectorVisitor extends RecursiveAstVisitor<void> {
-  const _HookDetectorVisitor(this.onHookFound);
+  bool found = false;
 
-  final void Function() onHookFound;
+  bool _isHookName(String name) => _hookNameRegex.hasMatch(name);
 
   @override
   void visitMethodInvocation(MethodInvocation node) {
-    if (RegExp(_hookNameRegex).hasMatch(node.methodName.name)) {
-      onHookFound();
-    }
-    // for hooks like `useTextEditingController.call()`
-    final target = node.realTarget;
-    if (target != null && target is SimpleIdentifier) {
-      if (RegExp(_hookNameRegex).hasMatch(target.name)) {
-        onHookFound();
+    if (_isHookName(node.methodName.name)) {
+      found = true;
+    } else {
+      final target = node.realTarget;
+      if (target is SimpleIdentifier && _isHookName(target.name)) {
+        found = true;
       }
     }
     super.visitMethodInvocation(node);
   }
 
-  // for hooks like `useTextEditingController()`
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
-    final function = node.function;
-    if (function is SimpleIdentifier) {
-      if (RegExp(_hookNameRegex).hasMatch(function.name)) {
-        onHookFound();
-      }
-    }
+    final f = node.function;
+    if (f is SimpleIdentifier && _isHookName(f.name)) found = true;
     super.visitFunctionExpressionInvocation(node);
   }
 }

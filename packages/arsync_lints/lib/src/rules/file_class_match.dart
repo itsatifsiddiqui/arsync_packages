@@ -1,18 +1,10 @@
 import '../arsync_lint_rule.dart';
 
-/// Rule E4: file_class_match
-///
-/// Enforce strict naming correspondence.
-/// If file is login_screen.dart, at least one Class MUST be LoginScreen.
-/// If file is auth_repository.dart, at least one Class MUST be AuthRepository.
-/// Files can contain multiple classes, but at least one must match the file name.
+/// Rule E4: a file must contain at least one public class whose name is the
+/// PascalCase version of the file name (e.g. `login_screen.dart` → `LoginScreen`).
+/// Providers are exempt.
 class FileClassMatch extends AnalysisRule {
-  FileClassMatch()
-    : super(
-        name: 'file_class_match',
-        description:
-            'No class in this file matches the file name. Expected a class named like the file (snake_case to PascalCase).',
-      );
+  FileClassMatch() : super(name: code.lowerCaseName, description: code.problemMessage);
 
   static const LintCode code = LintCode(
     'file_class_match',
@@ -30,55 +22,33 @@ class FileClassMatch extends AnalysisRule {
     RuleContext context,
   ) {
     if (!context.isInLibDir) return;
-
     final path = context.definingUnit.file.path;
     if (PathUtils.isInProviders(path)) return;
 
-    final fileName = PathUtils.getFileName(path);
-    final expectedClassName = PathUtils.snakeToPascal(fileName);
-
-    // NOTE: We pass context.allUnits to the visitor because definingUnit.content
-    // only returns the LIBRARY file content, not part file (.g.dart) content.
-    // The visitor must use allUnits to get the correct file's content.
-
-    final visitor = _Visitor(this, context.allUnits, expectedClassName);
-    registry.addCompilationUnit(this, visitor);
+    final expected = PathUtils.snakeToPascal(PathUtils.getFileName(path));
+    registry.addCompilationUnit(
+      this,
+      _Visitor(this, expected),
+    );
   }
 }
 
-class _Visitor extends SimpleAstVisitor<void> {
-  final AnalysisRule rule;
-  final List<dynamic> allUnits;
+class _Visitor extends ArsyncRuleVisitor<AnalysisRule> {
   final String expectedClassName;
 
-  _Visitor(this.rule, this.allUnits, this.expectedClassName);
+  _Visitor(super.rule, this.expectedClassName);
 
   @override
   void visitCompilationUnit(CompilationUnit node) {
-    // Skip generated files and nodes with ignore comments
-    if (NodeContentHelper.shouldSkipNode(node, allUnits, rule.name)) return;
 
-    final classNames = <String>[];
-    ClassDeclaration? firstClass;
+    final publics = node.declarations
+        .whereType<ClassDeclaration>()
+        .where((d) => !d.className.lexeme.startsWith('_'))
+        .toList();
+    if (publics.isEmpty) return;
+    if (publics.any((d) => d.className.lexeme == expectedClassName)) return;
 
-    for (final declaration in node.declarations) {
-      if (declaration is ClassDeclaration) {
-        final className = declaration.name.lexeme;
-        if (className.startsWith('_')) continue;
-
-        classNames.add(className);
-        firstClass ??= declaration;
-      }
-    }
-
-    if (classNames.isEmpty) return;
-
-    final hasMatchingClass = classNames.any(
-      (name) => name == expectedClassName,
-    );
-
-    if (!hasMatchingClass && firstClass != null) {
-      rule.reportAtOffset(firstClass.name.offset, firstClass.name.length);
-    }
+    final first = publics.first;
+    rule.reportAtOffset(first.className.offset, first.className.length);
   }
 }

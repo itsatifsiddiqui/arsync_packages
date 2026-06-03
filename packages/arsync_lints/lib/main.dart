@@ -20,6 +20,8 @@ import 'src/rules/presentation_layer_isolation.dart';
 import 'src/rules/shared_widget_purity.dart';
 import 'src/rules/model_purity.dart';
 import 'src/rules/repository_isolation.dart';
+import 'src/rules/converter_location.dart';
+import 'src/rules/state_class_location.dart';
 
 // Category B: Riverpod & State Management
 import 'src/rules/provider_autodispose_enforcement.dart';
@@ -41,10 +43,8 @@ import 'src/rules/repository_class_restriction.dart';
 
 // Category D: Code Quality & Complexity
 import 'src/rules/complexity_limits.dart';
-import 'src/rules/global_variable_restriction.dart';
 import 'src/rules/print_ban.dart';
 import 'src/rules/barrel_file_restriction.dart';
-import 'src/rules/ignore_file_ban.dart';
 
 // Category E: UI Safety & Consistency
 import 'src/rules/hook_safety_enforcement.dart';
@@ -64,7 +64,6 @@ import 'src/rules/avoid_single_child.dart';
 import 'src/rules/prefer_dedicated_media_query_methods.dart';
 import 'src/rules/prefer_space_between_elements.dart';
 import 'src/rules/prefer_to_include_sliver_in_name.dart';
-import 'src/rules/unsafe_null_assertion.dart';
 import 'src/rules/avoid_unnecessary_padding_widget.dart';
 import 'src/rules/unnecessary_hook_widget.dart';
 import 'src/rules/unnecessary_container.dart';
@@ -94,11 +93,7 @@ import 'src/fixes/repository_dependency_injection_fix.dart';
 import 'src/fixes/repository_class_restriction_fix.dart';
 
 // Fixes - Category D
-import 'src/fixes/complexity_limits_fix.dart';
-import 'src/fixes/global_variable_restriction_fix.dart';
 import 'src/fixes/print_ban_fix.dart';
-import 'src/fixes/barrel_file_restriction_fix.dart';
-import 'src/fixes/ignore_file_ban_fix.dart';
 
 // Fixes - Category E
 import 'src/fixes/hook_safety_enforcement_fix.dart';
@@ -111,14 +106,11 @@ import 'src/fixes/remove_listener_fix.dart';
 import 'src/fixes/dispose_notifier_fix.dart';
 
 // Fixes - Category F
-import 'src/fixes/avoid_consecutive_sliver_to_box_adapter_fix.dart';
 import 'src/fixes/avoid_hardcoded_color_fix.dart';
 import 'src/fixes/avoid_shrink_wrap_in_list_view_fix.dart';
-import 'src/fixes/avoid_single_child_fix.dart';
 import 'src/fixes/prefer_dedicated_media_query_methods_fix.dart';
 import 'src/fixes/prefer_space_between_elements_fix.dart';
 import 'src/fixes/prefer_to_include_sliver_in_name_fix.dart';
-import 'src/fixes/unsafe_null_assertion_fix.dart';
 import 'src/fixes/avoid_unnecessary_padding_widget_fix.dart';
 import 'src/fixes/unnecessary_hook_widget_fix.dart';
 import 'src/fixes/unnecessary_container_fix.dart';
@@ -138,6 +130,8 @@ class _Plugin extends Plugin {
       SharedWidgetPurity(),
       ModelPurity(),
       RepositoryIsolation(),
+      ConverterLocation(),
+      StateClassLocation(),
       // Category B: Riverpod & State Management
       ProviderAutodisposeEnforcement(),
       ViewModelNamingConvention(),
@@ -156,10 +150,8 @@ class _Plugin extends Plugin {
       RepositoryClassRestriction(),
       // Category D: Code Quality & Complexity
       ComplexityLimits(),
-      GlobalVariableRestriction(),
       PrintBan(),
       BarrelFileRestriction(),
-      IgnoreFileBan(),
       // Category E: UI Safety & Consistency
       HookSafetyEnforcement(),
       ScaffoldLocation(),
@@ -176,7 +168,6 @@ class _Plugin extends Plugin {
       PreferDedicatedMediaQueryMethods(),
       PreferSpaceBetweenElements(),
       PreferToIncludeSliverInName(),
-      UnsafeNullAssertion(),
       AvoidUnnecessaryPaddingWidget(),
       UnnecessaryHookWidget(),
       UnnecessaryContainer(),
@@ -250,10 +241,6 @@ class _Plugin extends Plugin {
       ProviderStateClassAddFreezedFix.new,
     );
     registry.registerFixForRule(
-      ProviderStateClass.importedStateCode,
-      ProviderStateClassMoveHereFix.new,
-    );
-    registry.registerFixForRule(
       ProviderDeclarationSyntax.code,
       ProviderDeclarationSyntaxFix.new,
     );
@@ -305,36 +292,7 @@ class _Plugin extends Plugin {
     );
 
     // Register fixes for Category D: Code Quality & Complexity
-    registry.registerFixForRule(
-      ComplexityLimits.nestingCode,
-      ComplexityLimitsAddTodoFix.new,
-    );
-    registry.registerFixForRule(
-      ComplexityLimits.methodLinesCode,
-      ComplexityLimitsAddTodoFix.new,
-    );
-    registry.registerFixForRule(
-      ComplexityLimits.buildLinesCode,
-      ComplexityLimitsAddTodoFix.new,
-    );
-    registry.registerFixForRule(
-      ComplexityLimits.nestedTernaryCode,
-      ComplexityLimitsAddTodoFix.new,
-    );
-    registry.registerFixForRule(
-      GlobalVariableRestriction.variableCode,
-      GlobalVariableRestrictionFix.new,
-    );
-    registry.registerFixForRule(
-      GlobalVariableRestriction.functionCode,
-      GlobalVariableRestrictionFix.new,
-    );
     registry.registerFixForRule(PrintBan.code, PrintBanFix.new);
-    registry.registerFixForRule(
-      BarrelFileRestriction.code,
-      BarrelFileRestrictionFix.new,
-    );
-    registry.registerFixForRule(IgnoreFileBan.code, IgnoreFileBanFix.new);
 
     // Register fixes for Category E: UI Safety & Consistency
     registry.registerFixForRule(
@@ -359,10 +317,6 @@ class _Plugin extends Plugin {
 
     // Register fixes for Category F: Flutter Best Practices
     registry.registerFixForRule(
-      AvoidConsecutiveSliverToBoxAdapter.code,
-      AvoidConsecutiveSliverToBoxAdapterFix.new,
-    );
-    registry.registerFixForRule(
       AvoidHardcodedColor.code,
       AvoidHardcodedColorFix.new,
     );
@@ -370,7 +324,6 @@ class _Plugin extends Plugin {
       AvoidShrinkWrapInListView.code,
       AvoidShrinkWrapInListViewFix.new,
     );
-    registry.registerFixForRule(AvoidSingleChild.code, AvoidSingleChildFix.new);
     registry.registerFixForRule(
       PreferDedicatedMediaQueryMethods.code,
       PreferDedicatedMediaQueryMethodsFix.new,
@@ -382,10 +335,6 @@ class _Plugin extends Plugin {
     registry.registerFixForRule(
       PreferToIncludeSliverInName.code,
       PreferToIncludeSliverInNameFix.new,
-    );
-    registry.registerFixForRule(
-      UnsafeNullAssertion.code,
-      UnsafeNullAssertionFix.new,
     );
     registry.registerFixForRule(
       AvoidUnnecessaryPaddingWidget.paddingWrapsContainerCode,
