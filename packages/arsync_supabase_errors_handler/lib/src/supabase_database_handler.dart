@@ -1,5 +1,5 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase/supabase.dart';
 
 import 'codes/supabase_database_code.dart';
@@ -17,10 +17,8 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  SupabaseDatabaseHandler({
-    this.customExceptions,
-    int priority = 18,
-  }) : _priority = priority;
+  SupabaseDatabaseHandler({this.customExceptions, int priority = 18})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -88,6 +86,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('supabase_db_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Database: $code - $message',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -112,10 +111,12 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   SupabaseDatabaseHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -163,6 +164,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Missing Field',
       briefMessage: 'Required field missing',
       exceptionCode: SupabaseDatabaseCode.notNullViolation,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.tableNotFound: ArsyncException(
       icon: Icons.table_chart_outlined,
@@ -172,6 +174,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Missing Table',
       briefMessage: 'Table not found',
       exceptionCode: SupabaseDatabaseCode.tableNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.columnNotFound: ArsyncException(
       icon: Icons.view_column_outlined,
@@ -181,6 +184,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Missing Column',
       briefMessage: 'Column not found',
       exceptionCode: SupabaseDatabaseCode.columnNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.insufficientPrivilege: ArsyncException(
       icon: Icons.no_accounts,
@@ -189,6 +193,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Permission',
       briefMessage: 'Access denied',
       exceptionCode: SupabaseDatabaseCode.insufficientPrivilege,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.syntaxError: ArsyncException(
       icon: Icons.code,
@@ -198,6 +203,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Syntax Error',
       briefMessage: 'Query syntax error',
       exceptionCode: SupabaseDatabaseCode.syntaxError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.invalidParameter: ArsyncException(
       icon: Icons.input,
@@ -207,6 +213,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid parameter',
       exceptionCode: SupabaseDatabaseCode.invalidParameter,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.dataException: ArsyncException(
       icon: Icons.data_object,
@@ -216,6 +223,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Data Error',
       briefMessage: 'Data processing error',
       exceptionCode: SupabaseDatabaseCode.dataException,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.connectionFailure: ArsyncException(
       icon: Icons.wifi_off,
@@ -234,6 +242,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: SupabaseDatabaseCode.networkError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -243,6 +252,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timeout',
       briefMessage: 'Operation timed out',
       exceptionCode: SupabaseDatabaseCode.timeoutError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.serverError: ArsyncException(
       icon: Icons.cloud_off,
@@ -252,6 +262,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Server Error',
       briefMessage: 'Database server error',
       exceptionCode: SupabaseDatabaseCode.serverError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -261,6 +272,7 @@ class SupabaseDatabaseHandler implements ArsyncExceptionHandler {
       briefTitle: 'Database Error',
       briefMessage: 'Database operation failed',
       exceptionCode: SupabaseDatabaseCode.unknownError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

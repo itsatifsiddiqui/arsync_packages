@@ -2,7 +2,7 @@
 ///
 /// This package provides specialized error handlers for various Supabase services
 /// that integrate with the Arsync Exception Toolkit.
-library arsync_supabase_errors_handler;
+library;
 
 // Core handlers for Supabase services
 export 'src/supabase_auth_handler.dart';

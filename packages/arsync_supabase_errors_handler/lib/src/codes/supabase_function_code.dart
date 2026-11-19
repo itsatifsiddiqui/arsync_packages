@@ -14,8 +14,7 @@ enum SupabaseFunctionCode implements ArsyncExceptionCode {
   timeoutError('supabase_function_timeout_error'),
   rateLimited('supabase_function_rate_limited'),
   serverError('supabase_function_server_error'),
-  unknownError('supabase_function_unknown_error'),
-  ;
+  unknownError('supabase_function_unknown_error');
 
   const SupabaseFunctionCode(this.id);
 

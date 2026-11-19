@@ -154,7 +154,8 @@ class SupabaseErrorCodes {
   /// Check if an error should be ignored based on its message
   static bool isIgnorable(String errorMessage) {
     final lowerMessage = errorMessage.toLowerCase();
-    return ignorableErrorPatterns
-        .any((pattern) => lowerMessage.contains(pattern.toLowerCase()));
+    return ignorableErrorPatterns.any(
+      (pattern) => lowerMessage.contains(pattern.toLowerCase()),
+    );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase/supabase.dart';
 
 import '../arsync_supabase_errors_handler.dart';
@@ -16,10 +16,8 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  SupabaseAuthHandler({
-    this.customExceptions,
-    int priority = 20,
-  }) : _priority = priority;
+  SupabaseAuthHandler({this.customExceptions, int priority = 20})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -40,7 +38,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message.contains('authentication'),
       message.contains('auth/'),
       message.contains('unauthorized'),
-      message.contains('jwt')
+      message.contains('jwt'),
     ];
 
     return conditions.contains(true);
@@ -96,6 +94,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('supabase_auth_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Auth: $code - $message',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -115,10 +114,12 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   SupabaseAuthHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -139,6 +140,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Sign In Failed',
       briefMessage: 'Invalid email or password',
       exceptionCode: SupabaseAuthCode.invalidCredentials,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.userNotFound: ArsyncException(
       icon: Icons.person_off_outlined,
@@ -148,6 +150,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Found',
       briefMessage: 'Account not found',
       exceptionCode: SupabaseAuthCode.userNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.emailNotConfirmed: ArsyncException(
       icon: Icons.mark_email_unread_outlined,
@@ -157,6 +160,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Verify Email',
       briefMessage: 'Email not verified',
       exceptionCode: SupabaseAuthCode.emailNotConfirmed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.invalidToken: ArsyncException(
       icon: Icons.token,
@@ -173,6 +177,8 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Session Expired',
       briefMessage: 'Please sign in again',
       exceptionCode: SupabaseAuthCode.tokenExpired,
+      severity: ArsyncErrorSeverity.critical,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.invalidEmail: ArsyncException(
       icon: Icons.alternate_email,
@@ -181,6 +187,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Email',
       briefMessage: 'Invalid email format',
       exceptionCode: SupabaseAuthCode.invalidEmail,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.weakPassword: ArsyncException(
       icon: Icons.password,
@@ -190,6 +197,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Weak Password',
       briefMessage: 'Password too weak',
       exceptionCode: SupabaseAuthCode.weakPassword,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.userAlreadyExists: ArsyncException(
       icon: Icons.person_add_disabled,
@@ -199,6 +207,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Account Exists',
       briefMessage: 'User already exists',
       exceptionCode: SupabaseAuthCode.userAlreadyExists,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.emailTaken: ArsyncException(
       icon: Icons.email,
@@ -208,6 +217,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Email Taken',
       briefMessage: 'Email already registered',
       exceptionCode: SupabaseAuthCode.emailTaken,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.invalidMfaType: ArsyncException(
       icon: Icons.security,
@@ -234,6 +244,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Code',
       briefMessage: 'Incorrect MFA code',
       exceptionCode: SupabaseAuthCode.invalidMfaCode,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.phoneAlreadyConfirmed: ArsyncException(
       icon: Icons.phone_android,
@@ -243,6 +254,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Phone In Use',
       briefMessage: 'Phone number already confirmed',
       exceptionCode: SupabaseAuthCode.phoneAlreadyConfirmed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.networkError: ArsyncException(
       icon: Icons.wifi_off,
@@ -252,6 +264,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: SupabaseAuthCode.networkError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -261,6 +274,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timeout',
       briefMessage: 'Request timed out',
       exceptionCode: SupabaseAuthCode.timeoutError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -279,6 +293,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Server Error',
       briefMessage: 'Authentication server error',
       exceptionCode: SupabaseAuthCode.serverError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -288,6 +303,7 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Auth Error',
       briefMessage: 'Authentication failed',
       exceptionCode: SupabaseAuthCode.unknownError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

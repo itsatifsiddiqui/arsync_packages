@@ -14,8 +14,7 @@ enum SupabaseRealtimeCode implements ArsyncExceptionCode {
   timeoutError('supabase_realtime_timeout_error'),
   rateLimited('supabase_realtime_rate_limited'),
   serverError('supabase_realtime_server_error'),
-  unknownError('supabase_realtime_unknown_error'),
-  ;
+  unknownError('supabase_realtime_unknown_error');
 
   const SupabaseRealtimeCode(this.id);
 

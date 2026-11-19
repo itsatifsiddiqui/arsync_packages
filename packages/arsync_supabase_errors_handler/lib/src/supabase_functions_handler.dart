@@ -1,5 +1,5 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase/supabase.dart';
 
 import 'codes/supabase_function_code.dart';
@@ -17,10 +17,8 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  SupabaseFunctionsHandler({
-    this.customExceptions,
-    int priority = 17,
-  }) : _priority = priority;
+  SupabaseFunctionsHandler({this.customExceptions, int priority = 17})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -90,6 +88,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('supabase_function_$code'),
       originalException: exception,
       technicalDetails: technicalDetails,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -129,10 +128,12 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   SupabaseFunctionsHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -153,6 +154,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Missing Function',
       briefMessage: 'Function not found',
       exceptionCode: SupabaseFunctionCode.functionNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.functionExecutionFailed: ArsyncException(
       icon: Icons.dangerous,
@@ -162,6 +164,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Execution Failed',
       briefMessage: 'Function execution failed',
       exceptionCode: SupabaseFunctionCode.executionFailed,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.functionTimeout: ArsyncException(
       icon: Icons.timer_off,
@@ -180,6 +183,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid function input',
       exceptionCode: SupabaseFunctionCode.invalidPayload,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unauthorized: ArsyncException(
       icon: Icons.no_accounts,
@@ -197,6 +201,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: SupabaseFunctionCode.networkError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -206,6 +211,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timeout',
       briefMessage: 'Request timed out',
       exceptionCode: SupabaseFunctionCode.timeoutError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -224,6 +230,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Server Error',
       briefMessage: 'Function server error',
       exceptionCode: SupabaseFunctionCode.serverError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -233,6 +240,7 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Function Error',
       briefMessage: 'Function failed',
       exceptionCode: SupabaseFunctionCode.unknownError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

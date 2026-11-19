@@ -18,8 +18,7 @@ enum SupabaseStorageCode implements ArsyncExceptionCode {
   timeoutError('supabase_storage_timeout_error'),
   rateLimited('supabase_storage_rate_limited'),
   serverError('supabase_storage_server_error'),
-  unknownError('supabase_storage_unknown_error'),
-  ;
+  unknownError('supabase_storage_unknown_error');
 
   const SupabaseStorageCode(this.id);
 

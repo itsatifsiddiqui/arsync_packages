@@ -18,8 +18,7 @@ enum SupabaseDatabaseCode implements ArsyncExceptionCode {
   networkError('supabase_db_network_error'),
   timeoutError('supabase_db_timeout_error'),
   serverError('supabase_db_server_error'),
-  unknownError('supabase_db_unknown_error'),
-  ;
+  unknownError('supabase_db_unknown_error');
 
   const SupabaseDatabaseCode(this.id);
 

@@ -1,5 +1,5 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase/supabase.dart';
 
 import 'codes/supabase_storage_code.dart';
@@ -17,10 +17,8 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  SupabaseStorageHandler({
-    this.customExceptions,
-    int priority = 16,
-  }) : _priority = priority;
+  SupabaseStorageHandler({this.customExceptions, int priority = 16})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -86,6 +84,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('supabase_storage_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Storage: $code - $message',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -134,10 +133,12 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   SupabaseStorageHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -167,6 +168,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Bucket Missing',
       briefMessage: 'Storage bucket not found',
       exceptionCode: SupabaseStorageCode.bucketNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unauthorized: ArsyncException(
       icon: Icons.no_accounts,
@@ -176,6 +178,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Access',
       briefMessage: 'Permission denied',
       exceptionCode: SupabaseStorageCode.unauthorized,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.insufficientStorage: ArsyncException(
       icon: Icons.sd_card_alert,
@@ -203,6 +206,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'File Too Large',
       briefMessage: 'File size exceeds limit',
       exceptionCode: SupabaseStorageCode.fileTooBig,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.invalidContentType: ArsyncException(
       icon: Icons.file_present,
@@ -212,6 +216,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid File Type',
       briefMessage: 'Unsupported file type',
       exceptionCode: SupabaseStorageCode.invalidContentType,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.invalidFilename: ArsyncException(
       icon: Icons.text_snippet,
@@ -239,6 +244,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: SupabaseStorageCode.networkError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -248,6 +254,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timeout',
       briefMessage: 'Upload timed out',
       exceptionCode: SupabaseStorageCode.timeoutError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -266,6 +273,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Server Error',
       briefMessage: 'Storage server error',
       exceptionCode: SupabaseStorageCode.serverError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -275,6 +283,7 @@ class SupabaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Storage Error',
       briefMessage: 'Storage operation failed',
       exceptionCode: SupabaseStorageCode.unknownError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

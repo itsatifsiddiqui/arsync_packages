@@ -87,7 +87,7 @@ final toolkit = ArsyncExceptionToolkit(
                   'The password you entered doesn\'t match our records. Please try again or reset your password.',
               briefTitle: 'Login Failed',
               briefMessage: 'Incorrect password',
-              exceptionCode: 'supabase_auth_invalid_credentials',
+              exceptionCode: SupabaseAuthCode.invalidCredentials,
             ),
           },
         ),
@@ -139,6 +139,10 @@ try {
   }
 }
 ```
+
+### Severity
+
+Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. An expired session is `critical`. Cancelled actions stay `ignored`.
 
 ## Handler Classes
 

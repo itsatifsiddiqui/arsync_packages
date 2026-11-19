@@ -1,5 +1,5 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/supabase_realtime_code.dart';
 import 'supabase_error_codes.dart';
@@ -16,10 +16,8 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  SupabaseRealtimeHandler({
-    this.customExceptions,
-    int priority = 15,
-  }) : _priority = priority;
+  SupabaseRealtimeHandler({this.customExceptions, int priority = 15})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -75,6 +73,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('supabase_realtime_$code'),
       originalException: exception,
       technicalDetails: 'Supabase Realtime: $code - $message',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -89,10 +88,12 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   SupabaseRealtimeHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -157,6 +158,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: SupabaseRealtimeCode.networkError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.timeoutError: ArsyncException(
       icon: Icons.timer_off,
@@ -165,6 +167,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timeout',
       briefMessage: 'Connection timed out',
       exceptionCode: SupabaseRealtimeCode.timeoutError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.rateLimited: ArsyncException(
       icon: Icons.speed,
@@ -183,6 +186,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       briefTitle: 'Server Error',
       briefMessage: 'Realtime server error',
       exceptionCode: SupabaseRealtimeCode.serverError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
@@ -192,6 +196,7 @@ class SupabaseRealtimeHandler implements ArsyncExceptionHandler {
       briefTitle: 'Realtime Error',
       briefMessage: 'Realtime operation failed',
       exceptionCode: SupabaseRealtimeCode.unknownError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

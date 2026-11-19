@@ -2,7 +2,7 @@
 
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:arsync_supabase_errors_handler/arsync_supabase_errors_handler.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase/supabase.dart';
 
 void main() {

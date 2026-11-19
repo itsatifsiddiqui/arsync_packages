@@ -36,12 +36,12 @@ class SupabaseErrorsHandler implements ArsyncExceptionHandler {
     SupabaseFunctionsHandler? functionsHandler,
     SupabaseRealtimeHandler? realtimeHandler,
     int priority = 25,
-  })  : _authHandler = authHandler ?? SupabaseAuthHandler(),
-        _databaseHandler = databaseHandler ?? SupabaseDatabaseHandler(),
-        _storageHandler = storageHandler ?? SupabaseStorageHandler(),
-        _functionsHandler = functionsHandler ?? SupabaseFunctionsHandler(),
-        _realtimeHandler = realtimeHandler ?? SupabaseRealtimeHandler(),
-        _priority = priority;
+  }) : _authHandler = authHandler ?? SupabaseAuthHandler(),
+       _databaseHandler = databaseHandler ?? SupabaseDatabaseHandler(),
+       _storageHandler = storageHandler ?? SupabaseStorageHandler(),
+       _functionsHandler = functionsHandler ?? SupabaseFunctionsHandler(),
+       _realtimeHandler = realtimeHandler ?? SupabaseRealtimeHandler(),
+       _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -79,6 +79,7 @@ class SupabaseErrorsHandler implements ArsyncExceptionHandler {
       title: 'Supabase Error',
       message: 'An unexpected Supabase error occurred',
       originalException: exception,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 

@@ -1,3 +1,9 @@
+## 0.1.0
+
+* Uses arsync_exception_toolkit 0.3.0
+* Sets `severity` and `trackingSeverity` on every error 
+* Moved to the `material_ui` package for Flutter 3.50+ (needs Flutter 3.35 or newer)
+
 ## 0.0.4
 
 * Replace hardcoded exception codes with typed enums
