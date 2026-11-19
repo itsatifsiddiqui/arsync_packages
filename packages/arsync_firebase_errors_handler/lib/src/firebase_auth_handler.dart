@@ -1,7 +1,7 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart'
     show FirebaseAuthException;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/firebase_auth_code.dart';
 import 'firebase_error_codes.dart';
@@ -18,10 +18,8 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  FirebaseAuthHandler({
-    this.customExceptions,
-    int priority = 20,
-  }) : _priority = priority;
+  FirebaseAuthHandler({this.customExceptions, int priority = 20})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -63,13 +61,15 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
     return ArsyncException(
       icon: Icons.error_outline,
       title: 'Authentication Error',
-      message: authException.message ??
+      message:
+          authException.message ??
           'An unexpected authentication error occurred',
       briefTitle: 'Auth Error',
       briefMessage: 'Authentication failed',
       exceptionCode: RawArsyncExceptionCode('firebase_auth_$code'),
       originalException: exception,
       technicalDetails: 'Firebase Auth: $code - ${authException.message}',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -81,8 +81,9 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
     Map<String, ArsyncException> customExceptions,
   ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -103,6 +104,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Found',
       briefMessage: 'Account not found',
       exceptionCode: FirebaseAuthCode.userNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.wrongPassword: ArsyncException(
       icon: Icons.lock_outline,
@@ -112,6 +114,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Wrong Password',
       briefMessage: 'Wrong password',
       exceptionCode: FirebaseAuthCode.wrongPassword,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.emailAlreadyInUse: ArsyncException(
       icon: Icons.email,
@@ -121,6 +124,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Email Taken',
       briefMessage: 'Email already registered',
       exceptionCode: FirebaseAuthCode.emailAlreadyInUse,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.invalidEmail: ArsyncException(
       icon: Icons.alternate_email,
@@ -129,6 +133,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Email',
       briefMessage: 'Invalid email format',
       exceptionCode: FirebaseAuthCode.invalidEmail,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.weakPassword: ArsyncException(
       icon: Icons.security,
@@ -138,6 +143,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Weak Password',
       briefMessage: 'Password too weak',
       exceptionCode: FirebaseAuthCode.weakPassword,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.invalidVerificationCode: ArsyncException(
       icon: Icons.qr_code,
@@ -147,6 +153,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Code',
       briefMessage: 'Wrong verification code',
       exceptionCode: FirebaseAuthCode.invalidVerificationCode,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.invalidVerificationId: ArsyncException(
       icon: Icons.qr_code_2,
@@ -156,6 +163,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Expired',
       briefMessage: 'Verification expired',
       exceptionCode: FirebaseAuthCode.invalidVerificationId,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.operationNotAllowed: ArsyncException(
       icon: Icons.block,
@@ -165,6 +173,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Allowed',
       briefMessage: 'Operation not permitted',
       exceptionCode: FirebaseAuthCode.operationNotAllowed,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.userDisabled: ArsyncException(
       icon: Icons.person_off,
@@ -174,6 +183,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Account Suspended',
       briefMessage: 'Account suspended',
       exceptionCode: FirebaseAuthCode.userDisabled,
+      severity: ArsyncErrorSeverity.critical,
     ),
     FirebaseErrorCodes.providerAlreadyLinked: ArsyncException(
       icon: Icons.link,
@@ -183,6 +193,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Already Linked',
       briefMessage: 'Already linked',
       exceptionCode: FirebaseAuthCode.providerAlreadyLinked,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.invalidCredential: ArsyncException(
       icon: Icons.lock_open,
@@ -192,6 +203,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Credentials',
       briefMessage: 'Invalid credentials',
       exceptionCode: FirebaseAuthCode.invalidCredential,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.credentialAlreadyInUse: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -209,6 +221,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Try Different Sign-in',
       briefMessage: 'Account exists with different credential',
       exceptionCode: FirebaseAuthCode.accountExistsWithDifferentCredential,
+      severity: ArsyncErrorSeverity.critical,
     ),
     FirebaseErrorCodes.tooManyRequests: ArsyncException(
       icon: Icons.schedule,
@@ -227,6 +240,8 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Sign In Again',
       briefMessage: 'Please sign in again',
       exceptionCode: FirebaseAuthCode.requiresRecentLogin,
+      severity: ArsyncErrorSeverity.critical,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -236,6 +251,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: FirebaseAuthCode.networkRequestFailed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.timeout: ArsyncException(
       icon: Icons.timer_off,
@@ -245,6 +261,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Request Timeout',
       briefMessage: 'Request timeout',
       exceptionCode: FirebaseAuthCode.timeout,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.internalError: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -254,6 +271,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'System Error',
       briefMessage: 'System error',
       exceptionCode: FirebaseAuthCode.internalError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -263,6 +281,7 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
       exceptionCode: FirebaseAuthCode.unknown,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

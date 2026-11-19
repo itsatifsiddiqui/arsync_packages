@@ -1,6 +1,6 @@
 import 'package:cloud_functions_platform_interface/cloud_functions_platform_interface.dart'
     show FirebaseFunctionsException;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 
 import 'codes/firebase_functions_code.dart';
@@ -18,10 +18,8 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  FirebaseFunctionsHandler({
-    this.customExceptions,
-    int priority = 17,
-  }) : _priority = priority;
+  FirebaseFunctionsHandler({this.customExceptions, int priority = 17})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -53,7 +51,8 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
         try {
           final buffer = StringBuffer();
           buffer.writeln(
-              'Firebase Functions: $code - ${functionsException.message}');
+            'Firebase Functions: $code - ${functionsException.message}',
+          );
           buffer.writeln('Details:');
           details.forEach((key, value) {
             buffer.writeln('  $key: $value');
@@ -91,13 +90,15 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
     return ArsyncException(
       icon: Icons.cloud_outlined,
       title: 'Cloud Function Error',
-      message: functionsException.message ??
+      message:
+          functionsException.message ??
           'An unexpected error occurred in a cloud function',
       briefTitle: 'Function Error',
       briefMessage: 'Cloud function failed',
       exceptionCode: RawArsyncExceptionCode('firebase_functions_$code'),
       originalException: exception,
       technicalDetails: technicalDetails,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -106,10 +107,12 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   FirebaseFunctionsHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -155,6 +158,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Sign In Required',
       briefMessage: 'Authentication required',
       exceptionCode: FirebaseFunctionsCode.unauthenticated,
+      severity: ArsyncErrorSeverity.critical,
     ),
     FirebaseErrorCodes.resourceExhausted: ArsyncException(
       icon: Icons.battery_alert,
@@ -207,6 +211,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'System Error',
       briefMessage: 'System error',
       exceptionCode: FirebaseFunctionsCode.internalError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.unimplemented: ArsyncException(
       icon: Icons.build_circle,
@@ -216,6 +221,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Implemented',
       briefMessage: 'Feature not available',
       exceptionCode: FirebaseFunctionsCode.unimplemented,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.cancelled: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -224,6 +230,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Cancelled',
       briefMessage: 'Cancelled',
       exceptionCode: FirebaseFunctionsCode.cancelled,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -233,6 +240,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: FirebaseFunctionsCode.networkRequestFailed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -242,6 +250,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
       exceptionCode: FirebaseFunctionsCode.unknown,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

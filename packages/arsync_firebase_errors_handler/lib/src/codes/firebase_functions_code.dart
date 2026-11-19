@@ -18,8 +18,7 @@ enum FirebaseFunctionsCode implements ArsyncExceptionCode {
   unimplemented('firebase_functions_unimplemented'),
   cancelled('firebase_functions_cancelled'),
   networkRequestFailed('firebase_functions_network_request_failed'),
-  unknown('firebase_functions_unknown'),
-  ;
+  unknown('firebase_functions_unknown');
 
   const FirebaseFunctionsCode(this.id);
 

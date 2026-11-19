@@ -18,14 +18,14 @@ enum FirebaseAuthCode implements ArsyncExceptionCode {
   invalidCredential('firebase_auth_invalid_credential'),
   credentialAlreadyInUse('firebase_auth_credential_already_in_use'),
   accountExistsWithDifferentCredential(
-      'firebase_auth_account_exists_with_different_credential'),
+    'firebase_auth_account_exists_with_different_credential',
+  ),
   tooManyRequests('firebase_auth_too_many_requests'),
   requiresRecentLogin('firebase_auth_requires_recent_login'),
   networkRequestFailed('firebase_auth_network_request_failed'),
   timeout('firebase_auth_timeout'),
   internalError('firebase_auth_internal_error'),
-  unknown('firebase_auth_unknown'),
-  ;
+  unknown('firebase_auth_unknown');
 
   const FirebaseAuthCode(this.id);
 

@@ -1,7 +1,7 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart'
     show FirebaseException;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/firebase_core_code.dart';
 import 'firebase_error_codes.dart';
@@ -21,10 +21,8 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  FirebaseCoreHandler({
-    this.customExceptions,
-    int priority = 15,
-  }) : _priority = priority;
+  FirebaseCoreHandler({this.customExceptions, int priority = 15})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -75,6 +73,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('firebase_core_$code'),
       originalException: exception,
       technicalDetails: 'Firebase Core: $code - ${firebaseException.message}',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -83,10 +82,12 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   FirebaseCoreHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -107,6 +108,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: FirebaseCoreCode.networkRequestFailed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.timeout: ArsyncException(
       icon: Icons.timer_off,
@@ -116,6 +118,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Request Timeout',
       briefMessage: 'Request timeout',
       exceptionCode: FirebaseCoreCode.timeout,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.appNotAuthorized: ArsyncException(
       icon: Icons.gpp_bad,
@@ -125,6 +128,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Authorized',
       briefMessage: 'App not authorized',
       exceptionCode: FirebaseCoreCode.appNotAuthorized,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.noSuchProvider: ArsyncException(
       icon: Icons.link_off,
@@ -134,6 +138,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Provider Unavailable',
       briefMessage: 'Provider not available',
       exceptionCode: FirebaseCoreCode.noSuchProvider,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.operationNotAllowed: ArsyncException(
       icon: Icons.block,
@@ -143,6 +148,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Allowed',
       briefMessage: 'Operation not permitted',
       exceptionCode: FirebaseCoreCode.operationNotAllowed,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.internalError: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -152,6 +158,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'System Error',
       briefMessage: 'Firebase system error',
       exceptionCode: FirebaseCoreCode.internalError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.invalidApiKey: ArsyncException(
       icon: Icons.vpn_key_off,
@@ -161,6 +168,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid API Key',
       briefMessage: 'Invalid Firebase configuration',
       exceptionCode: FirebaseCoreCode.invalidApiKey,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.appNotInstalled: ArsyncException(
       icon: Icons.app_shortcut,
@@ -178,6 +186,7 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown Firebase error',
       exceptionCode: FirebaseCoreCode.unknown,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

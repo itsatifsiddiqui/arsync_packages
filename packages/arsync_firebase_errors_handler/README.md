@@ -81,7 +81,7 @@ final toolkit = ArsyncExceptionToolkit(
               message: 'The Custom Exception',
               briefTitle: 'Login Failed',
               briefMessage: 'Incorrect password',
-              exceptionCode: 'firebase_auth_wrong_password',
+              exceptionCode: FirebaseAuthCode.wrongPassword,
             ),
           },
         ),
@@ -130,6 +130,10 @@ try {
   }
 }
 ```
+
+### Severity
+
+Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. Sign-in and account errors, like a suspended account or a needed re-login, are `critical`. Cancelled actions stay `ignored`.
 
 ## Handler Classes
 

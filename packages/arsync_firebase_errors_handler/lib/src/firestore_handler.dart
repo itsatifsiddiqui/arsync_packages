@@ -1,7 +1,7 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart'
     show FirebaseException;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/firestore_code.dart';
 import 'firebase_error_codes.dart';
@@ -18,10 +18,8 @@ class FirestoreHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  FirestoreHandler({
-    this.customExceptions,
-    int priority = 18,
-  }) : _priority = priority;
+  FirestoreHandler({this.customExceptions, int priority = 18})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -71,6 +69,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('firestore_$code'),
       originalException: exception,
       technicalDetails: 'Firestore: $code - ${firestoreException.message}',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -79,10 +78,12 @@ class FirestoreHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   FirestoreHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -103,6 +104,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Access Denied',
       briefMessage: 'No permission',
       exceptionCode: FirestoreCode.permissionDenied,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.unavailable: ArsyncException(
       icon: Icons.cloud_off,
@@ -139,6 +141,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Data Error',
       briefMessage: 'Data error',
       exceptionCode: FirestoreCode.dataLoss,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.invalidArgument: ArsyncException(
       icon: Icons.warning_amber_outlined,
@@ -148,6 +151,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid Input',
       briefMessage: 'Invalid input',
       exceptionCode: FirestoreCode.invalidArgument,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.resourceExhausted: ArsyncException(
       icon: Icons.battery_alert,
@@ -182,6 +186,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timeout',
       briefMessage: 'Operation timed out',
       exceptionCode: FirestoreCode.deadlineExceeded,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.outOfRange: ArsyncException(
       icon: Icons.error_outline,
@@ -199,6 +204,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Not Implemented',
       briefMessage: 'Feature not available',
       exceptionCode: FirestoreCode.unimplemented,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.unauthenticated: ArsyncException(
       icon: Icons.lock_outline,
@@ -207,6 +213,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Sign In Required',
       briefMessage: 'Authentication required',
       exceptionCode: FirestoreCode.unauthenticated,
+      severity: ArsyncErrorSeverity.critical,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -216,6 +223,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: FirestoreCode.networkRequestFailed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.cancelled: ArsyncException(
       icon: Icons.cancel_outlined,
@@ -224,6 +232,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Cancelled',
       briefMessage: 'Cancelled',
       exceptionCode: FirestoreCode.cancelled,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -233,6 +242,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
       exceptionCode: FirestoreCode.unknown,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }

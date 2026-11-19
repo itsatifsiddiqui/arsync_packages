@@ -8,7 +8,7 @@ import 'package:firebase_auth_platform_interface/firebase_auth_platform_interfac
     show FirebaseAuthException;
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart'
     show FirebaseException;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   runApp(const MyApp());

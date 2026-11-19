@@ -36,12 +36,12 @@ class FirebaseErrorsHandler implements ArsyncExceptionHandler {
     FirebaseStorageHandler? storageHandler,
     FirebaseCoreHandler? coreHandler,
     int priority = 25,
-  })  : _authHandler = authHandler ?? FirebaseAuthHandler(),
-        _firestoreHandler = firestoreHandler ?? FirestoreHandler(),
-        _functionsHandler = functionsHandler ?? FirebaseFunctionsHandler(),
-        _storageHandler = storageHandler ?? FirebaseStorageHandler(),
-        _coreHandler = coreHandler ?? FirebaseCoreHandler(),
-        _priority = priority;
+  }) : _authHandler = authHandler ?? FirebaseAuthHandler(),
+       _firestoreHandler = firestoreHandler ?? FirestoreHandler(),
+       _functionsHandler = functionsHandler ?? FirebaseFunctionsHandler(),
+       _storageHandler = storageHandler ?? FirebaseStorageHandler(),
+       _coreHandler = coreHandler ?? FirebaseCoreHandler(),
+       _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -79,6 +79,7 @@ class FirebaseErrorsHandler implements ArsyncExceptionHandler {
       title: 'Firebase Error',
       message: 'An unexpected Firebase error occurred',
       originalException: exception,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 

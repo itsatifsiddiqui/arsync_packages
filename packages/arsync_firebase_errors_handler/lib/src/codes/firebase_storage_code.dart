@@ -18,8 +18,7 @@ enum FirebaseStorageCode implements ArsyncExceptionCode {
   projectNotFound('firebase_storage_project_not_found'),
   unauthenticated('firebase_storage_unauthenticated'),
   networkRequestFailed('firebase_storage_network_request_failed'),
-  unknown('firebase_storage_unknown'),
-  ;
+  unknown('firebase_storage_unknown');
 
   const FirebaseStorageCode(this.id);
 

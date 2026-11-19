@@ -20,8 +20,7 @@ enum FirestoreCode implements ArsyncExceptionCode {
   unauthenticated('firestore_unauthenticated'),
   networkRequestFailed('firestore_network_request_failed'),
   cancelled('firestore_cancelled'),
-  unknown('firestore_unknown'),
-  ;
+  unknown('firestore_unknown');
 
   const FirestoreCode(this.id);
 

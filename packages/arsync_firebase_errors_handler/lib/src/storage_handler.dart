@@ -1,7 +1,7 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart'
     show FirebaseException;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/firebase_storage_code.dart';
 import 'firebase_error_codes.dart';
@@ -18,10 +18,8 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  FirebaseStorageHandler({
-    this.customExceptions,
-    int priority = 16,
-  }) : _priority = priority;
+  FirebaseStorageHandler({this.customExceptions, int priority = 16})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -74,6 +72,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('firebase_storage_$code'),
       originalException: exception,
       technicalDetails: 'Firebase Storage: $code - ${storageException.message}',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -82,10 +81,12 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   FirebaseStorageHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -115,6 +116,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Access',
       briefMessage: 'No access',
       exceptionCode: FirebaseStorageCode.unauthorized,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.quotaExceeded: ArsyncException(
       icon: Icons.storage,
@@ -158,6 +160,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Cancelled',
       briefMessage: 'Operation cancelled',
       exceptionCode: FirebaseStorageCode.cancelled,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.invalidUrl: ArsyncException(
       icon: Icons.link_off,
@@ -166,6 +169,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Invalid URL',
       briefMessage: 'Invalid URL',
       exceptionCode: FirebaseStorageCode.invalidUrl,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.invalidChecksum: ArsyncException(
       icon: Icons.error_outline,
@@ -184,6 +188,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Bucket Not Found',
       briefMessage: 'Storage bucket not found',
       exceptionCode: FirebaseStorageCode.bucketNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.projectNotFound: ArsyncException(
       icon: Icons.folder_off,
@@ -193,6 +198,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Project Not Found',
       briefMessage: 'Project not found',
       exceptionCode: FirebaseStorageCode.projectNotFound,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
     FirebaseErrorCodes.unauthenticated: ArsyncException(
       icon: Icons.lock_outline,
@@ -201,6 +207,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Sign In Required',
       briefMessage: 'Authentication required',
       exceptionCode: FirebaseStorageCode.unauthenticated,
+      severity: ArsyncErrorSeverity.critical,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
       icon: Icons.wifi_off,
@@ -210,6 +217,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Connection',
       briefMessage: 'Network error',
       exceptionCode: FirebaseStorageCode.networkRequestFailed,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,
@@ -219,6 +227,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Unknown Error',
       briefMessage: 'Unknown error',
       exceptionCode: FirebaseStorageCode.unknown,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
   };
 }
