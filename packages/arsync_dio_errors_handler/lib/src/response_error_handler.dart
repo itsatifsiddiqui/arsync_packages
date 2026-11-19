@@ -1,6 +1,6 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/dio_error_code.dart';
 import 'dio_error_codes.dart';
@@ -26,8 +26,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     required ErrorExtractor errorExtractor,
     this.customExceptions,
     int priority = 21, // Higher priority than basic DioErrorHandler
-  })  : _priority = priority,
-        _errorExtractor = errorExtractor;
+  }) : _priority = priority,
+       _errorExtractor = errorExtractor;
 
   @override
   bool canHandle(Object exception) {
@@ -53,7 +53,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     final errorMessage = extractedError.message;
 
     // Technical details with both the extracted error and the original message
-    final technicalDetails = 'Dio Response Error: $statusCode\n'
+    final technicalDetails =
+        'Dio Response Error: $statusCode\n'
         'URL: ${dioException.requestOptions.uri}\n'
         'Method: ${dioException.requestOptions.method}\n'
         'Error Code: $errorCode\n'
@@ -81,8 +82,10 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     // Use default error exceptions based on status code categories
     // Check if we have a default handler for the status code
     final code = DioErrorCodes.fromStatusCode(statusCode);
-    final defaultError =
-        _getDefaultErrorForStatusCode(statusCode, errorMessage);
+    final defaultError = _getDefaultErrorForStatusCode(
+      statusCode,
+      errorMessage,
+    );
 
     return defaultError.copyWith(
       originalException: exception,
@@ -97,15 +100,15 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
       return _errorExtractor.extractError(response);
     } catch (e) {
       // If error extraction fails, return a basic error
-      return ExtractedError(
-        message: 'Failed to parse error response',
-      );
+      return ExtractedError(message: 'Failed to parse error response');
     }
   }
 
   /// Get a default error message based on the HTTP status code
   ArsyncException _getDefaultErrorForStatusCode(
-      int statusCode, String? errorMessage) {
+    int statusCode,
+    String? errorMessage,
+  ) {
     // Client errors (4xx)
     if (statusCode >= 400 && statusCode < 500) {
       switch (statusCode) {
@@ -113,7 +116,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           return ArsyncException(
             icon: Icons.error_outline,
             title: 'Something\'s Not Right',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'There seems to be an issue with this request. Let\'s try again.',
             briefTitle: 'Try Again',
             briefMessage: 'Something\'s not right',
@@ -123,17 +127,21 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           return ArsyncException(
             icon: Icons.lock_outline,
             title: 'Sign In Needed',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'A sign in is needed to continue. The session may have expired.',
             briefTitle: 'Sign In',
             briefMessage: 'Sign in needed',
             exceptionCode: DioErrorCode.unauthorized,
+            severity: ArsyncErrorSeverity.critical,
+            trackingSeverity: ArsyncTrackingSeverity.none,
           );
         case 403:
           return ArsyncException(
             icon: Icons.no_accounts,
             title: 'Access Needed',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'Access to this feature isn\'t currently available.',
             briefTitle: 'No Access',
             briefMessage: 'Access needed',
@@ -143,7 +151,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           return ArsyncException(
             icon: Icons.find_replace,
             title: 'Not Available',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'The requested item isn\'t available right now. It may have been moved or removed.',
             briefTitle: 'Not Found',
             briefMessage: 'Item not available',
@@ -153,7 +162,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           return ArsyncException(
             icon: Icons.input,
             title: 'Information Issue',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'There seems to be an issue with the information provided. A review might help.',
             briefTitle: 'Review Info',
             briefMessage: 'Information issue',
@@ -163,7 +173,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           return ArsyncException(
             icon: Icons.speed,
             title: 'Slow Down',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'Too many requests in a short time. Please wait a moment before trying again.',
             briefTitle: 'Too Fast',
             briefMessage: 'Please wait a moment',
@@ -173,7 +184,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
           return ArsyncException(
             icon: Icons.error_outline,
             title: 'Request Issue',
-            message: errorMessage ??
+            message:
+                errorMessage ??
                 'An issue occurred with this request. Please try again or contact support.',
             briefTitle: 'Request Issue',
             briefMessage: 'Request failed',
@@ -186,11 +198,13 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
       return ArsyncException(
         icon: Icons.cloud_off,
         title: 'Temporary Issue',
-        message: errorMessage ??
+        message:
+            errorMessage ??
             'We\'re experiencing a temporary issue. We\'re working on it and should be resolved soon.',
         briefTitle: 'Temporary Issue',
         briefMessage: 'We\'re on it',
         exceptionCode: DioErrorCode.serverError,
+        trackingSeverity: ArsyncTrackingSeverity.error,
       );
     }
 
@@ -198,11 +212,13 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
     return ArsyncException(
       icon: Icons.help_outline,
       title: 'Unexpected Issue',
-      message: errorMessage ??
+      message:
+          errorMessage ??
           'An unexpected issue occurred. Please try again or contact support.',
       briefTitle: 'Issue',
       briefMessage: 'Unexpected issue',
       exceptionCode: DioErrorCode.unknownStatus,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -211,7 +227,8 @@ class ResponseErrorHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   ResponseErrorHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Create a new instance with the merged exceptions
     return ResponseErrorHandler(
       errorExtractor: _errorExtractor,

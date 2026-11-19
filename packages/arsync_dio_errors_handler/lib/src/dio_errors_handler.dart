@@ -25,10 +25,11 @@ class DioErrorsHandler implements ArsyncExceptionHandler {
     ResponseErrorHandler? responseErrorHandler,
     DioErrorHandler? dioErrorHandler,
     int priority = 25,
-  })  : _responseErrorHandler = responseErrorHandler ??
-            ResponseErrorHandler(errorExtractor: DefaultErrorExtractor()),
-        _dioErrorHandler = dioErrorHandler ?? DioErrorHandler(),
-        _priority = priority;
+  }) : _responseErrorHandler =
+           responseErrorHandler ??
+           ResponseErrorHandler(errorExtractor: DefaultErrorExtractor()),
+       _dioErrorHandler = dioErrorHandler ?? DioErrorHandler(),
+       _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -54,6 +55,7 @@ class DioErrorsHandler implements ArsyncExceptionHandler {
       message:
           'Something unexpected happened with the connection. Please try again.',
       originalException: exception,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 

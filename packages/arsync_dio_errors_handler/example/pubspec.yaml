@@ -36,7 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   arsync_dio_errors_handler:
     path: ../
+  material_ui: ^1.11.1
 
+  arsync_exception_toolkit: ^0.3.0
+  dio: ^5.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -116,9 +116,7 @@ class DioErrorCodes {
       'network_authentication_required'; // 511
 
   /// Ignorable Exceptions
-  static const List<String> ignorableErrorCodes = [
-    cancel,
-  ];
+  static const List<String> ignorableErrorCodes = [cancel];
 
   /// Check if the given error code is ignorable
   static bool isIgnorable(String code) {

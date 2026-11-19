@@ -1,6 +1,6 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'codes/dio_error_code.dart';
 import 'dio_error_codes.dart';
@@ -17,10 +17,8 @@ class DioErrorHandler implements ArsyncExceptionHandler {
   ///
   /// [customExceptions] - Optional map to override default error exceptions
   /// [priority] - Priority level for this handler (higher = higher priority)
-  DioErrorHandler({
-    this.customExceptions,
-    int priority = 20,
-  }) : _priority = priority;
+  DioErrorHandler({this.customExceptions, int priority = 20})
+    : _priority = priority;
 
   @override
   bool canHandle(Object exception) {
@@ -69,6 +67,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       exceptionCode: RawArsyncExceptionCode('dio_$code'),
       originalException: exception,
       technicalDetails: 'Dio: $code - ${dioException.message}',
+      trackingSeverity: ArsyncTrackingSeverity.error,
     );
   }
 
@@ -139,10 +138,12 @@ class DioErrorHandler implements ArsyncExceptionHandler {
 
   /// Create a new instance with custom error exceptions
   DioErrorHandler withCustomExceptions(
-      Map<String, ArsyncException> customExceptions) {
+    Map<String, ArsyncException> customExceptions,
+  ) {
     // Start with a copy of the default map
-    final Map<String, ArsyncException> mergedExceptions =
-        Map.from(_defaultErrorMap);
+    final Map<String, ArsyncException> mergedExceptions = Map.from(
+      _defaultErrorMap,
+    );
 
     // Override with any custom exceptions
     mergedExceptions.addAll(customExceptions);
@@ -164,6 +165,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Connection Issue',
       briefMessage: 'Network connection needed',
       exceptionCode: DioErrorCode.connectionTimeout,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     DioErrorCodes.sendTimeout: ArsyncException(
@@ -174,6 +176,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Slow Connection',
       briefMessage: 'Connection is slow',
       exceptionCode: DioErrorCode.sendTimeout,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     DioErrorCodes.receiveTimeout: ArsyncException(
@@ -184,6 +187,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'No Response',
       briefMessage: 'Taking too long',
       exceptionCode: DioErrorCode.receiveTimeout,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     DioErrorCodes.connectionError: ArsyncException(
@@ -194,6 +198,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Offline',
       briefMessage: 'Connection needed',
       exceptionCode: DioErrorCode.connectionError,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     DioErrorCodes.badCertificate: ArsyncException(
@@ -213,6 +218,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Stopped',
       briefMessage: 'Request stopped',
       exceptionCode: DioErrorCode.cancel,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     // HTTP status code errors
@@ -233,6 +239,8 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Sign In',
       briefMessage: 'Sign in needed',
       exceptionCode: DioErrorCode.unauthorized,
+      severity: ArsyncErrorSeverity.critical,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     DioErrorCodes.forbidden: ArsyncException(
@@ -261,6 +269,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Unavailable',
       briefMessage: 'Action unavailable',
       exceptionCode: DioErrorCode.methodNotAllowed,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
 
     DioErrorCodes.requestTimeout: ArsyncException(
@@ -270,6 +279,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Timed Out',
       briefMessage: 'Please try again',
       exceptionCode: DioErrorCode.requestTimeout,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 
     DioErrorCodes.conflict: ArsyncException(
@@ -279,6 +289,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Conflict',
       briefMessage: 'Update conflict',
       exceptionCode: DioErrorCode.conflict,
+      severity: ArsyncErrorSeverity.critical,
     ),
 
     DioErrorCodes.unprocessableEntity: ArsyncException(
@@ -309,6 +320,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Temporary Issue',
       briefMessage: 'We\'re on it',
       exceptionCode: DioErrorCode.internalServerError,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
 
     DioErrorCodes.badGateway: ArsyncException(
@@ -319,6 +331,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Service Issue',
       briefMessage: 'Please try again soon',
       exceptionCode: DioErrorCode.badGateway,
+      trackingSeverity: ArsyncTrackingSeverity.error,
     ),
 
     DioErrorCodes.serviceUnavailable: ArsyncException(

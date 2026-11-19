@@ -71,7 +71,7 @@ final toolkit = ArsyncExceptionToolkit(
         message: 'Please check your internet connection and try again.',
         briefTitle: 'No Connection',
         briefMessage: 'Network unavailable',
-        exceptionCode: 'dio_connection_error',
+        exceptionCode: DioErrorCode.connectionError,
       ),
       },
     ),
@@ -143,6 +143,10 @@ final toolkit = ArsyncExceptionToolkit(
   ],
 );
 ```
+
+### Severity
+
+Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. A 401 sign-in error is `critical`. Cancelled actions stay `ignored`.
 
 ## Handler Classes
 

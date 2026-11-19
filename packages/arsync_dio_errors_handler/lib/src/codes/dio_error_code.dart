@@ -28,8 +28,7 @@ enum DioErrorCode implements ArsyncExceptionCode {
   // Response error handler defaults
   clientError('dio_client_error'),
   serverError('dio_server_error'),
-  unknownStatus('dio_unknown_status'),
-  ;
+  unknownStatus('dio_unknown_status');
 
   const DioErrorCode(this.id);
 
