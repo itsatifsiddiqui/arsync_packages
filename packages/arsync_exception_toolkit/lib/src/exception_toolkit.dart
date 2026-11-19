@@ -2,10 +2,11 @@ import '../arsync_exception_toolkit.dart';
 import 'exception_mapper.dart';
 
 /// Customization callback for modifying exceptions before they're returned.
-typedef ExceptionModifier = ArsyncException Function(
-  ArsyncException exception,
-  Object originalException,
-);
+typedef ExceptionModifier =
+    ArsyncException Function(
+      ArsyncException exception,
+      Object originalException,
+    );
 
 /// Central service for exception handling throughout the application.
 ///
@@ -35,12 +36,12 @@ class ArsyncExceptionToolkit {
     bool sortByPriority = true,
     List<String>? ignorableExceptions,
     ArsyncTr? localize,
-  })  : _exceptionMapper = ArsyncExceptionMapper(
-          handlers: handlers,
-          sortByPriority: sortByPriority,
-        ),
-        _localize = localize,
-        _ignorableExceptions = ignorableExceptions ?? arsyncIgnorableExceptions;
+  }) : _exceptionMapper = ArsyncExceptionMapper(
+         handlers: handlers,
+         sortByPriority: sortByPriority,
+       ),
+       _localize = localize,
+       _ignorableExceptions = ignorableExceptions ?? arsyncIgnorableExceptions;
 
   /// Handle an exception and return an AppException.
   ///
@@ -66,7 +67,9 @@ class ArsyncExceptionToolkit {
     // Apply any registered modifiers for the exception code
     if (_exceptionModifiers.containsKey(appException.exceptionCode.id)) {
       appException = _exceptionModifiers[appException.exceptionCode.id]!(
-          appException, exception);
+        appException,
+        exception,
+      );
     }
 
     return _applyLocalization(appException);
@@ -121,8 +124,9 @@ class ArsyncExceptionToolkit {
   bool shouldIgnoreException(Object exception) {
     final exceptionString = exception.toString().toLowerCase();
 
-    return _ignorableExceptions
-        .any((term) => exceptionString.contains(term.toLowerCase()));
+    return _ignorableExceptions.any(
+      (term) => exceptionString.contains(term.toLowerCase()),
+    );
   }
 
   /// Check if it's a network-related exception.

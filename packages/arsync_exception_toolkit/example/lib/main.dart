@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A basic example demonstrating how to use the Arsync Exception Toolkit.
 /// This example shows:

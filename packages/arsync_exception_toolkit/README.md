@@ -127,6 +127,35 @@ toolkit.registerExceptionModifier(
 );
 ```
 
+### Severity
+
+Each exception has a `severity` (how to show it) and a `trackingSeverity` (how to report it). They are set separately, defaults are `normal` and `warning`.
+
+```dart
+final exception = toolkit.handleException(e);
+
+switch (exception.severity) {
+  case ArsyncErrorSeverity.critical:
+    showAlert(exception);
+  case ArsyncErrorSeverity.normal:
+    showSnackbar(exception);
+  case ArsyncErrorSeverity.field:
+    showFieldError(exception);
+  case ArsyncErrorSeverity.ignored:
+    break;
+}
+
+if (exception.trackingSeverity != ArsyncTrackingSeverity.none) {
+  reportError(exception);
+}
+
+toolkit.registerExceptionModifier(
+  ArsyncCoreCode.network.id,
+  (exception, originalException) =>
+      exception.copyWith(severity: ArsyncErrorSeverity.critical),
+);
+```
+
 ### Ignoring Certain Exceptions
 
 Define which exceptions should be ignored: This is useful for ignoring exceptions that are not relevant to the user and should not be displayed.

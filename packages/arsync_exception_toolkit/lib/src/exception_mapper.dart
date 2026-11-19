@@ -20,10 +20,7 @@ class ArsyncExceptionMapper {
   ArsyncExceptionMapper({
     List<ArsyncExceptionHandler> handlers = const [],
     this.sortByPriority = true,
-  }) : _handlers = [
-          ...handlers,
-          GeneralExceptionHandler(),
-        ] {
+  }) : _handlers = [...handlers, GeneralExceptionHandler()] {
     if (sortByPriority) {
       _sortHandlersByPriority();
     }
@@ -47,7 +44,8 @@ class ArsyncExceptionMapper {
     // This should never happen with GeneralExceptionHandler in place,
     // but just in case, return a default exception
     return ArsyncException.generic(
-      message: fallbackMessage ??
+      message:
+          fallbackMessage ??
           'An unexpected error occurred: ${exception.toString()}',
       technicalDetails: exception.toString(),
       originalException: exception,

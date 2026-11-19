@@ -1,3 +1,9 @@
+## 0.3.0
+
+* Added `severity` (critical, normal, field, ignored) and `trackingSeverity` (error, warning, none) to `ArsyncException`
+* Added `isCritical` and `isFieldError` getters
+* Moved to the `material_ui` package for Flutter 3.50+ (needs Flutter 3.35 or newer)
+
 ## 0.2.0
 
 * Added simple, optional localization support via a `localize` key lookup

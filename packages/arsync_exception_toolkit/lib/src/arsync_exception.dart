@@ -1,8 +1,26 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'arsync_exception_code.dart';
 import 'codes/arsync_core_code.dart';
+
+/// How an error should be shown to the user.
+enum ArsyncErrorSeverity {
+  /// Blocks the user and needs a decision now, shown as a native alert.
+  critical,
+
+  /// Temporary, the user can try again, shown as a snackbar.
+  normal,
+
+  /// Tied to one input, shown under that field.
+  field,
+
+  /// Never shown to the user.
+  ignored,
+}
+
+/// How an error should be reported to crash or error tracking.
+enum ArsyncTrackingSeverity { error, warning, none }
 
 /// Represents a standardized application exception with user-friendly information.
 ///
@@ -23,9 +41,8 @@ class ArsyncException {
 
   /// Short message for brief notifications
   final String briefMessage;
-  
 
-   /// Optional exception code for identifying specific exceptions
+  /// Optional exception code for identifying specific exceptions
   final ArsyncExceptionCode exceptionCode;
 
   /// Original exception that caused this AppException
@@ -33,6 +50,12 @@ class ArsyncException {
 
   /// Optional technical details (for debugging)
   final String? technicalDetails;
+
+  /// How this error should be shown to the user
+  final ArsyncErrorSeverity severity;
+
+  /// How this error should be reported to error tracking
+  final ArsyncTrackingSeverity trackingSeverity;
 
   /// Create an app exception with required and optional information
   const ArsyncException({
@@ -44,6 +67,8 @@ class ArsyncException {
     required this.exceptionCode,
     this.originalException,
     this.technicalDetails,
+    this.severity = ArsyncErrorSeverity.normal,
+    this.trackingSeverity = ArsyncTrackingSeverity.warning,
   });
 
   /// Creates a copy of the exception with modified fields
@@ -56,6 +81,8 @@ class ArsyncException {
     ArsyncExceptionCode? exceptionCode,
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity? severity,
+    ArsyncTrackingSeverity? trackingSeverity,
   }) {
     return ArsyncException(
       icon: icon ?? this.icon,
@@ -66,6 +93,8 @@ class ArsyncException {
       exceptionCode: exceptionCode ?? this.exceptionCode,
       originalException: originalException ?? this.originalException,
       technicalDetails: technicalDetails ?? this.technicalDetails,
+      severity: severity ?? this.severity,
+      trackingSeverity: trackingSeverity ?? this.trackingSeverity,
     );
   }
 
@@ -79,6 +108,8 @@ class ArsyncException {
     String briefMessage = 'No internet connection',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.none,
   }) {
     return ArsyncException(
       icon: icon,
@@ -89,6 +120,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.network,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -102,6 +135,8 @@ class ArsyncException {
     String briefMessage = 'Operation timed out',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.none,
   }) {
     return ArsyncException(
       icon: icon,
@@ -112,6 +147,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.timeout,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -125,6 +162,8 @@ class ArsyncException {
     ArsyncExceptionCode? exceptionCode,
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.warning,
   }) {
     return ArsyncException(
       icon: icon,
@@ -135,6 +174,8 @@ class ArsyncException {
       exceptionCode: exceptionCode ?? ArsyncCoreCode.generic,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -147,6 +188,8 @@ class ArsyncException {
     String briefMessage = 'Permission required',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.warning,
   }) {
     return ArsyncException(
       icon: icon,
@@ -157,6 +200,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.permission,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -169,6 +214,8 @@ class ArsyncException {
     String briefMessage = 'Resource not found',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.warning,
   }) {
     return ArsyncException(
       icon: icon,
@@ -179,6 +226,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.notFound,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -192,6 +241,8 @@ class ArsyncException {
     String briefMessage = 'Authentication failed',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.critical,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.none,
   }) {
     return ArsyncException(
       icon: icon,
@@ -202,6 +253,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.authentication,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -214,6 +267,8 @@ class ArsyncException {
     String briefMessage = 'Server error occurred',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.error,
   }) {
     return ArsyncException(
       icon: icon,
@@ -224,6 +279,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.server,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -236,6 +293,8 @@ class ArsyncException {
     String briefMessage = 'Operation ignored',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.ignored,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.none,
   }) {
     return ArsyncException(
       icon: icon,
@@ -246,6 +305,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.ignored,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -258,6 +319,8 @@ class ArsyncException {
     String briefMessage = 'Invalid data format',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.warning,
   }) {
     return ArsyncException(
       icon: icon,
@@ -268,6 +331,8 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.format,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
@@ -280,6 +345,8 @@ class ArsyncException {
     String briefMessage = 'Operation not supported',
     Object? originalException,
     String? technicalDetails,
+    ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.warning,
   }) {
     return ArsyncException(
       icon: icon,
@@ -290,12 +357,14 @@ class ArsyncException {
       exceptionCode: ArsyncCoreCode.unsupported,
       originalException: originalException,
       technicalDetails: technicalDetails ?? originalException?.toString(),
+      severity: severity,
+      trackingSeverity: trackingSeverity,
     );
   }
 
   @override
   String toString() {
-    return 'ArsyncException(icon: $icon, title: $title, message: $message, briefTitle: $briefTitle, briefMessage: $briefMessage, exceptionCode: $exceptionCode, originalException: $originalException, technicalDetails: $technicalDetails)';
+    return 'ArsyncException(icon: $icon, title: $title, message: $message, briefTitle: $briefTitle, briefMessage: $briefMessage, exceptionCode: $exceptionCode, originalException: $originalException, technicalDetails: $technicalDetails, severity: $severity, trackingSeverity: $trackingSeverity)';
   }
 
   @override
@@ -309,7 +378,9 @@ class ArsyncException {
         other.briefMessage == briefMessage &&
         other.exceptionCode == exceptionCode &&
         other.originalException == originalException &&
-        other.technicalDetails == technicalDetails;
+        other.technicalDetails == technicalDetails &&
+        other.severity == severity &&
+        other.trackingSeverity == trackingSeverity;
   }
 
   @override
@@ -321,7 +392,9 @@ class ArsyncException {
         briefMessage.hashCode ^
         exceptionCode.hashCode ^
         originalException.hashCode ^
-        technicalDetails.hashCode;
+        technicalDetails.hashCode ^
+        severity.hashCode ^
+        trackingSeverity.hashCode;
   }
 
   bool get isNetworkError => exceptionCode == ArsyncCoreCode.network;
@@ -342,4 +415,8 @@ class ArsyncException {
 
   // Alias for isIgnoredError
   bool get shouldIgnore => isIgnoredError;
+
+  bool get isCritical => severity == ArsyncErrorSeverity.critical;
+
+  bool get isFieldError => severity == ArsyncErrorSeverity.field;
 }

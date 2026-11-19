@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../arsync_exception_toolkit.dart';
 
@@ -19,21 +19,15 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
   ArsyncException handle(Object exception) {
     // Handle specific common exception types
     if (ExceptionUtils.isNetworkConnectivityIssue(exception)) {
-      return ArsyncException.network(
-        originalException: exception,
-      );
+      return ArsyncException.network(originalException: exception);
     }
 
     if (exception is FormatException) {
-      return ArsyncException.format(
-        originalException: exception,
-      );
+      return ArsyncException.format(originalException: exception);
     }
 
     if (exception is TimeoutException) {
-      return ArsyncException.timeout(
-        originalException: exception,
-      );
+      return ArsyncException.timeout(originalException: exception);
     }
 
     if (exception is AssertionError) {
@@ -93,9 +87,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
     }
 
     if (exception is UnsupportedError) {
-      return ArsyncException.unsupported(
-        originalException: exception,
-      );
+      return ArsyncException.unsupported(originalException: exception);
     }
 
     if (exception is ConcurrentModificationError) {
@@ -141,39 +133,27 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
     }
 
     if (ExceptionUtils.isTimeoutIssue(exception)) {
-      return ArsyncException.timeout(
-        originalException: exception,
-      );
+      return ArsyncException.timeout(originalException: exception);
     }
 
     if (ExceptionUtils.isNotFoundIssue(exception)) {
-      return ArsyncException.notFound(
-        originalException: exception,
-      );
+      return ArsyncException.notFound(originalException: exception);
     }
 
     if (ExceptionUtils.isAuthenticationIssue(exception)) {
-      return ArsyncException.authentication(
-        originalException: exception,
-      );
+      return ArsyncException.authentication(originalException: exception);
     }
 
     if (ExceptionUtils.isServerIssue(exception)) {
-      return ArsyncException.server(
-        originalException: exception,
-      );
+      return ArsyncException.server(originalException: exception);
     }
 
     if (ExceptionUtils.isFormatIssue(exception)) {
-      return ArsyncException.format(
-        originalException: exception,
-      );
+      return ArsyncException.format(originalException: exception);
     }
 
     if (ExceptionUtils.isUnsupportedIssue(exception)) {
-      return ArsyncException.unsupported(
-        originalException: exception,
-      );
+      return ArsyncException.unsupported(originalException: exception);
     }
 
     if (exception is String || exception is Exception) {
@@ -185,9 +165,7 @@ class GeneralExceptionHandler implements ArsyncExceptionHandler {
       );
     }
     // Default unknown exception
-    return ArsyncException.generic(
-      originalException: exception,
-    );
+    return ArsyncException.generic(originalException: exception);
   }
 
   @override

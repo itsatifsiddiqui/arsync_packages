@@ -120,22 +120,14 @@ class ExceptionUtils {
   }
 
   static bool isFormatIssue(Object exception) {
-    final conditions = [
-      'format',
-      'parse',
-      'syntax',
-    ];
+    final conditions = ['format', 'parse', 'syntax'];
 
     final message = exception.toString().toLowerCase();
     return conditions.any(message.contains);
   }
 
   static bool isUnsupportedIssue(Object exception) {
-    final conditions = [
-      'unsupported',
-      'not supported',
-      'not implemented',
-    ];
+    final conditions = ['unsupported', 'not supported', 'not implemented'];
 
     final message = exception.toString().toLowerCase();
     return conditions.any(message.contains);

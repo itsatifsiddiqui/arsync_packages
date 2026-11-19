@@ -1,5 +1,5 @@
 import 'package:arsync_exception_toolkit/arsync_exception_toolkit.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Extensions for the AppException class to provide additional functionality.
 extension ArsyncExceptionExtensions on ArsyncException {
