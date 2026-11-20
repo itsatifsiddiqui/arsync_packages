@@ -50,11 +50,34 @@ void main() {
     });
   });
 
-  test('cancelled sign-in stays ignored', () {
-    expectSeverity(
+  test('cancelled sign-in comes back ignored', () {
+    final exception = handler.handle(
       AuthException('User cancelled the sign in'),
-      ArsyncErrorSeverity.ignored,
-      ArsyncTrackingSeverity.none,
     );
+    expect(exception.exceptionCode, SupabaseAuthCode.userCancelled);
+    expect(exception.severity, ArsyncErrorSeverity.ignored);
+    expect(exception.trackingSeverity, ArsyncTrackingSeverity.none);
+  });
+
+  test('a number in a cancel message is not read as a database code', () {
+    expect(
+      SupabaseErrorCodes.extractErrorCode('User rejected request 12345'),
+      SupabaseErrorCodes.userCancelled,
+    );
+  });
+
+  test('customExceptions can override a cancel', () {
+    final custom = SupabaseAuthHandler(
+      customExceptions: {
+        SupabaseErrorCodes.userCancelled: ArsyncException.generic(
+          title: 'Closed',
+        ),
+      },
+    );
+    final exception = custom.handle(
+      AuthException('User cancelled the sign in'),
+    );
+    expect(exception.title, 'Closed');
+    expect(exception.severity, ArsyncErrorSeverity.normal);
   });
 }

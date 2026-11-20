@@ -1,3 +1,9 @@
+## 0.2.0
+
+* Supports arsync_exception_toolkit 0.4.0
+* Cancelled actions now return a `user_cancelled` code with severity `ignored` and can be changed with `customExceptions`
+* Deprecated `ignorableErrorPatterns` and `isIgnorable` (removed in 1.0.0)
+
 ## 0.1.0
 
 * Uses arsync_exception_toolkit 0.3.0

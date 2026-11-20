@@ -60,6 +60,7 @@ class SupabaseErrorCodes {
   static const String rateLimited = 'rate_limited';
   static const String serverError = 'server_error';
   static const String unknownError = 'unknown_error';
+  static const String userCancelled = 'user_cancelled';
 
   // Common pattern fragments to detect in error messages
   static const Map<String, String> errorPatterns = {
@@ -117,6 +118,9 @@ class SupabaseErrorCodes {
   };
 
   /// Ignorable error patterns
+  @Deprecated(
+    'Cancels now come back with severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static const List<String> ignorableErrorPatterns = [
     'user cancelled',
     'operation cancelled',
@@ -131,6 +135,12 @@ class SupabaseErrorCodes {
   /// and return the corresponding error code
   static String extractErrorCode(String errorMessage) {
     final lowerMessage = errorMessage.toLowerCase();
+
+    // Checked before the PostgreSQL code regex, so a number inside a
+    // cancel message is not read as a database error code.
+    if (_cancelPatterns.any(lowerMessage.contains)) {
+      return userCancelled;
+    }
 
     // Check for PostgreSQL error codes (format XX000)
     final pgCodeRegex = RegExp(r'[0-9]{2}[0-9A-Z]{3}');
@@ -152,10 +162,20 @@ class SupabaseErrorCodes {
   }
 
   /// Check if an error should be ignored based on its message
+  @Deprecated(
+    'Cancels now come back with severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static bool isIgnorable(String errorMessage) {
     final lowerMessage = errorMessage.toLowerCase();
     return ignorableErrorPatterns.any(
       (pattern) => lowerMessage.contains(pattern.toLowerCase()),
     );
   }
+
+  static const List<String> _cancelPatterns = [
+    'user cancelled',
+    'operation cancelled',
+    'user aborted',
+    'user rejected',
+  ];
 }

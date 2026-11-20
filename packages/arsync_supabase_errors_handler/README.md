@@ -142,7 +142,7 @@ try {
 
 ### Severity
 
-Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. An expired session is `critical`. Cancelled actions stay `ignored`.
+Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. An expired session is `critical`. Cancelled actions come back with severity `ignored`, and you can change that with `customExceptions`.
 
 ## Handler Classes
 

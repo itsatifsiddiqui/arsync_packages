@@ -21,6 +21,7 @@ enum SupabaseAuthCode implements ArsyncExceptionCode {
   timeoutError('supabase_auth_timeout_error'),
   rateLimited('supabase_auth_rate_limited'),
   serverError('supabase_auth_server_error'),
+  userCancelled('supabase_auth_user_cancelled'),
   unknownError('supabase_auth_unknown_error');
 
   const SupabaseAuthCode(this.id);

@@ -54,14 +54,6 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
     // Create a technical details string that includes any extra details
     String technicalDetails = 'Supabase Functions: $code - $message';
 
-    // Check if this error should be ignored
-    if (SupabaseErrorCodes.isIgnorable(message)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails: technicalDetails,
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       return customExceptions![code]!.copyWith(
@@ -231,6 +223,16 @@ class SupabaseFunctionsHandler implements ArsyncExceptionHandler {
       briefMessage: 'Function server error',
       exceptionCode: SupabaseFunctionCode.serverError,
       trackingSeverity: ArsyncTrackingSeverity.error,
+    ),
+    SupabaseErrorCodes.userCancelled: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Operation Cancelled',
+      message: 'The operation was cancelled.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Operation cancelled',
+      exceptionCode: SupabaseFunctionCode.userCancelled,
+      severity: ArsyncErrorSeverity.ignored,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,

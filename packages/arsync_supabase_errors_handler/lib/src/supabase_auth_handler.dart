@@ -60,14 +60,6 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       message = exceptionStr;
     }
 
-    // Check if this error should be ignored
-    if (SupabaseErrorCodes.isIgnorable(message)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails: 'Supabase Auth: $code - $message',
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       return customExceptions![code]!.copyWith(
@@ -294,6 +286,16 @@ class SupabaseAuthHandler implements ArsyncExceptionHandler {
       briefMessage: 'Authentication server error',
       exceptionCode: SupabaseAuthCode.serverError,
       trackingSeverity: ArsyncTrackingSeverity.error,
+    ),
+    SupabaseErrorCodes.userCancelled: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Sign-In Cancelled',
+      message: 'The sign-in was cancelled.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Sign-in cancelled',
+      exceptionCode: SupabaseAuthCode.userCancelled,
+      severity: ArsyncErrorSeverity.ignored,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     SupabaseErrorCodes.unknownError: ArsyncException(
       icon: Icons.help_outline,
