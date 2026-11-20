@@ -13,6 +13,7 @@ enum FirebaseCoreCode implements ArsyncExceptionCode {
   internalError('firebase_core_internal_error'),
   invalidApiKey('firebase_core_invalid_api_key'),
   appNotInstalled('firebase_core_app_not_installed'),
+  cancelled('firebase_core_cancelled'),
   unknown('firebase_core_unknown');
 
   const FirebaseCoreCode(this.id);

@@ -100,11 +100,21 @@ void main() {
     });
   });
 
-  test('cancelled sign-in stays ignored', () {
-    expectSeverity(
-      authError('popup-closed-by-user'),
-      ArsyncErrorSeverity.ignored,
-      ArsyncTrackingSeverity.none,
+  test('cancelled sign-in comes back ignored', () {
+    final exception = handler.handle(authError('popup-closed-by-user'));
+    expect(exception.exceptionCode, FirebaseAuthCode.popupClosedByUser);
+    expect(exception.severity, ArsyncErrorSeverity.ignored);
+    expect(exception.trackingSeverity, ArsyncTrackingSeverity.none);
+  });
+
+  test('customExceptions can override a cancel', () {
+    final custom = FirebaseAuthHandler(
+      customExceptions: {
+        'popup-closed-by-user': ArsyncException.generic(title: 'Closed'),
+      },
     );
+    final exception = custom.handle(authError('popup-closed-by-user'));
+    expect(exception.title, 'Closed');
+    expect(exception.severity, ArsyncErrorSeverity.normal);
   });
 }

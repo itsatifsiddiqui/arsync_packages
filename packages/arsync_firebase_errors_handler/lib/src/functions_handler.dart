@@ -31,15 +31,6 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
     final functionsException = exception as FirebaseFunctionsException;
     final code = functionsException.code;
 
-    // Handle ignorable exceptions
-    if (FirebaseErrorCodes.isIgnorable(code)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails:
-            'Firebase Functions: $code - ${functionsException.message}',
-      );
-    }
-
     // Check for additional details in the exception
     final details = functionsException.details;
     String technicalDetails =
@@ -230,6 +221,7 @@ class FirebaseFunctionsHandler implements ArsyncExceptionHandler {
       briefTitle: 'Cancelled',
       briefMessage: 'Cancelled',
       exceptionCode: FirebaseFunctionsCode.cancelled,
+      severity: ArsyncErrorSeverity.ignored,
       trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(

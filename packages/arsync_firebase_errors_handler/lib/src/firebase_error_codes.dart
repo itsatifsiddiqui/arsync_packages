@@ -67,6 +67,9 @@ class FirebaseErrorCodes {
   static const String appNotInstalled = 'app-not-installed';
 
   // Ignorable Exceptions
+  @Deprecated(
+    'Cancels now come back with severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static const List<String> ignorableErrorCodes = [
     webContextCancelled,
     cancelled,
@@ -75,6 +78,9 @@ class FirebaseErrorCodes {
   ];
 
   /// Check if the given error code is ignorable
+  @Deprecated(
+    'Cancels now come back with severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static bool isIgnorable(String code) {
     return ignorableErrorCodes.contains(code);
   }

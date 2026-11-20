@@ -1,3 +1,9 @@
+## 0.2.0
+
+* Supports arsync_exception_toolkit 0.4.0
+* Cancelled actions now return severity `ignored` and can be changed with `customExceptions`
+* Deprecated `ignorableErrorCodes` and `isIgnorable` (removed in 1.0.0)
+
 ## 0.1.0
 
 * Uses arsync_exception_toolkit 0.3.0 and firebase_core_platform_interface 8

@@ -32,15 +32,6 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
     final storageException = exception as FirebaseException;
     final code = storageException.code;
 
-    // Handle ignorable exceptions
-    if (FirebaseErrorCodes.isIgnorable(code)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails:
-            'Firebase Storage: $code - ${storageException.message}',
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       // Return a copy with the original exception and technical details
@@ -160,6 +151,7 @@ class FirebaseStorageHandler implements ArsyncExceptionHandler {
       briefTitle: 'Cancelled',
       briefMessage: 'Operation cancelled',
       exceptionCode: FirebaseStorageCode.cancelled,
+      severity: ArsyncErrorSeverity.ignored,
       trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.invalidUrl: ArsyncException(

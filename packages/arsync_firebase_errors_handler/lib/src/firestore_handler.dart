@@ -32,14 +32,6 @@ class FirestoreHandler implements ArsyncExceptionHandler {
     final firestoreException = exception as FirebaseException;
     final code = firestoreException.code;
 
-    // Handle ignorable exceptions
-    if (FirebaseErrorCodes.isIgnorable(code)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails: 'Firestore: $code - ${firestoreException.message}',
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       // Return a copy with the original exception and technical details
@@ -232,6 +224,7 @@ class FirestoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'Cancelled',
       briefMessage: 'Cancelled',
       exceptionCode: FirestoreCode.cancelled,
+      severity: ArsyncErrorSeverity.ignored,
       trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(

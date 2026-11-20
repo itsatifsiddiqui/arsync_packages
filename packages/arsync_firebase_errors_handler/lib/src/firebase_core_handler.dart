@@ -36,14 +36,6 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
     final firebaseException = exception as FirebaseException;
     final code = firebaseException.code;
 
-    // Handle ignorable exceptions
-    if (FirebaseErrorCodes.isIgnorable(code)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails: 'Firebase Core: $code - ${firebaseException.message}',
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       // Return a copy with the original exception and technical details
@@ -177,6 +169,16 @@ class FirebaseCoreHandler implements ArsyncExceptionHandler {
       briefTitle: 'App Not Installed',
       briefMessage: 'Required app not installed',
       exceptionCode: FirebaseCoreCode.appNotInstalled,
+    ),
+    FirebaseErrorCodes.cancelled: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Operation Cancelled',
+      message: 'The operation was cancelled.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Operation cancelled',
+      exceptionCode: FirebaseCoreCode.cancelled,
+      severity: ArsyncErrorSeverity.ignored,
+      trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.unknown: ArsyncException(
       icon: Icons.help_outline,

@@ -31,14 +31,6 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
     final authException = exception as FirebaseAuthException;
     final code = authException.code;
 
-    // Handle ignorable exceptions
-    if (FirebaseErrorCodes.isIgnorable(code)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails: 'Firebase Auth: $code - ${authException.message}',
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       // Return a copy with the original exception and technical details
@@ -241,6 +233,46 @@ class FirebaseAuthHandler implements ArsyncExceptionHandler {
       briefMessage: 'Please sign in again',
       exceptionCode: FirebaseAuthCode.requiresRecentLogin,
       severity: ArsyncErrorSeverity.critical,
+      trackingSeverity: ArsyncTrackingSeverity.none,
+    ),
+    FirebaseErrorCodes.webContextCancelled: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Sign-In Cancelled',
+      message: 'The sign-in was cancelled.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Sign-in cancelled',
+      exceptionCode: FirebaseAuthCode.webContextCancelled,
+      severity: ArsyncErrorSeverity.ignored,
+      trackingSeverity: ArsyncTrackingSeverity.none,
+    ),
+    FirebaseErrorCodes.popupClosedByUser: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Sign-In Cancelled',
+      message: 'The sign-in window was closed before finishing.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Sign-in cancelled',
+      exceptionCode: FirebaseAuthCode.popupClosedByUser,
+      severity: ArsyncErrorSeverity.ignored,
+      trackingSeverity: ArsyncTrackingSeverity.none,
+    ),
+    FirebaseErrorCodes.userCancelled: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Sign-In Cancelled',
+      message: 'The sign-in was cancelled.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Sign-in cancelled',
+      exceptionCode: FirebaseAuthCode.userCancelled,
+      severity: ArsyncErrorSeverity.ignored,
+      trackingSeverity: ArsyncTrackingSeverity.none,
+    ),
+    FirebaseErrorCodes.cancelled: ArsyncException(
+      icon: Icons.cancel_outlined,
+      title: 'Sign-In Cancelled',
+      message: 'The sign-in was cancelled.',
+      briefTitle: 'Cancelled',
+      briefMessage: 'Sign-in cancelled',
+      exceptionCode: FirebaseAuthCode.cancelled,
+      severity: ArsyncErrorSeverity.ignored,
       trackingSeverity: ArsyncTrackingSeverity.none,
     ),
     FirebaseErrorCodes.networkRequestFailed: ArsyncException(
