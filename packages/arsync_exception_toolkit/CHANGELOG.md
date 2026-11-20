@@ -1,3 +1,9 @@
+## 0.4.0
+
+* Deprecated the old ignore API, use `severity: ArsyncErrorSeverity.ignored` instead
+* Fixed adding or removing ignore patterns throwing an error
+* `ArsyncException.generic` (unknown errors) is now tracked as error, not warning
+
 ## 0.3.0
 
 * Added `severity` (critical, normal, field, ignored) and `trackingSeverity` (error, warning, none) to `ArsyncException`

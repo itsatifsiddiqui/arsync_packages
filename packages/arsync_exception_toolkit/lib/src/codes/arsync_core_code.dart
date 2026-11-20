@@ -14,6 +14,9 @@ enum ArsyncCoreCode implements ArsyncExceptionCode {
   notFound('not_found_error'),
   authentication('auth_error'),
   server('server_error'),
+  @Deprecated(
+    'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   ignored('ignored_error'),
   format('format_error'),
   unsupported('unsupported_error'),

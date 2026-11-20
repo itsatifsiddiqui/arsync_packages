@@ -34,6 +34,9 @@ class ArsyncExceptionToolkit {
   ArsyncExceptionToolkit({
     List<ArsyncExceptionHandler> handlers = const [],
     bool sortByPriority = true,
+    @Deprecated(
+      'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+    )
     List<String>? ignorableExceptions,
     ArsyncTr? localize,
   }) : _exceptionMapper = ArsyncExceptionMapper(
@@ -41,7 +44,9 @@ class ArsyncExceptionToolkit {
          sortByPriority: sortByPriority,
        ),
        _localize = localize,
-       _ignorableExceptions = ignorableExceptions ?? arsyncIgnorableExceptions;
+       _ignorableExceptions = List.of(
+         ignorableExceptions ?? arsyncIgnorableExceptions,
+       );
 
   /// Handle an exception and return an AppException.
   ///
@@ -49,6 +54,9 @@ class ArsyncExceptionToolkit {
   /// [ignoreMatching] - If true, exceptions matching ignorable patterns return a cancelled exception.
   ArsyncException handleException(
     Object exception, {
+    @Deprecated(
+      'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+    )
     bool ignoreMatching = true,
   }) {
     if (ignoreMatching && shouldIgnoreException(exception)) {
@@ -105,6 +113,9 @@ class ArsyncExceptionToolkit {
   /// Add a string to the list of ignorable exceptions.
   ///
   /// [exceptionPattern] - String pattern to match in exception messages.
+  @Deprecated(
+    'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   void addIgnorableException(String exceptionPattern) {
     if (!_ignorableExceptions.contains(exceptionPattern)) {
       _ignorableExceptions.add(exceptionPattern);
@@ -114,6 +125,9 @@ class ArsyncExceptionToolkit {
   /// Remove a string from the list of ignorable exceptions.
   ///
   /// [exceptionPattern] - Pattern to remove from the ignorable list.
+  @Deprecated(
+    'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   void removeIgnorableException(String exceptionPattern) {
     _ignorableExceptions.remove(exceptionPattern);
   }
@@ -121,6 +135,9 @@ class ArsyncExceptionToolkit {
   /// Check if the exception should be ignored.
   ///
   /// Returns true if the exception message contains any ignorable patterns.
+  @Deprecated(
+    'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   bool shouldIgnoreException(Object exception) {
     final exceptionString = exception.toString().toLowerCase();
 
@@ -137,6 +154,9 @@ class ArsyncExceptionToolkit {
   }
 
   /// Default list of exception substrings that indicate the exception should be ignored.
+  @Deprecated(
+    'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static const List<String> arsyncIgnorableExceptions = [
     'web-context-cancelled',
     'cancelled',

@@ -22,7 +22,7 @@ void main() {
     test('tracking does not depend on severity', () {
       for (final severity in ArsyncErrorSeverity.values) {
         final ex = ArsyncException.generic(severity: severity);
-        expect(ex.trackingSeverity, ArsyncTrackingSeverity.warning);
+        expect(ex.trackingSeverity, ArsyncTrackingSeverity.error);
       }
     });
 
@@ -56,7 +56,7 @@ void main() {
         'generic': (
           ArsyncException.generic(),
           ArsyncErrorSeverity.normal,
-          ArsyncTrackingSeverity.warning,
+          ArsyncTrackingSeverity.error,
         ),
         'permission': (
           ArsyncException.permission(),
@@ -139,7 +139,7 @@ void main() {
       final ex = ArsyncException.generic();
       final copy = ex.copyWith(severity: ArsyncErrorSeverity.critical);
       expect(copy.severity, ArsyncErrorSeverity.critical);
-      expect(copy.trackingSeverity, ArsyncTrackingSeverity.warning);
+      expect(copy.trackingSeverity, ArsyncTrackingSeverity.error);
     });
   });
 
@@ -173,7 +173,7 @@ void main() {
     test('compares the resolved tracking', () {
       final implicit = ArsyncException.generic();
       final explicit = ArsyncException.generic(
-        trackingSeverity: ArsyncTrackingSeverity.warning,
+        trackingSeverity: ArsyncTrackingSeverity.error,
       );
       expect(implicit, explicit);
       expect(implicit.hashCode, explicit.hashCode);
@@ -194,6 +194,12 @@ void main() {
       expect(ex.trackingSeverity, ArsyncTrackingSeverity.warning);
     });
 
+    test('an unknown exception is tracked as error', () {
+      final ex = ArsyncExceptionToolkit().handleException(Exception('boom'));
+      expect(ex.exceptionCode, ArsyncCoreCode.generic);
+      expect(ex.trackingSeverity, ArsyncTrackingSeverity.error);
+    });
+
     test('ignorable exceptions come back with severity ignored', () {
       final toolkit = ArsyncExceptionToolkit();
       final ex = toolkit.handleException(Exception('user cancelled'));
@@ -208,6 +214,37 @@ void main() {
       final localized = ex.tr((key) => 'x');
       expect(localized.severity, ArsyncErrorSeverity.critical);
       expect(localized.trackingSeverity, ArsyncTrackingSeverity.error);
+    });
+
+    test('shouldIgnore follows severity, not the code', () {
+      final ignored = ArsyncException.generic(
+        severity: ArsyncErrorSeverity.ignored,
+      );
+      expect(ignored.shouldIgnore, isTrue);
+      expect(ignored.isIgnoredError, isTrue);
+      expect(ArsyncException.generic().shouldIgnore, isFalse);
+      expect(
+        ArsyncException.ignored(
+          severity: ArsyncErrorSeverity.normal,
+        ).shouldIgnore,
+        isFalse,
+      );
+    });
+
+    test('ignore patterns can be added and removed on the default list', () {
+      final toolkit = ArsyncExceptionToolkit();
+      final error = Exception('user aborted');
+      expect(toolkit.shouldIgnoreException(error), isFalse);
+
+      toolkit.addIgnorableException('user aborted');
+      expect(toolkit.handleException(error).shouldIgnore, isTrue);
+      expect(
+        toolkit.handleException(error, ignoreMatching: false).shouldIgnore,
+        isFalse,
+      );
+
+      toolkit.removeIgnorableException('user aborted');
+      expect(toolkit.shouldIgnoreException(error), isFalse);
     });
   });
 }

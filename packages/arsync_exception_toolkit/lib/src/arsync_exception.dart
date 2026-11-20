@@ -163,7 +163,7 @@ class ArsyncException {
     Object? originalException,
     String? technicalDetails,
     ArsyncErrorSeverity severity = ArsyncErrorSeverity.normal,
-    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.warning,
+    ArsyncTrackingSeverity trackingSeverity = ArsyncTrackingSeverity.error,
   }) {
     return ArsyncException(
       icon: icon,
@@ -285,6 +285,9 @@ class ArsyncException {
   }
 
   /// Create a cancelled operation exception
+  @Deprecated(
+    'Use severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   factory ArsyncException.ignored({
     IconData icon = Icons.cancel_outlined,
     String title = 'Operation Ignored',
@@ -411,10 +414,10 @@ class ArsyncException {
 
   bool get isServerError => exceptionCode == ArsyncCoreCode.server;
 
-  bool get isIgnoredError => exceptionCode == ArsyncCoreCode.ignored;
+  @Deprecated('Use shouldIgnore. Will be removed in 1.0.0.')
+  bool get isIgnoredError => shouldIgnore;
 
-  // Alias for isIgnoredError
-  bool get shouldIgnore => isIgnoredError;
+  bool get shouldIgnore => severity == ArsyncErrorSeverity.ignored;
 
   bool get isCritical => severity == ArsyncErrorSeverity.critical;
 

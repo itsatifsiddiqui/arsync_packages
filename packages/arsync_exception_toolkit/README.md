@@ -17,7 +17,7 @@ A flexible, standardized exception handling system for Flutter applications by A
 
 ```yaml
 dependencies:
-  arsync_exception_toolkit: ^0.2.0
+  arsync_exception_toolkit: ^0.4.0
 ```
 
 ## Basic Usage
@@ -158,19 +158,17 @@ toolkit.registerExceptionModifier(
 
 ### Ignoring Certain Exceptions
 
-Define which exceptions should be ignored: This is useful for ignoring exceptions that are not relevant to the user and should not be displayed.
+To hide an exception from the user, give it `severity: ArsyncErrorSeverity.ignored` and skip it when `shouldIgnore` is true. The handler packages already do this for cancelled actions. To ignore one more code, use a modifier:
 
 ```dart
-final toolkit = ArsyncExceptionToolkit(
-  ignorableExceptions: [
-    'operation_cancelled',
-    'user_dismissed',
-  ],
+toolkit.registerExceptionModifier(
+  ArsyncCoreCode.permission.id,
+  (exception, originalException) =>
+      exception.copyWith(severity: ArsyncErrorSeverity.ignored),
 );
-
-// Add more later
-toolkit.addIgnorableException('user_aborted');
 ```
+
+The old ignore API (`ignorableExceptions`, `addIgnorableException`, `ArsyncException.ignored`, `ArsyncCoreCode.ignored` and friends) is deprecated and will be removed in 1.0.0.
 
 ### Localization (i18n)
 
