@@ -38,7 +38,7 @@ dependencies:
     path: ../
   material_ui: ^1.11.1
 
-  arsync_exception_toolkit: ^0.3.0
+  arsync_exception_toolkit: ^0.4.0
   dio: ^5.11.1
 dev_dependencies:
   flutter_test:

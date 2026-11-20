@@ -146,7 +146,7 @@ final toolkit = ArsyncExceptionToolkit(
 
 ### Severity
 
-Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. A 401 sign-in error is `critical`. Cancelled actions stay `ignored`.
+Every error comes with a `severity` (how to show it) and a `trackingSeverity` (how to report it), see the [Arsync Exception Toolkit](https://pub.dev/packages/arsync_exception_toolkit) docs. A 401 sign-in error is `critical`. Cancelled requests come back with severity `ignored`, and you can change that with `customExceptions`.
 
 ## Handler Classes
 

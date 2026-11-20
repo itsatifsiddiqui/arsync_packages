@@ -84,12 +84,23 @@ void main() {
     });
   });
 
-  test('cancelled request stays ignored', () {
-    expectSeverity(
-      DioErrorsHandler(),
+  test('cancelled request comes back ignored', () {
+    final exception = DioErrorsHandler().handle(
       typeError(DioExceptionType.cancel),
-      ArsyncErrorSeverity.ignored,
-      ArsyncTrackingSeverity.none,
     );
+    expect(exception.exceptionCode, DioErrorCode.cancel);
+    expect(exception.severity, ArsyncErrorSeverity.ignored);
+    expect(exception.trackingSeverity, ArsyncTrackingSeverity.none);
+  });
+
+  test('customExceptions can override a cancel', () {
+    final handler = DioErrorHandler(
+      customExceptions: {
+        DioErrorCodes.cancel: ArsyncException.generic(title: 'Stopped'),
+      },
+    );
+    final exception = handler.handle(typeError(DioExceptionType.cancel));
+    expect(exception.title, 'Stopped');
+    expect(exception.severity, ArsyncErrorSeverity.normal);
   });
 }

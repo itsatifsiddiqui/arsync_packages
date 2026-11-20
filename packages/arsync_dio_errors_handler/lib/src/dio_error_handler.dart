@@ -33,14 +33,6 @@ class DioErrorHandler implements ArsyncExceptionHandler {
     // Convert DioErrorType to a string code
     final code = _getErrorCode(dioErrorType, dioException);
 
-    // Handle ignorable exceptions
-    if (DioErrorCodes.isIgnorable(code)) {
-      return ArsyncException.ignored(
-        originalException: exception,
-        technicalDetails: 'Dio: $code - ${dioException.message}',
-      );
-    }
-
     // Use custom error exceptions if provided and the code exists
     if (customExceptions != null && customExceptions!.containsKey(code)) {
       return customExceptions![code]!.copyWith(
@@ -218,6 +210,7 @@ class DioErrorHandler implements ArsyncExceptionHandler {
       briefTitle: 'Stopped',
       briefMessage: 'Request stopped',
       exceptionCode: DioErrorCode.cancel,
+      severity: ArsyncErrorSeverity.ignored,
       trackingSeverity: ArsyncTrackingSeverity.none,
     ),
 

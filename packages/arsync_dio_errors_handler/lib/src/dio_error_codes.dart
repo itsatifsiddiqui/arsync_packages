@@ -116,9 +116,15 @@ class DioErrorCodes {
       'network_authentication_required'; // 511
 
   /// Ignorable Exceptions
+  @Deprecated(
+    'Cancels now come back with severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static const List<String> ignorableErrorCodes = [cancel];
 
   /// Check if the given error code is ignorable
+  @Deprecated(
+    'Cancels now come back with severity: ArsyncErrorSeverity.ignored. Will be removed in 1.0.0.',
+  )
   static bool isIgnorable(String code) {
     return ignorableErrorCodes.contains(code);
   }
